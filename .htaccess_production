@@ -1,0 +1,89 @@
+# =============================================================================
+# EES — PRODUCTION .htaccess (shared hosting / root domain)
+# For site installed at the domain root:
+#   https://ecoasis.mu/  OR  https://www.ecoasis.mu/
+#
+# Usage: upload this file as .htaccess to your server's public_html folder.
+# Also ensure APP_URL in .env matches exactly: https://yourdomain.com
+# =============================================================================
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Site is at the domain root — no subdirectory prefix needed.
+    RewriteBase /
+
+    # Force HTTPS — redirect all plain HTTP requests
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # Block access to sensitive files and directories
+    RewriteRule ^\.env$                       - [F,L]
+    RewriteRule ^\.htaccess_                  - [F,L]
+    RewriteRule ^config\.php$                 - [F,L]
+    RewriteRule ^core/logs/                   - [F,L]
+    RewriteRule ^vendor/                      - [F,L]
+    RewriteRule ^composer\.(json|lock)$       - [F,L]
+    RewriteRule ^database/                    - [F,L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# Protect hidden files (.env, .htaccess, .git, etc.)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Block sensitive file extensions
+<FilesMatch "\.(env|log|ini|sh|bat|sql|gz)$">
+    Require all denied
+</FilesMatch>
+
+# PHP settings — production
+<IfModule mod_php.c>
+    php_flag display_errors         Off
+    php_flag log_errors             On
+    php_value upload_max_filesize   10M
+    php_value post_max_size         12M
+    php_value max_execution_time    60
+</IfModule>
+
+# Static asset caching
+<IfModule mod_headers.c>
+    # JavaScript and CSS — 1 day (cache-busting via ?t= param)
+    <FilesMatch "\.(js|css)$">
+        Header set Cache-Control "public, max-age=86400, must-revalidate"
+    </FilesMatch>
+
+    # Images — 1 month
+    <FilesMatch "\.(jpg|jpeg|png|gif|ico|svg|webp)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+
+    # Fonts — 1 year (immutable)
+    <FilesMatch "\.(woff|woff2|ttf|otf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # PHP files — no cache
+    <FilesMatch "\.php$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+# Custom error pages
+ErrorDocument 404 /core/error-404.php
+ErrorDocument 500 /core/error-500.php
+ErrorDocument 403 /core/error-404.php

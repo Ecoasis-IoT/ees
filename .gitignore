@@ -1,0 +1,23 @@
+# Database dumps & SQL files
+database/
+
+# Environment / secrets
+.env
+.env.backup
+.env.local
+.env.*.local
+
+# PHP dependencies (run: composer install)
+vendor/
+
+# Runtime logs — keep core/logs/.htaccess but ignore log files
+core/logs/security/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/

@@ -8,24 +8,27 @@
     text-align: center;
 }
 
+#footer-sec .footer-version {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
 </style>
 
 <?php
-
-echo"
-
-<div id=\"footer-sec\">
-    © Copyright <span id=\"year\"></span> | Designed and Developed by Ecoasis Technical Services Ltd.
-</div>
-
-";
+$versionData = json_decode(file_get_contents(__DIR__ . '/../../version.json'), true);
+$appVersion  = $versionData['version'] ?? '';
 ?>
+
+<div id="footer-sec">
+    <div>© Copyright <span id="year"></span> | Designed and Developed by Ecoasis Technical Services Ltd.</div>
+    <?php if ($appVersion): ?>
+    <div class="footer-version"><?= htmlspecialchars($appVersion, ENT_QUOTES, 'UTF-8') ?></div>
+    <?php endif; ?>
+</div>
 
 <!-- To get year -->
 <script>
-var currentDate = new Date();
-var year = currentDate.getFullYear();
-
-document.getElementById("year").innerHTML = year;
-
+document.getElementById("year").innerHTML = new Date().getFullYear();
 </script>

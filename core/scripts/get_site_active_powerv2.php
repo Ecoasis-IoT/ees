@@ -1,27 +1,36 @@
 <?php
+ob_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
+require_once __DIR__ . '/../common/db_key_helper.php';
 
-$site_db = $_POST["site_db"];
-$date = $_POST['date'];
+header('Content-Type: application/json; charset=utf-8');
 
-// $timenow = date('y-m-d H:i');
+// Guard: must be an XMLHttpRequest (jQuery sends this automatically)
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
+}
 
-require("../config/" . $site_db);
+$site_db = trim($_POST['site_db'] ?? '');
+$date    = trim($_POST['date']    ?? date('Y-m-d'));
 
-$query = "SELECT
-    `meter_id`,
-    `meter_name`,
-     TIME(date) as 'time',
-     IF(active_power < 0, 0, ROUND(active_power,2)) as 'active_power'
-FROM
-    `plant_active_power`
-WHERE
-    DATE(date) = DATE('$date')
-    ORDER BY date ASC";
+if (empty($site_db)) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
 
+$pdo = getDB(ees_db_key($site_db));
 
-$result = mysqli_query($link, $query);
-$data = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-echo json_encode($data);
-
-?>
+try {
+    $stmt = $pdo->prepare(
+        "SELECT meter_id, meter_name, TIME(date) as time,
+                IF(active_power < 0, 0, ROUND(active_power,2)) as active_power
+         FROM plant_active_power
+         WHERE DATE(date) = DATE(:date)
+         ORDER BY date ASC"
+    );
+    $stmt->execute([':date' => $date]);
+    ob_end_clean();
+    echo json_encode($stmt->fetchAll());
+} catch (PDOException $e) {
+    error_log("get_site_active_powerv2 error: " . $e->getMessage());
+    ob_end_clean();
+    echo json_encode(['status' => 'Err']);
+}

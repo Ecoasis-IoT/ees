@@ -1,0 +1,8 @@
+input, select {
+    padding: 5px;
+}
+
+.editsitetbl td:first-child {
+    width: 200px;
+    font-weight: 500;
+}

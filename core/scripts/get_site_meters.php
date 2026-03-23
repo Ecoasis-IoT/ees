@@ -1,24 +1,30 @@
 <?php
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
+require_once __DIR__ . '/../common/db_key_helper.php';
 
-// error_reporting(E_ALL);
-// ini_set('display_errors', '1');
+header('Content-Type: application/json; charset=utf-8');
 
-$site_db = $_POST["site_db"];
+// Guard: must be an XMLHttpRequest (jQuery sends this automatically)
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    echo json_encode([]); exit;
+}
 
-$timenow = date('y-m-d H:i');
+$site_db = trim($_POST['site_db'] ?? '');
 
-require("../config/" . $site_db);
+if (empty($site_db)) {
+    echo json_encode([]);
+    exit;
+}
 
+try {
+    $db_key   = ees_db_key($site_db);
+    $site_pdo = getDB($db_key);
 
-$query = "SELECT
-            meter_name,
-            device_type
-        FROM
-            `tbl_meters`";
-            
-$result = mysqli_query($link, $query);
-$data = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-echo json_encode($data);
-
-?>
+    $stmt = $site_pdo->query("SELECT meter_name, device_type FROM tbl_meters ORDER BY meter_name ASC");
+    $data = $stmt->fetchAll();
+    echo json_encode($data);
+} catch (PDOException $e) {
+    error_log("get_site_meters error [{$site_db}]: " . $e->getMessage());
+    echo json_encode([]);
+}

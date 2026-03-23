@@ -1,23 +1,35 @@
 <?php
+ob_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
 
-$size = filesize("../../cron/network_status.txt");
+header('Content-Type: application/json; charset=utf-8');
 
-$myfile = fopen("../../cron/network_status.txt", "r") or die(json_encode(array("status"=>"noFile")));
+$file = __DIR__ . '/../../cron/network_status.txt';
 
-
-if($size > 0){
-    $state = fread($myfile, $size);
-}
-else{
-    //No data in text file
-    echo json_encode(array("status"=>"emptyFile"));
-}
-
-if(trim($state) == "ON"){
-    echo json_encode(array("status"=>"connected"));
-}
-else if(trim($state) == "OFF"){
-    echo json_encode(array("status"=>"disconnected"));
+if (!file_exists($file)) {
+    ob_end_clean();
+    echo json_encode(['status' => 'noFile']);
+    exit;
 }
 
-?>
+$size = filesize($file);
+
+if ($size <= 0) {
+    ob_end_clean();
+    echo json_encode(['status' => 'emptyFile']);
+    exit;
+}
+
+$fh    = fopen($file, 'r');
+$state = $fh ? trim(fread($fh, $size)) : '';
+if ($fh) fclose($fh);
+
+ob_end_clean();
+if ($state === 'ON') {
+    echo json_encode(['status' => 'connected']);
+} elseif ($state === 'OFF') {
+    echo json_encode(['status' => 'disconnected']);
+} else {
+    echo json_encode(['status' => 'unknown']);
+}

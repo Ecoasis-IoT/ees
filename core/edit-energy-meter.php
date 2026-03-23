@@ -1,7 +1,7 @@
 <?php
-
-include("scripts/auth.php");
-
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
 ?>
 
 <!DOCTYPE html>
@@ -19,11 +19,7 @@ include("scripts/auth.php");
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
 
-<style>
-input, select {
-    padding:5px;
-}
-</style>
+<link rel="stylesheet" href="assets/css/pages/form-pages.css">
 
 </head>
 <body data-theme="theme-cyan">

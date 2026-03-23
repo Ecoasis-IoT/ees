@@ -1,65 +1,68 @@
 <?php
+/**
+ * Dashboard data: site list with today's production and active power.
+ */
 
-require("../config/admin.php");
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
+require_once __DIR__ . '/../common/db_key_helper.php';
 
-$query = "SELECT `id`, `site_name`, `db_name`,`location`, `commissioned` FROM `tbl_site` ORDER BY `id`";
+header('Content-Type: application/json; charset=utf-8');
 
-$result = mysqli_query($admin_link, $query);
-$sites = mysqli_fetch_all($result, MYSQLI_ASSOC);
+$admin_pdo = getDB('admin');
 
-mysqli_close($admin_link);
-
-for($i = 0; $i < count($sites); $i++){
-    
-    if($sites[$i]["commissioned"] == 1){
-    
-        $config_path = "../config/";
-        $config_path .= $sites[$i]["db_name"];
-    
-        require $config_path;
-        
-        $timenow = date('y-m-d H:i');
-
-        $query = "
-                (SELECT
-                    ROUND(SUM(production),2) as 'data'
-                FROM
-                    `tbl_hourly_prod`
-                WHERE
-                    meter_id >= 100 and DATE(datetime) = DATE('$timenow'))
-                
-                UNION ALL
-                
-                (
-                SELECT
-                    IFNULL(active_power,0)
-                FROM
-                    `plant_active_power`
-                WHERE
-                    DATE(date) = DATE('$timenow')
-                ORDER BY
-                    DATE DESC
-                    LIMIT 1);
-                ";
-        
-        $result = mysqli_query($link, $query);
-        $power = mysqli_fetch_all($result);
-        
-        mysqli_close($link);
-        $sites[$i]["prod"] = round($power[0][0], 2);
-        $sites[$i]["active_power"] = round($power[1][0], 2);
-        
-        
-    }
-    else if($sites[$i]["commissioned"] == 0){
-        
-        $sites[$i]["prod"] = 0;
-        $sites[$i]["active_power"] = 0;
-        
-    }
-    
+try {
+    $stmt  = $admin_pdo->query("SELECT `id`, `site_name`, `db_name`, `location`, `commissioned` FROM `tbl_site` ORDER BY `id`");
+    $sites = $stmt->fetchAll();
+} catch (PDOException $e) {
+    error_log("get_dashboard admin query error: " . $e->getMessage());
+    echo json_encode([]);
+    exit;
 }
 
-echo json_encode($sites);
+$timenow = date('Y-m-d');
 
-?>
+foreach ($sites as &$site) {
+    if ((int)$site['commissioned'] !== 1) {
+        $site['prod']         = 0;
+        $site['active_power'] = 0;
+        continue;
+    }
+
+    $db_key   = ees_db_key($site['db_name']);
+    $site_pdo = tryGetDB($db_key);
+
+    if (!$site_pdo) {
+        $site['prod']         = 0;
+        $site['active_power'] = 0;
+        continue;
+    }
+
+    try {
+        $sql = "
+            (SELECT ROUND(COALESCE(SUM(production), 0), 2) AS data
+             FROM tbl_hourly_prod
+             WHERE meter_id >= 100 AND DATE(datetime) = :dt)
+            UNION ALL
+            (SELECT COALESCE(active_power, 0)
+             FROM plant_active_power
+             WHERE DATE(date) = :dt2
+             ORDER BY date DESC
+             LIMIT 1)
+        ";
+
+        $q = $site_pdo->prepare($sql);
+        $q->execute([':dt' => $timenow, ':dt2' => $timenow]);
+        $rows = $q->fetchAll(PDO::FETCH_NUM);
+
+        $site['prod']         = round((float)($rows[0][0] ?? 0), 2);
+        $site['active_power'] = round((float)($rows[1][0] ?? 0), 2);
+    } catch (PDOException $e) {
+        error_log("get_dashboard site [{$site['db_name']}] error: " . $e->getMessage());
+        $site['prod']         = 0;
+        $site['active_power'] = 0;
+    }
+}
+unset($site);
+
+echo json_encode($sites);

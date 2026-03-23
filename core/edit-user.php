@@ -1,7 +1,9 @@
 <?php
-
-include("scripts/auth.php");
-
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/asset_helper.php';
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>

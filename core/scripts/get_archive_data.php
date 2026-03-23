@@ -1,48 +1,42 @@
 <?php
+ob_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
+require_once __DIR__ . '/../common/db_key_helper.php';
 
-// ini_set('display_errors', '1');
-// ini_set('display_startup_errors', '1');
-// error_reporting(E_ALL);
+header('Content-Type: application/json; charset=utf-8');
 
-$site_id = $_POST['site'];
-$start_date = $_POST['start_date'];
-$end_date = $_POST['end_date'];
+// Guard: must be an XMLHttpRequest (jQuery sends this automatically)
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
+}
 
-// GET Site Database
-require("../config/admin.php");
+$site_id    = intval($_POST['site']       ?? 0);
+$start_date = trim($_POST['start_date']   ?? '');
+$end_date   = trim($_POST['end_date']     ?? '');
 
-$get_db_name = "
-                SELECT
-                    site_name,
-                    db_name,
-                    capacity
-                FROM
-                    `tbl_site`
-                WHERE
-                    id =" . $site_id;
+if (!$site_id || empty($start_date) || empty($end_date)) {
+    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
+}
 
-$result = mysqli_query($admin_link, $get_db_name);
-$res = mysqli_fetch_assoc($result);
+$adm  = getDB('admin');
+$stmt = $adm->prepare("SELECT site_name, db_name FROM tbl_site WHERE id = :id");
+$stmt->execute([':id' => $site_id]);
+$site = $stmt->fetch();
+if (!$site) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
 
-mysqli_close($admin_link);
-    
-$site_db = $res['db_name'];
-$site_name = $res['site_name'];
+$pdo = getDB(ees_db_key($site['db_name']));
 
-//Create Connection to site db
-
-require("../config/" . $site_db);
-
-
-
-$query = "SELECT `date`, `production`, `insolation` FROM `tbl_archive` WHERE `date` >= '$start_date' and `date` <= '$end_date'";
-$result = mysqli_query($link, $query);
-
-$data = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-echo json_encode(array("site_name"=>$site_name, "archive"=>$data));
-
-// echo $query;
-
-
-?>
+try {
+    $s = $pdo->prepare(
+        "SELECT date, production, insolation FROM tbl_archive
+         WHERE date >= :start AND date <= :end"
+    );
+    $s->execute([':start' => $start_date, ':end' => $end_date]);
+    ob_end_clean();
+    echo json_encode(['site_name' => $site['site_name'], 'archive' => $s->fetchAll()]);
+} catch (PDOException $e) {
+    error_log("get_archive_data error: " . $e->getMessage());
+    ob_end_clean();
+    echo json_encode(['status' => 'Err']);
+}

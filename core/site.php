@@ -1,7 +1,9 @@
 <?php
-
-include("scripts/auth.php");
-
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/asset_helper.php';
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -160,37 +162,30 @@ include("scripts/auth.php");
         $.ajax({
             type: "POST",
             url: "scripts/get_all_sites.php",
+            dataType: 'json',
             data: {
                 
             },
-            success: function(dataResult) {
-                var data = JSON.parse(dataResult);
-                // console.log(data.statusCode);
-                
-                // console.log(data.data);
-                
-                var sites = data.data;
-                
-                console.log(sites);
-                
-                let gateway;
-                
-                for(let i = 0; i < sites.length; i++){
-                    
-                    if(sites[i][5] == "1"){
-                        gateway = "<p class='connected'> ONLINE </p>";
-                    }
-                    else{
-                        gateway = "<p class='disconnected'> OFFLINE </p>";
-                    }
-                    
-                    let row = "<tr><td>" + sites[i][1] +"</td><td>"+ sites[i][3] +"</td><td class='justify-content-center d-flex'>"+ gateway +"</td><td><a href='devices.php?site="+ sites[i][0] +"' class='btn btn-primary'><i class='icon-energy' aria-hidden='true'></i> View Devices</a></td></tr>";
-                    
+            success: function(data) {
+                var sites = data.data || [];
+
+                for (let i = 0; i < sites.length; i++) {
+                    var s       = sites[i];
+                    var gateway = parseInt(s.gateway_status) === 1
+                        ? "<p class='connected'>ONLINE</p>"
+                        : "<p class='disconnected'>OFFLINE</p>";
+                    var cap = s.capacity ? s.capacity + ' kWp' : '—';
+
+                    var row = "<tr>" +
+                        "<td>" + s.site_name + "</td>" +
+                        "<td>" + cap + "</td>" +
+                        "<td class='justify-content-center d-flex'>" + gateway + "</td>" +
+                        "<td><a href='devices.php?site=" + s.id + "' class='btn btn-primary'>" +
+                            "<i class='icon-energy' aria-hidden='true'></i> View Devices</a></td>" +
+                        "</tr>";
+
                     $('#tbl_site tbody').append(row);
-                    
-                    
                 }
-                
             }
             });
     });

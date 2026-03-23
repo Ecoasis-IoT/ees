@@ -1,0 +1,84 @@
+/* Admin Settings Page Styles */
+
+.nav-tabs .nav-link {
+    cursor: pointer;
+}
+
+.tab-content {
+    padding-top: 20px;
+}
+
+.action-btn-group {
+    display: flex;
+    gap: 5px;
+}
+
+#modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1050;
+    justify-content: center;
+    align-items: center;
+}
+
+#modal-overlay.active {
+    display: flex;
+}
+
+.admin-modal {
+    background: #fff;
+    border-radius: 8px;
+    padding: 30px;
+    width: 480px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.admin-modal h4 {
+    margin-bottom: 20px;
+}
+
+.admin-modal .close-modal {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.badge-admin {
+    background: #dc3545;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.badge-user {
+    background: #6c757d;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.status-online {
+    color: green;
+    font-weight: 600;
+}
+
+.status-offline {
+    color: red;
+    font-weight: 600;
+}

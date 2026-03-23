@@ -1,0 +1,14 @@
+/* Dashboard page styles */
+
+#map_container {
+    height: 75vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+#sites_map {
+    height: 100%;
+    width: 110%;
+    z-index: 0;
+    border-radius: 0.35rem;
+}

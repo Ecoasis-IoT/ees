@@ -1,19 +1,35 @@
 <?php
+ob_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
+require_once __DIR__ . '/../common/db_key_helper.php';
 
-// error_reporting(E_ALL);
-// ini_set('display_errors', '1');
+header('Content-Type: application/json; charset=utf-8');
 
-$site_db = $_POST["site_db"];
-$date = $_POST['date'];
+// Guard: must be an XMLHttpRequest (jQuery sends this automatically)
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
+}
 
-// $timenow = date('y-m-d H:i');
+$site_db = trim($_POST['site_db'] ?? '');
+$date    = trim($_POST['date']    ?? date('Y-m-d'));
 
-require("../config/" . $site_db);
+if (empty($site_db)) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
 
-$query = "SELECT TIME(date) as 'time', irradiance, ambient_temp, panel_temp FROM `plant_irradiance` WHERE DATE(date) = DATE('$date') ORDER BY date ASC";
-$results = mysqli_query($link, $query);
-$data = mysqli_fetch_all($results, MYSQLI_ASSOC);
+$pdo = getDB(ees_db_key($site_db));
 
-echo json_encode($data);
-
-?>
+try {
+    $stmt = $pdo->prepare(
+        "SELECT TIME(date) as time, irradiance, ambient_temp, panel_temp
+         FROM plant_irradiance
+         WHERE DATE(date) = DATE(:date)
+         ORDER BY date ASC"
+    );
+    $stmt->execute([':date' => $date]);
+    ob_end_clean();
+    echo json_encode($stmt->fetchAll());
+} catch (PDOException $e) {
+    error_log("get_site_irradiance error: " . $e->getMessage());
+    ob_end_clean();
+    echo json_encode(['status' => 'Err']);
+}

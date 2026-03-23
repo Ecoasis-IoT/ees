@@ -1,80 +1,70 @@
 <?php
-// error_reporting(E_ALL);
-// ini_set('display_errors', '1');
-// $site_id = $_POST["site_id"];
+ob_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
+require_once __DIR__ . '/../common/db_key_helper.php';
 
-// $site_id = 7777;
-$site_id = $_POST["site_id"];
-$end_date = $_POST["end_date"];
+header('Content-Type: application/json; charset=utf-8');
 
-$month = date('m', strtotime(date($end_date)));
+$site_id  = intval($_POST['site_id']  ?? 0);
+$end_date = trim($_POST['end_date']   ?? date('Y-m-d'));
+$month    = (int)date('m', strtotime($end_date));
 
-// GET Site Database
-require("../config/admin.php");
+if (!$site_id) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
 
-$get_db_name = "
-                SELECT
-                    db_name
-                FROM
-                    `tbl_site`
-                WHERE
-                    id =" . $site_id;
+$adm  = getDB('admin');
+$stmt = $adm->prepare("SELECT db_name FROM tbl_site WHERE id = :id");
+$stmt->execute([':id' => $site_id]);
+$site = $stmt->fetch();
+if (!$site) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
 
-$result = mysqli_query($admin_link, $get_db_name);
-$res = mysqli_fetch_assoc($result);
+$pdo = tryGetDB(ees_db_key($site['db_name']));
+if (!$pdo) { ob_end_clean(); echo json_encode([]); exit; }
 
-mysqli_close($admin_link);
+try {
+    $hist_stmt = $pdo->prepare(
+        "SELECT YEAR(date) as year, production, insolation
+         FROM tbl_historical WHERE MONTH(date) = :month"
+    );
+    $hist_stmt->execute([':month' => $month]);
+    $raw     = $hist_stmt->fetchAll();
+    $history = array_map(function($r) {
+        return [
+            'year'       => (string)$r['year'],
+            'production' => (float)$r['production'],
+            'insolation' => (float)$r['insolation'],
+        ];
+    }, $raw);
 
-$site_db = $res['db_name'];
+    $current_year = (int)date('Y');
 
-//FETCH DATA
+    // PDO does not allow the same named param twice — use :yr_label vs :yr_filter
+    $curr_stmt = $pdo->prepare(
+        "SELECT :yr_label as year,
+                MAX(total_active_energy) - MIN(total_active_energy) as production
+         FROM tbl_main_meter
+         WHERE YEAR(date) = :yr_filter AND MONTH(date) = :month"
+    );
+    $curr_stmt->execute([':yr_label' => $current_year, ':yr_filter' => $current_year, ':month' => $month]);
+    $current = $curr_stmt->fetch();
 
-require("../config/" . $site_db);
+    $irr_stmt = $pdo->prepare(
+        "SELECT SUM(insolation) as insolation FROM plant_irradiance
+         WHERE YEAR(date) = :yr AND MONTH(date) = :month"
+    );
+    $irr_stmt->execute([':yr' => $current_year, ':month' => $month]);
+    $curr_irr = $irr_stmt->fetch();
 
-$query_history = "
-                    SELECT
-                        YEAR(`date`) as 'year',
-                        `production`,
-                        `insolation`
-                    FROM
-                        `tbl_historical`
-                    WHERE
-                        MONTH(date) = $month
-                    ";
-                    
-$result = mysqli_query($link, $query_history);
-$history = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    $history[] = [
+        'year'       => (string)$current_year,
+        'production' => round((float)($current['production'] ?? 0), 2),
+        'insolation' => round((float)($curr_irr['insolation'] ?? 0), 2),
+    ];
 
-// $next_key = count($history);
-
-$current_year = date('Y');
-
-$query_current = "SELECT
-                	'$current_year' as 'year',
-                    MAX(total_active_energy) - MIN(total_active_energy) as 'production'
-                FROM
-                    `tbl_main_meter`
-                WHERE
-                    YEAR(date) = '$current_year' and MONTH(date) = $month";
-
-$result = mysqli_query($link, $query_current);
-$current = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-// print_r($current);
-
-$current_irradiance = "
-SELECT
-    SUM(insolation) as 'insolation'
-FROM
-    `plant_irradiance`
-WHERE
-    YEAR(date) = '$current_year' and MONTH(date) = $month;";
-
-$result = mysqli_query($link, $current_irradiance);
-$irradiance = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-$history[] = array("year" => $current[0]['year'], "production"=>round($current[0]['production'],2), "insolation" => $irradiance[0]['insolation']);
-
-echo json_encode($history);
-
-?>
+    ob_end_clean();
+    echo json_encode($history);
+} catch (PDOException $e) {
+    error_log("get_plant_historical error: " . $e->getMessage());
+    ob_end_clean();
+    echo json_encode(['status' => 'Err']);
+}

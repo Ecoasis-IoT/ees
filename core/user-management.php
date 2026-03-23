@@ -1,7 +1,9 @@
 <?php
-
-include("scripts/auth.php");
-
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/asset_helper.php';
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -96,11 +98,11 @@ include("scripts/auth.php");
         $.ajax({
             type: "POST",
             url: "scripts/get_all_users.php",
+            dataType: 'json',
             data: {
                 
             },
-            success: function(dataResult) {
-                var data = JSON.parse(dataResult);
+            success: function(data) {
                 // console.log(data.statusCode);
                 
                 console.log(data);

@@ -1,27 +1,25 @@
-// <?php
+<?php
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
 
-// include("scripts/auth.php");
+$site_id = intval($_GET['site'] ?? 0);
+if (!$site_id) { header('Location: dashboard.php'); exit; }
 
-// $site_id = $_GET['site'];
+try {
+    $stmt = getDB('admin')->prepare("SELECT site_name, db_name FROM tbl_site WHERE id = :id LIMIT 1");
+    $stmt->execute([':id' => $site_id]);
+    $site_details = $stmt->fetch();
+} catch (PDOException $e) {
+    error_log("site-dashboardv4 PDO error: " . $e->getMessage());
+    header('Location: dashboard.php'); exit;
+}
+if (!$site_details) { header('Location: dashboard.php'); exit; }
 
-// //get site name
-// require("config/admin.php");
-
-// $get_site_name = "SELECT site_name, db_name from tbl_site where id = $site_id";
-// $results = mysqli_query($admin_link, $get_site_name);
-// $site_details = mysqli_fetch_assoc($results);
-
-// $site_name = $site_details["site_name"];
-// $site_db = $site_details["db_name"];
-
-// if(mysqli_num_rows($results) < 1){
-    
-//     header('Location: dashboard.php');
-// }
-
-// mysqli_close($admin_link);
-
-// ?>
+$site_name  = $site_details['site_name'];
+$site_db    = $site_details['db_name'];
+$csrf_token = generateCSRFToken();
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -359,7 +357,7 @@ var kpi_active_power = [];
                 "site_db": '<?php echo $site_db;?>'
             },
             success: function(dataResult) {
-                var data = JSON.parse(dataResult);
+                var data = dataResult;
                 
                 // console.log(dataResult);
                 
@@ -413,7 +411,7 @@ function get_barchart_data(date){
             "date": date
         },
         success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+            var data = dataResult;
             // console.log(data);
             for(var i = 0; i < data.length; i++){
                 
@@ -442,7 +440,7 @@ function get_linechart_data(date){
             "date": date
         },
         success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+            var data = dataResult;
             
             // console.log(dataResult);
             
@@ -473,7 +471,7 @@ function getActivePower(date){
             "date": date
         },
         success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+            var data = dataResult;
             
             for(var i = 0; i < data.length; i++){
                 kpi_active_power.push({"x": data[i].time, "y": data[i].active_power});

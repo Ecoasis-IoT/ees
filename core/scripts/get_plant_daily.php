@@ -1,153 +1,68 @@
 <?php
+ob_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
+require_once __DIR__ . '/../common/db_key_helper.php';
 
-// error_reporting(E_ALL);
-// ini_set('display_errors', '1');
+header('Content-Type: application/json; charset=utf-8');
 
-$site_id = $_POST["site_id"];
-$start_date = $_POST['start_date'];
-$end_date = $_POST['end_date'];
+$site_id    = intval($_POST['site_id']    ?? 0);
+$start_date = trim($_POST['start_date']   ?? '');
+$end_date   = trim($_POST['end_date']     ?? '');
 
-// $site_id = 7778;
-// $start_date = "2024-09-10";
-// $end_date = "2024-09-20";
+if (!$site_id || empty($start_date) || empty($end_date)) {
+    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
+}
 
-// GET Site Database
-require("../config/admin.php");
+$adm  = getDB('admin');
+$stmt = $adm->prepare("SELECT db_name, capacity, main_meter FROM tbl_site WHERE id = :id");
+$stmt->execute([':id' => $site_id]);
+$site = $stmt->fetch();
+if (!$site) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
 
-$get_db_name = "
-                SELECT
-                    db_name, capacity, main_meter
-                FROM
-                    `tbl_site`
-                WHERE
-                    id =" . $site_id;
+$pdo = tryGetDB(ees_db_key($site['db_name']));
+if (!$pdo) { ob_end_clean(); echo json_encode([]); exit; }
+$capacity   = (float)$site['capacity'];
+$main_meter = (int)$site['main_meter'];
 
-$result = mysqli_query($admin_link, $get_db_name);
-$res = mysqli_fetch_assoc($result);
+try {
+    $energy_stmt = $pdo->prepare(
+        "SELECT DATE(DATETIME) AS date, ROUND(SUM(production),2) as production
+         FROM tbl_hourly_prod
+         WHERE DATE(DATETIME) >= DATE(:start) AND DATE(DATETIME) <= DATE(:end) AND meter_id >= :meter
+         GROUP BY DATE(DATETIME)"
+    );
+    $energy_stmt->execute([':start' => $start_date, ':end' => $end_date, ':meter' => $main_meter]);
+    $energy = $energy_stmt->fetchAll();
 
-mysqli_close($admin_link);
+    $irr_stmt = $pdo->prepare(
+        "SELECT DATE(date) as date, ROUND(SUM(insolation),2) as insolation
+         FROM plant_irradiance
+         WHERE DATE(date) >= DATE(:start) AND DATE(date) <= DATE(:end)
+         GROUP BY DATE(date)"
+    );
+    $irr_stmt->execute([':start' => $start_date, ':end' => $end_date]);
+    $irradiance = $irr_stmt->fetchAll();
 
-$site_db = $res['db_name'];
-$capacity = $res['capacity'];
-$main_meter_id = $res['main_meter'];
-
-//FETCH DATA
-
-require("../config/" . $site_db);
-
-
-$data = [];
-
-//Gets the production of the day but not cumulative missing days
-
-// $query_energy = "SELECT
-// 	DATE(date) as 'date',
-//     ROUND(max(total_active_energy) - min(total_active_energy),2) as 'production'
-// FROM
-//     `tbl_main_meter`
-// WHERE
-//     DATE(date) >= DATE('$start_date') AND DATE(date) <= DATE('$end_date')
-// GROUP BY DATE(date)"; 
-
-$query_energy = "SELECT
-            DATE(DATETIME) AS 'date',
-            ROUND(SUM(production),2) as 'production'
-        FROM
-            `tbl_hourly_prod`
-        WHERE
-            DATE(DATETIME) >= DATE('$start_date') AND DATE(DATETIME) <= DATE('$end_date') AND meter_id >= $main_meter_id
-        GROUP BY
-            DATE(DATETIME)";
-
-
-//=========================================================================
-
-$result_energy = mysqli_query($link, $query_energy);
-$energy = mysqli_fetch_all($result_energy, MYSQLI_ASSOC);
-
-$query_irradiance = "
-SELECT
-    DATE(date) as 'date',
-    ROUND(SUM(insolation),2) as 'insolation'
-FROM
-    `plant_irradiance`
-WHERE
-    DATE(date) >= DATE('$start_date') AND DATE(date) <= DATE('$end_date')
-GROUP BY DATE(date)";
-
-$result_irradiance = mysqli_query($link, $query_irradiance);
-$irradiance = mysqli_fetch_all($result_irradiance, MYSQLI_ASSOC);
-
-//==========================================================================
-
-// print_r($tempirradiance);
-
-
-
-$length = count($energy);
-$primary = $energy;
-$secondary = $irradiance;
-
-if(count($secondary) != 0){
-
-    for($i = 0; $i<$length; $i++){
-        $row = [];
-        
-        $the_date =  $primary[$i]['date'];
-        
-        
-        for($j = 0; $j < count($secondary); $j++){
-            
-            // echo $primary[$j]['date'];
-            
-            if($secondary[$j]['date'] == $the_date){
-                
-                $row['date'] = $secondary[$j]['date'];
-                $row['prod'] = round($primary[$i]['production'],2);
-                $row['insolation'] = $secondary[$j]['insolation'];
-                
-                if((($secondary[$j]['insolation'])*$capacity) != 0){
-                    
-                    try{
-                        $row['pr'] = round(($primary[$i]['production']/(($secondary[$j]['insolation'])*$capacity))*100,0);
-                    }
-                    catch (DivisionByZeroError $e){
-                        
-                        $row['pr'] = 0;
-                        
-                    }
-                    
-                }
-                else{
-                    $row['pr'] = 0;
-                }
-                $data[] = $row;
+    // Merge energy + irradiance by date and compute PR
+    $data = [];
+    foreach ($energy as $e_row) {
+        $row = ['date' => $e_row['date'], 'prod' => round($e_row['production'], 2), 'insolation' => 0, 'pr' => 0];
+        foreach ($irradiance as $i_row) {
+            if ($i_row['date'] === $e_row['date']) {
+                $row['insolation'] = (float)$i_row['insolation'];
+                $denom = $i_row['insolation'] * $capacity;
+                $row['pr'] = $denom > 0 ? round(($e_row['production'] / $denom) * 100, 0) : 0;
                 break;
             }
         }
-    
-        
-    }
-    
-}else{
-    
-    
-    for($i = 0; $i<$length; $i++){
-        
-        $row = [];
-                        
-        $row['date'] = $primary[$i]['date'];
-        $row['prod'] = round($primary[$i]['production'],2);
-        $row['insolation'] = 0;
-        $row['pr'] = 0;
-        
         $data[] = $row;
     }
-    
+
+    ob_end_clean();
+    echo json_encode($data);
+} catch (PDOException $e) {
+    error_log("get_plant_daily error: " . $e->getMessage());
+    ob_end_clean();
+    echo json_encode(['status' => 'Err']);
 }
-
-
-echo json_encode($data);
-
-
-?>

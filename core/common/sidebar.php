@@ -47,21 +47,33 @@ echo"
                         </li>
                         <li>
                             <a class=\"has-arrow\"><i class=\"icon-screen-desktop\"></i> <span>Site Management</span></a>
-                            <ul>                                    
-                                <li><a href=\"site.php\">Site</a></li>
-                                
+                            <ul>
+                                <li><a href=\"site.php\">Sites</a></li>
                             </ul>
                         </li>
                         <li class=\"\">
                             <a class=\"has-arrow\"><i class=\"icon-user\"></i> <span>User Management</span></a>
-                            <ul>                                    
+                            <ul>
                                 <li><a href='user-management.php'>Users</a></li>
+                                <li class=\"admin-only\" style=\"display:none;\"><a href=\"admin-settings.php\">Admin Settings</a></li>
                             </ul>
                         </li> 
                         
                         <li>
                             <a href=\"archive.php\"><i class=\"fa fa-file-archive-o\"></i> <span>Archive</span></a>
-                        </li> 
+                        </li>
+
+                        <li>
+                            <a href=\"notifications.php\"><i class=\"fa fa-bell-o\"></i> <span>Notifications</span></a>
+                        </li>
+
+                        <li>
+                            <a href=\"profile.php\"><i class=\"fa fa-user-circle-o\"></i> <span>My Profile</span></a>
+                        </li>
+
+                        <li class=\"admin-only\" style=\"display:none;\">
+                            <a href=\"security_dashboard.php\"><i class=\"fa fa-shield\"></i> <span>Security</span></a>
+                        </li>
                     
                     </ul>
                 </nav>
@@ -125,9 +137,13 @@ echo"
 </div>
 
 <script>
-        
-    document.getElementById('this-username').innerHTML = '" . $_SESSION['name'] . "';
-        
+    var _uname = '" . htmlspecialchars(($_SESSION['firstname'] ?? '') . ' ' . ($_SESSION['lastname'] ?? '') ?: ($_SESSION['username'] ?? 'User'), ENT_QUOTES, 'UTF-8') . "';
+    document.getElementById('this-username').innerHTML = _uname || 'User';
+
+    var _isAdmin = " . (isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === 1 ? 'true' : 'false') . ";
+    if (_isAdmin) {
+        document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display = ''; });
+    }
 </script>
 
 ";

@@ -1,28 +1,37 @@
 <?php
+ob_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
+require_once __DIR__ . '/../common/db_key_helper.php';
 
-$site_db = $_POST["site_db"];
-$date = $_POST['date'];
+header('Content-Type: application/json; charset=utf-8');
 
-// $timenow = date('y-m-d H:i');
+// Guard: must be an XMLHttpRequest (jQuery sends this automatically)
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
+}
 
-require("../config/" . $site_db);
+$site_db = trim($_POST['site_db'] ?? '');
+$date    = trim($_POST['date']    ?? date('Y-m-d'));
 
+if (empty($site_db)) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
 
-$query = "SELECT
-            TIME_FORMAT(TIME(DATETIME),
-            '%H:%i:%s') AS 'time',
-            ROUND(sum(production),2) as 'production'
-        FROM
-            `tbl_hourly_prod`
-        WHERE
-            meter_id >= 100 AND DATE(DATETIME) = '$date'
-        GROUP BY TIME(DATETIME)
-        ORDER BY DATETIME ASC
-            ";
-            
-$result = mysqli_query($link, $query);
-$data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+$pdo = getDB(ees_db_key($site_db));
 
-echo json_encode($data);
-
-?>
+try {
+    $stmt = $pdo->prepare(
+        "SELECT TIME_FORMAT(TIME(DATETIME),'%H:%i:%s') AS time,
+                ROUND(SUM(production),2) as production
+         FROM tbl_hourly_prod
+         WHERE meter_id >= 100 AND DATE(DATETIME) = :date
+         GROUP BY TIME(DATETIME)
+         ORDER BY DATETIME ASC"
+    );
+    $stmt->execute([':date' => $date]);
+    ob_end_clean();
+    echo json_encode($stmt->fetchAll());
+} catch (PDOException $e) {
+    error_log("get_site_barchart error: " . $e->getMessage());
+    ob_end_clean();
+    echo json_encode(['status' => 'Err']);
+}

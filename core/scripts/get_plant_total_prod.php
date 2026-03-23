@@ -1,79 +1,56 @@
 <?php
+ob_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
+require_once __DIR__ . '/../common/db_key_helper.php';
 
-// error_reporting(E_ALL);
-// ini_set('display_errors', '1');
+header('Content-Type: application/json; charset=utf-8');
 
-$site_id = $_POST["site_id"];
+$site_id    = intval($_POST['site_id']  ?? 0);
+$start_date = trim($_POST['start_date'] ?? '');
+$end_date   = trim($_POST['end_date']   ?? '');
 
-$start_date = $_POST['start_date'];
-$end_date = $_POST['end_date'];
-
-
-// GET Site Database
-require("../config/admin.php");
-
-$get_db_name = "SELECT
-    db_name, capacity
-FROM
-    `tbl_site`
-WHERE
-    id =" . $site_id;
-
-$result = mysqli_query($admin_link, $get_db_name);
-$res = mysqli_fetch_assoc($result);
-
-mysqli_close($admin_link);
-
-$site_db = $res['db_name'];
-$capacity = $res['capacity'];
-
-//FETCH DATA
-
-require("../config/" . $site_db);
-
-//get_total_production
-// $query_prod = "SELECT
-//     ROUND(MAX(total_active_energy) - MIN(total_active_energy),2) as 'total_prod'
-// FROM
-//     `tbl_main_meter`
-// WHERE
-//     DATE(date) >= DATE('$start_date') AND DATE(date) <= DATE('$end_date')";
-    
-$query_prod = "SELECT
-                    ROUND(SUM(production),2) as 'total_prod'
-                FROM
-                    `tbl_hourly_prod`
-                WHERE
-                    meter_id >= 100 and DATE(datetime) >= DATE('$start_date') and DATE(datetime) <= DATE('$end_date')";
-    
-
-
-$result = mysqli_query($link, $query_prod);
-$data_prod = mysqli_fetch_assoc($result);
-
-//get_total_insolation
-$query_insolation = "SELECT
-                        ROUND(SUM(insolation),2) as 'insolation'
-                    FROM
-                        `plant_irradiance`
-                    WHERE DATE(date) >= DATE('$start_date') AND DATE(date) <= DATE('$end_date')";
-
-$result = mysqli_query($link, $query_insolation);
-$data_ins = mysqli_fetch_assoc($result);
-
-if ($data_ins["insolation"] == NULL) { $data_ins["insolation"] = 0; }
-
-try{
-    $pr = round(($data_prod["total_prod"]/($data_ins["insolation"] * $capacity))*100,0);
-}
-catch(DivisionByZeroError $e){
-    $pr = 0;
+if (!$site_id || empty($start_date) || empty($end_date)) {
+    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
 }
 
-$co2 = round(($data_prod["total_prod"]*0.001)*966,2);
+$adm  = getDB('admin');
+$stmt = $adm->prepare("SELECT db_name, capacity FROM tbl_site WHERE id = :id");
+$stmt->execute([':id' => $site_id]);
+$site = $stmt->fetch();
+if (!$site) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
 
+$pdo = tryGetDB(ees_db_key($site['db_name']));
+if (!$pdo) { ob_end_clean(); echo json_encode(['status' => 'Err', 'message' => 'DB unavailable']); exit; }
+$capacity = (float)$site['capacity'];
 
-echo json_encode(array("prod"=>$data_prod["total_prod"], "insolation"=>$data_ins["insolation"], "pr"=>$pr, "co2"=>$co2));
+try {
+    $prod_stmt = $pdo->prepare(
+        "SELECT ROUND(SUM(production),2) as total_prod
+         FROM tbl_hourly_prod
+         WHERE meter_id >= 100 AND DATE(datetime) >= DATE(:start) AND DATE(datetime) <= DATE(:end)"
+    );
+    $prod_stmt->execute([':start' => $start_date, ':end' => $end_date]);
+    $data_prod = $prod_stmt->fetch();
 
+    $ins_stmt = $pdo->prepare(
+        "SELECT ROUND(SUM(insolation),2) as insolation
+         FROM plant_irradiance
+         WHERE DATE(date) >= DATE(:start) AND DATE(date) <= DATE(:end)"
+    );
+    $ins_stmt->execute([':start' => $start_date, ':end' => $end_date]);
+    $data_ins = $ins_stmt->fetch();
 
-?>
+    $insolation = (float)($data_ins['insolation'] ?? 0);
+    $total_prod = (float)($data_prod['total_prod'] ?? 0);
+    $denom      = $insolation * $capacity;
+    $pr         = $denom > 0 ? round(($total_prod / $denom) * 100, 0) : 0;
+    $co2        = round(($total_prod * 0.001) * 966, 2);
+
+    ob_end_clean();
+    echo json_encode(['prod' => $total_prod, 'insolation' => $insolation, 'pr' => $pr, 'co2' => $co2]);
+} catch (PDOException $e) {
+    error_log("get_plant_total_prod error: " . $e->getMessage());
+    ob_end_clean();
+    echo json_encode(['status' => 'Err']);
+}

@@ -1,7 +1,9 @@
 <?php
-
-include("scripts/auth.php");
-
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/asset_helper.php';
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -114,11 +116,11 @@ function send_email(){
         type: "POST",
         url: "scripts/send_new_user_email.php",
         data: {
-            "old_user": "<?php echo $_SESSION['name'] ?>",
+            "csrf_token": "<?php echo htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>",
+            "old_user": "<?php echo htmlspecialchars($_SESSION['name'] ?? '', ENT_QUOTES, 'UTF-8') ?>",
             "email": document.getElementById('new_email').value
         },
-        success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+        success: function(data) {
             // console.log(data.statusCode);
             
             if(data.statusCode == "Err") {

@@ -1,22 +1,24 @@
 <?php
-// error_reporting(E_ALL);
-// ini_set('display_errors', '1');
+/**
+ * All users list — migrated to PDO
+ */
 
-require("../config/admin.php");
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
 
-$query = "
-SELECT
-    `id`,
-    CONCAT(`firstname`,' ',`lastname`) as 'fullname',
-    `email`,
-    `date_added`
-FROM
-    `tbl_user`
-    ";
+header('Content-Type: application/json; charset=utf-8');
 
-$result = mysqli_query($admin_link, $query);
-$data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+$pdo = getDB('admin');
 
-echo json_encode($data);
-
-?>
+try {
+    $stmt = $pdo->query(
+        "SELECT id, CONCAT(firstname,' ',lastname) AS fullname, email, date_added
+         FROM tbl_user
+         ORDER BY date_added DESC"
+    );
+    $users = $stmt->fetchAll();
+    echo json_encode($users);
+} catch (PDOException $e) {
+    error_log("get_all_users error: " . $e->getMessage());
+    echo json_encode([]);
+}

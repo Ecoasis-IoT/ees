@@ -1,0 +1,28 @@
+/* Plant page — supplementary styles (appended to existing plant.css) */
+
+.card .header h2 {
+    font-weight: bold;
+    font-size: 30px;
+}
+
+input {
+    padding: 5px;
+    margin-left: 7px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    border-radius: 1px;
+    width: auto;
+    border: 1px solid #767676;
+}
+
+.alarms-sort {
+    margin-left: 7px;
+    padding: 8px;
+    width: 218px;
+    font-size: 14px;
+    border-radius: 1px;
+}
+
+.table {
+    font-family: 'Arial';
+}
