@@ -1,0 +1,1 @@
+INSERT INTO `tbl_sub_meters`(`date`, `meter_id`, `meter_name`, `active_power`, `power_factor`, `total_active_energy`) VALUES ('2026-03-23 08:00:00', '40', 'Meter 40', 4.88646, '0.99995', 44504.69531)
