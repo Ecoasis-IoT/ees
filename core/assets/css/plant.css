@@ -136,7 +136,7 @@ body {
     text-align: center;
     /*font-family: NunitoSans-SemiBold;*/
     font-size: 14px;
-    font-family: Arial !important;
+    font-family: 'Nunito Sans', sans-serif !important;
 }
 
 .table>:not(caption)>*>* {

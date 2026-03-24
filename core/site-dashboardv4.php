@@ -79,7 +79,7 @@ $csrf_token = generateCSRFToken();
 }    
 
 #grid_availability {
-    font-family:'Arial';
+    font-family:'Nunito Sans', sans-serif;
     font-weight: bold;
 }
 

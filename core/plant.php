@@ -149,7 +149,7 @@ $csrf_token = generateCSRFToken();
 
                         <div class="row clearfix g-3 mb-3">
                             <div class="col-lg-12">
-                                <h5 class="text-center reports-title" contenteditable>ECOASIS &nbsp;- <p id="output" class="mb-0 d-inline text-uppercase"></p> - <span id="monthyear" style="text-transform:uppercase;font-family: Arial;" contenteditable></span></h5>
+                                <h5 class="text-center reports-title" contenteditable>ECOASIS &nbsp;- <p id="output" class="mb-0 d-inline text-uppercase"></p> - <span id="monthyear" style="text-transform:uppercase;font-family: 'Nunito Sans', sans-serif;" contenteditable></span></h5>
                             </div>                    
                         </div> 
 

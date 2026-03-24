@@ -32,7 +32,7 @@ if (ini_get('session.use_cookies')) {
     <link rel="shortcut icon" type="image/x-icon" href="assets/images/logo_icon.png">
     <link rel="stylesheet" href="assets/css/main.css">
     <style>
-        body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:#f0f3f4; margin:0; font-family:sans-serif; }
+        body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:#f0f3f4; margin:0; font-family:'Nunito Sans', sans-serif; }
         .text-above { font-size:1.4rem; color:#555; margin-bottom:24px; }
         .spinner { width:56px; height:56px; border:5px solid #d0e8c8; border-top-color:#70AD47; border-radius:50%; animation:spin .9s linear infinite; }
         @keyframes spin { to { transform:rotate(360deg); } }
