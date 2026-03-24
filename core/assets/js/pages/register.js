@@ -15,11 +15,14 @@
         var lname    = document.getElementById('lname').value.trim();
         var email    = document.getElementById('email').value.trim();
         var password = document.getElementById('password').value;
+        var btn      = document.querySelector('input[type="button"]');
 
         if (!username || !fname || !lname || !email || !password) {
-            alert('Please fill in all fields.');
+            EES.alert('Please fill in all fields.', 'warning');
             return;
         }
+
+        EES.btnLoad(btn, 'Registering…');
 
         $.ajax({
             type:     'POST',
@@ -34,17 +37,19 @@
                 csrf_token: getCSRFToken()
             },
             success: function (data) {
-
                 if (data.statusCode === 'auth') {
-                    window.location.replace('login.php'); // within core/
+                    window.location.replace('login.php');
                 } else if (data.statusCode === 'duplicate') {
-                    alert('Username or email already exists. Please choose a different one.');
+                    EES.btnReset(btn);
+                    EES.alert('Username or email already exists. Please choose a different one.', 'warning');
                 } else {
-                    alert(data.message || 'Error registering account. Please try again.');
+                    EES.btnReset(btn);
+                    EES.alert(data.message || 'Error registering account. Please try again.', 'error');
                 }
             },
             error: function () {
-                alert('A network error occurred. Please try again.');
+                EES.btnReset(btn);
+                EES.alert('A network error occurred. Please try again.', 'error');
             }
         });
     };

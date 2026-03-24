@@ -92,7 +92,7 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
                                 <tr><td>Email</td>
                                     <td><input class="form-control" id="profile-email" value="<?= htmlspecialchars($user['email'] ?? '') ?>"></td></tr>
                             </table>
-                            <button class="btn btn-primary" onclick="saveProfileInfo()">Save Changes</button>
+                            <button class="btn btn-primary" onclick="saveProfileInfo(this)">Save Changes</button>
                         </div>
                     </div>
                 </div>
@@ -112,7 +112,7 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
                                 <tr><td>Confirm New Password</td>
                                     <td><input type="password" class="form-control" id="confirm-pass"></td></tr>
                             </table>
-                            <button class="btn btn-warning" onclick="changePassword()">Change Password</button>
+                            <button class="btn btn-warning" onclick="changePassword(this)">Change Password</button>
                         </div>
                     </div>
                 </div>
@@ -136,7 +136,7 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
 
                             <?php if (!$tfa_status['enabled']): ?>
                             <p>Two-factor authentication adds an extra layer of security to your account. Once enabled, you will need to enter a 6-digit code from your authenticator app when logging in.</p>
-                            <button class="btn btn-success" onclick="initiate2FA()"><i class="fa fa-shield"></i> Set Up 2FA</button>
+                            <button class="btn btn-success" onclick="initiate2FA(this)"><i class="fa fa-shield"></i> Set Up 2FA</button>
 
                             <div id="qr-setup-section" class="mt-4">
                                 <h5>1. Scan this QR code with your authenticator app</h5>
@@ -150,7 +150,7 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
                                         <input type="text" class="form-control" id="tfa-verify-code" placeholder="000000" maxlength="6">
                                     </div>
                                     <div class="col-lg-2 col-md-3 mt-2 mt-md-0">
-                                        <button class="btn btn-primary" onclick="verify2FA()">Verify &amp; Enable</button>
+                                        <button class="btn btn-primary" onclick="verify2FA(this)">Verify &amp; Enable</button>
                                     </div>
                                 </div>
                             </div>
@@ -162,7 +162,7 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
                                     <input type="password" class="form-control" id="tfa-disable-pass" placeholder="Current password">
                                 </div>
                                 <div class="col-lg-2 col-md-3 mt-2 mt-md-0">
-                                    <button class="btn btn-danger" onclick="disable2FA()">Disable 2FA</button>
+                                    <button class="btn btn-danger" onclick="disable2FA(this)">Disable 2FA</button>
                                 </div>
                             </div>
                             <?php endif; ?>
@@ -190,7 +190,8 @@ function showMsg(successId, errorId, isSuccess, msg) {
     else           { $('#' + errorId).text(msg).show(); }
 }
 
-function saveProfileInfo() {
+function saveProfileInfo(btn) {
+    EES.btnLoad(btn, 'Saving…');
     $.ajax({
         type: 'POST', url: 'scripts/profile_update_info.php',
         data: {
@@ -203,11 +204,13 @@ function saveProfileInfo() {
             var d = typeof r === 'string' ? JSON.parse(r) : r;
             showMsg('info-success','info-error', d.status==='auth', d.message || (d.status==='auth' ? 'Saved' : 'Error'));
         },
-        error: function() { showMsg('info-success','info-error', false, 'Request failed'); }
+        error: function() { showMsg('info-success','info-error', false, 'Request failed'); },
+        complete: function() { EES.btnReset(btn); }
     });
 }
 
-function changePassword() {
+function changePassword(btn) {
+    EES.btnLoad(btn, 'Saving…');
     $.ajax({
         type: 'POST', url: 'scripts/profile_update_password.php',
         data: {
@@ -221,11 +224,13 @@ function changePassword() {
             showMsg('pass-success','pass-error', d.status==='auth', d.message || (d.status==='auth' ? 'Password changed' : 'Error'));
             if (d.status === 'auth') { $('#current-pass,#new-pass,#confirm-pass').val(''); }
         },
-        error: function() { showMsg('pass-success','pass-error', false, 'Request failed'); }
+        error: function() { showMsg('pass-success','pass-error', false, 'Request failed'); },
+        complete: function() { EES.btnReset(btn); }
     });
 }
 
-function initiate2FA() {
+function initiate2FA(btn) {
+    EES.btnLoad(btn, 'Loading…');
     $.ajax({
         type: 'POST', url: 'scripts/profile_setup_2fa.php',
         data: { csrf_token: CSRF_TOKEN },
@@ -242,11 +247,13 @@ function initiate2FA() {
                 showMsg('tfa-success','tfa-error', false, d.message || 'Failed to initiate 2FA setup');
             }
         },
-        error: function() { showMsg('tfa-success','tfa-error', false, 'Request failed'); }
+        error: function() { showMsg('tfa-success','tfa-error', false, 'Request failed'); },
+        complete: function() { EES.btnReset(btn); }
     });
 }
 
-function verify2FA() {
+function verify2FA(btn) {
+    EES.btnLoad(btn, 'Verifying…');
     $.ajax({
         type: 'POST', url: 'scripts/profile_verify_2fa.php',
         data: { csrf_token: CSRF_TOKEN, code: $('#tfa-verify-code').val() },
@@ -259,11 +266,13 @@ function verify2FA() {
                 showMsg('tfa-success','tfa-error', false, d.message || 'Invalid code');
             }
         },
-        error: function() { showMsg('tfa-success','tfa-error', false, 'Request failed'); }
+        error: function() { showMsg('tfa-success','tfa-error', false, 'Request failed'); },
+        complete: function() { EES.btnReset(btn); }
     });
 }
 
-function disable2FA() {
+function disable2FA(btn) {
+    EES.btnLoad(btn, 'Disabling…');
     $.ajax({
         type: 'POST', url: 'scripts/profile_disable_2fa.php',
         data: { csrf_token: CSRF_TOKEN, password: $('#tfa-disable-pass').val() },
@@ -276,7 +285,8 @@ function disable2FA() {
                 showMsg('tfa-success','tfa-error', false, d.message || 'Failed');
             }
         },
-        error: function() { showMsg('tfa-success','tfa-error', false, 'Request failed'); }
+        error: function() { showMsg('tfa-success','tfa-error', false, 'Request failed'); },
+        complete: function() { EES.btnReset(btn); }
     });
 }
 </script>

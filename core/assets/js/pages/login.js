@@ -16,7 +16,7 @@
             el.textContent = message;
             el.style.display = 'block';
         } else {
-            alert(message);
+            EES.alert(message, 'error');
         }
     }
 

@@ -74,17 +74,21 @@
     }
 
     window.submitUserCreate = function () {
+        var btn = document.querySelector('#modal-body .btn-primary');
+        EES.btnLoad(btn, 'Creating…');
         var data = $('#user-form').serializeArray().reduce(function (o, f) { o[f.name] = f.value; return o; }, {});
         data.csrf_token = csrfToken;
         $.post('scripts/admin/user_create.php', data, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             closeModal();
             if (r.status === 'ok') { showAlert('success', r.message); loadUsers(); }
-            else showAlert('danger', r.message);
-        });
+            else { EES.btnReset(btn); showAlert('danger', r.message); }
+        }).fail(function() { EES.btnReset(btn); showAlert('danger', 'Request failed'); });
     };
 
     window.submitUserUpdate = function (id) {
+        var btn = document.querySelector('#modal-body .btn-primary');
+        EES.btnLoad(btn, 'Saving…');
         var data = $('#user-form').serializeArray().reduce(function (o, f) { o[f.name] = f.value; return o; }, {});
         data.id = id;
         data.csrf_token = csrfToken;
@@ -92,8 +96,8 @@
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             closeModal();
             if (r.status === 'ok') { showAlert('success', r.message); loadUsers(); }
-            else showAlert('danger', r.message);
-        });
+            else { EES.btnReset(btn); showAlert('danger', r.message); }
+        }).fail(function() { EES.btnReset(btn); showAlert('danger', 'Request failed'); });
     };
 
     $(document).on('click', '.edit-user', function () {
@@ -166,6 +170,8 @@
     });
 
     window.submitSiteUpdate = function (id) {
+        var btn = document.querySelector('#modal-body .btn-primary');
+        EES.btnLoad(btn, 'Saving…');
         var data = $('#site-form').serializeArray().reduce(function (o, f) { o[f.name] = f.value; return o; }, {});
         data.id = id;
         data.csrf_token = csrfToken;
@@ -173,8 +179,8 @@
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             closeModal();
             if (r.status === 'ok') { showAlert('success', r.message); loadSites(); }
-            else showAlert('danger', r.message);
-        });
+            else { EES.btnReset(btn); showAlert('danger', r.message); }
+        }).fail(function() { EES.btnReset(btn); showAlert('danger', 'Request failed'); });
     };
 
     $(document).on('click', '.delete-site', function () {
@@ -235,6 +241,8 @@
     });
 
     window.submitDeviceUpdate = function (deviceId) {
+        var btn = document.querySelector('#modal-body .btn-primary');
+        EES.btnLoad(btn, 'Saving…');
         var data = $('#device-form').serializeArray().reduce(function (o, f) { o[f.name] = f.value; return o; }, {});
         data.site_id   = currentSiteId;
         data.device_id = deviceId;
@@ -243,8 +251,8 @@
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             closeModal();
             if (r.status === 'ok') { showAlert('success', r.message); loadDevices(currentSiteId); }
-            else showAlert('danger', r.message);
-        });
+            else { EES.btnReset(btn); showAlert('danger', r.message); }
+        }).fail(function() { EES.btnReset(btn); showAlert('danger', 'Request failed'); });
     };
 
     $(document).on('click', '.delete-device', function () {

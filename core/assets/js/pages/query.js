@@ -273,7 +273,7 @@ function filter_meters(tab){
             },
             success: function(data) {
                 if(data.status != undefined){
-                    alert("Failed to retrieve meters for this site!");
+                    EES.alert('Failed to retrieve meters for this site!', 'error');
                 }
                 else{
                     // $("#meters_opt").empty();
@@ -394,7 +394,9 @@ function filter_meters(tab){
 //============================================================Day Script=============================================================
 
 function get_day(){
-    
+    var _btn = document.querySelector('#tab-day .submit');
+    EES.btnLoad(_btn, 'Loading…');
+
     let chart_labels = [];
     let kpi_irradiance = [];
     let kpi_prod = [];
@@ -651,7 +653,8 @@ function get_day(){
             
             $("#Day .custom_hide_card").css('display','block');
             
-        }
+        },
+        complete: function() { EES.btnReset(_btn); }
     });
     
 }
@@ -659,7 +662,9 @@ function get_day(){
 //===========================================MONTH SCRIPT=========================================================
 
 function get_month(){
-    
+    var _btn = document.querySelector('#tab-month .submit');
+    EES.btnLoad(_btn, 'Loading…');
+
     let chart_labels = [];
     let kpi_insolation = [];
     let kpi_prod = [];
@@ -908,7 +913,8 @@ function get_month(){
             
             $("#Month .custom_hide_card").css('display','block');
             
-        }
+        },
+        complete: function() { EES.btnReset(_btn); }
     });
     
 }
@@ -916,7 +922,9 @@ function get_month(){
 //===========================================YEAR SCRIPT=========================================================
 
 function get_year(){
-    
+    var _btn = document.querySelector('#tab-year .submit');
+    EES.btnLoad(_btn, 'Loading…');
+
     let chart_labels = [];
     let kpi_insolation = [];
     let kpi_prod = [];
@@ -1166,7 +1174,8 @@ function get_year(){
             
             $("#Year .custom_hide_card").css('display','block');
             
-        }
+        },
+        complete: function() { EES.btnReset(_btn); }
     });
     
 }
@@ -1328,7 +1337,9 @@ var custom_kpi;
 var color_count = 0;
 
 function get_custom(){
-    
+    var _btn = document.querySelector('#tab-custom .btn-outline-secondary');
+    EES.btnLoad(_btn, 'Loading…');
+
     let chart_colors = ['#3366cc','#dc3912','#ff9900','#109618','#990099','#0099c6','#dd4477','#66aa00','#b82e2e','#316395','#994499','#22aa99','#aaaa11','#6633cc','#e67300','#8b0707','#651067','#329262','#5574a6','#3b3eac','#b77322','#16d620','#b91383','#f4359e','#9c5935','#a9c413','#2a778d','#668d1c','#bea413','#0c5922','#743411'];
     
     let chart_labels = [];
@@ -1398,16 +1409,16 @@ function get_custom(){
     
     
     if(meters.length < 1 && irr_param == 0 && amb_param == 0 && panel_param == 0){
-        alert("No meter Selected!");
+        EES.alert('No meter selected!', 'warning');
     }
     else if(parameter == "" && irr_param == 0 && amb_param == 0 && panel_param == 0){
-        alert("No parameter Selected!");
+        EES.alert('No parameter selected!', 'warning');
     }
     else if(input_start == ""){
-        alert("No Start Date Selected!");
+        EES.alert('No start date selected!', 'warning');
     }
     else if(input_end == ""){
-        alert("No End Date Selected!");
+        EES.alert('No end date selected!', 'warning');
     }
     else{
         
@@ -1671,7 +1682,8 @@ function get_custom(){
                document.getElementById('panelTemp_param').checked = false;
                 $("#con_meter_parameters").hide();
                 $("#chart_type").hide()
-            }
+            },
+            complete: function() { EES.btnReset(_btn); }
         });
     
     }

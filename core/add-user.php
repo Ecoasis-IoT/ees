@@ -82,7 +82,7 @@ input, select {
                                 </table>
                                 
                                 <a class="btn btn-outline-dark" href="user-management.php">Discard</a>
-                                <input class="btn btn-primary" type="submit" value="Add User" onclick="send_email()">
+                                <input class="btn btn-primary" id="btn-add-user" type="button" value="Add User" onclick="send_email(this)">
 
                             </div>
                         </div>
@@ -110,8 +110,8 @@ input, select {
 
 <script>
 
-function send_email(){
-    
+function send_email(btn){
+    EES.btnLoad(btn, 'Sending…');
     $.ajax({
         type: "POST",
         url: "scripts/send_new_user_email.php",
@@ -121,19 +121,20 @@ function send_email(){
             "email": document.getElementById('new_email').value
         },
         success: function(data) {
-            // console.log(data.statusCode);
-            
-            if(data.statusCode == "Err") {
-                alert('Failed to Add User!');
-           } 
-           else if (data.statusCode == "ok"){
-                alert('An email has been sent to the user!');
-                window.location.replace("user-management.php");
-           }
-           
-        }});
-    
-    }
+            EES.btnReset(btn);
+            if (data.statusCode == "Err") {
+                EES.alert('Failed to Add User!', 'error');
+            } else if (data.statusCode == "ok") {
+                EES.alert('An email has been sent to the user!', 'success');
+                setTimeout(function(){ window.location.replace("user-management.php"); }, 1500);
+            }
+        },
+        error: function() {
+            EES.btnReset(btn);
+            EES.alert('A network error occurred. Please try again.', 'error');
+        }
+    });
+}
 
 
 </script>

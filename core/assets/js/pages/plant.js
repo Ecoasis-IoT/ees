@@ -53,6 +53,7 @@ var page = document.getElementById("content");
     }
     
     function query(){
+        var queryBtn = document.getElementById('preview_btn');
         
         let str_date = document.getElementById("endDate").value;
         var currentDate = new Date(str_date);
@@ -73,13 +74,13 @@ var page = document.getElementById("content");
         // console.log(start_date);
         
         if(!document.getElementById("startDate").value || !document.getElementById("endDate").value) {
-            alert("Starting and Ending Date is Missing!");
+            EES.alert('Starting and Ending Date is Missing!', 'warning');
         }
         else if(document.getElementById("budget_prod_input").value == "" || !isNumeric(document.getElementById("budget_prod_input").value)){
-            alert("Budgeted production value is missing or is not a number!");
+            EES.alert('Budgeted production value is missing or is not a number!', 'warning');
         }
         else{
-        
+            EES.btnLoad(queryBtn, 'Loading…');
             page.style.display = 'block';
             pdfbtn.style.visibility = 'visible';
             
@@ -100,6 +101,7 @@ var page = document.getElementById("content");
                     
                 },
                 success: function(data) {
+                    EES.btnReset(queryBtn);
                     if (!data || data.status === 'Err') return;
                     document.getElementById("plant_total_prod").innerHTML = numberWithSpaces(data.prod);
                     document.getElementById("plant_total_prod2").innerHTML = numberWithSpaces(data.prod);
@@ -111,8 +113,8 @@ var page = document.getElementById("content");
                     document.getElementById("plant_total_insolation").innerHTML = numberWithSpaces(data.insolation) ;
                     document.getElementById("plant_pr").innerHTML = numberWithSpaces(data.pr) + "%";
                     document.getElementById("plant_co2_avoided").innerHTML = numberWithSpaces(data.co2);
-                    
-                }
+                },
+                error: function() { EES.btnReset(queryBtn); }
             });
             
             // var textarea = document.getElementById("comments_input");

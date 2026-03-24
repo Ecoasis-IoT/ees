@@ -702,7 +702,7 @@ function loadStats() {
         data: { csrf_token: CSRF_TOKEN },
         success: function(r) {
             var d = typeof r === 'string' ? JSON.parse(r) : r;
-            if (d.statusCode !== 'success') { alert('Error loading stats'); return; }
+            if (d.statusCode !== 'success') { EES.alert('Error loading stats', 'error'); return; }
             var s = d.stats;
 
             $('#stat-failed-logins').text(s.failed_logins_24h || 0);
@@ -724,7 +724,7 @@ function loadStats() {
             renderEventChart(s.event_types_chart || []);
             renderRecentEvents(s.recent_events || []);
         },
-        error: function() { alert('Failed to load security statistics.'); }
+        error: function() { EES.alert('Failed to load security statistics.', 'error'); }
     });
 }
 

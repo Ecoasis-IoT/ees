@@ -225,7 +225,9 @@ function render_chart(dates, prod_dataset, ins_dataset){
 }
 
 function query(){
-    
+    var btn = document.querySelector('.submit');
+    EES.btnLoad(btn, 'Loading…');
+
     let site = document.getElementById("site").value;
     
     let start_date = new Date(document.getElementById("startDate").value).toISOString().split('T')[0];
@@ -241,8 +243,9 @@ function query(){
             "end_date": end_date
         },
         success: function(data) {
+            EES.btnReset(btn);
             if (!data || data.status === 'Err' || !Array.isArray(data.archive)) {
-                alert("Failed to load archive data. Please try again.");
+                EES.alert('Failed to load archive data. Please try again.', 'error');
                 return;
             }
 
@@ -279,7 +282,7 @@ function query(){
                 }
             }
             else{
-                alert("No data for this date!");
+                EES.alert('No data available for the selected date range.', 'warning');
             }
             
             if(total_prod < 1000){
@@ -293,6 +296,10 @@ function query(){
             
             render_chart(date_dataset, prod_dataset, ins_dataset);
             $(".custom_hide_card").css('display','block');
+        },
+        error: function() {
+            EES.btnReset(btn);
+            EES.alert('A network error occurred. Please try again.', 'error');
         }
     });
     
