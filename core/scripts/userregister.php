@@ -21,6 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Refuse registrations if the feature is disabled in .env
+if (!defined('REGISTRATION_LINK_ENABLED') || !REGISTRATION_LINK_ENABLED) {
+    http_response_code(403);
+    echo json_encode(['statusCode' => 'Err', 'message' => 'Registration is currently disabled.']);
+    exit;
+}
+
 applySessionCookieConfig();
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

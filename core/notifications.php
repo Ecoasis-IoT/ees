@@ -9,18 +9,6 @@ $user_id    = (int)$_SESSION['id'];
 
 $pdo = getDB('admin');
 
-$pdo->exec("CREATE TABLE IF NOT EXISTS tbl_notifications (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    type VARCHAR(20) NOT NULL DEFAULT 'info',
-    message TEXT NOT NULL,
-    action_url VARCHAR(500) NULL,
-    action_label VARCHAR(100) NULL,
-    is_read TINYINT(1) NOT NULL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_user_unread (user_id, is_read),
-    INDEX idx_created (created_at)
-)");
 
 $filter  = $_GET['filter'] ?? 'all';
 $page    = max(1, intval($_GET['page'] ?? 1));
@@ -34,9 +22,6 @@ if ($filter === 'unread') {
 } elseif ($filter === 'read') {
     $where .= ' AND is_read = 1';
 }
-
-$total = (int)$pdo->prepare("SELECT COUNT(*) FROM tbl_notifications WHERE $where")
-    ->execute($params) ? $pdo->prepare("SELECT COUNT(*) FROM tbl_notifications WHERE $where") : null;
 
 $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM tbl_notifications WHERE $where");
 $stmtCount->execute($params);

@@ -5,7 +5,7 @@ require_once __DIR__ . '/common/csrf.php';
 require_once __DIR__ . '/common/asset_helper.php';
 
 // Admin only
-if (!isset($_SESSION['group_id']) || (int)$_SESSION['group_id'] !== 1) {
+if (!isset($_SESSION['group_id']) || (int)$_SESSION['group_id'] !== (int)ADMIN_USERGROUP_ID) {
     header('Location: dashboard.php');
     exit;
 }

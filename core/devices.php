@@ -90,7 +90,7 @@ $csrf_token = generateCSRFToken();
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="header">
-                            <h2 style="display:inline-block;">Device List - <?php echo $site_name ?></h2> 
+                            <h2 style="display:inline-block;">Device List - <?= htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') ?></h2> 
                             <!--<a href="add-energy-meter.php" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add Device</a>     -->
                         </div>
                         <div class="body">                           
@@ -120,37 +120,6 @@ $csrf_token = generateCSRFToken();
 </div>
 
 
-<script>
-    
-    //get all site meters
-    $(function sites_meters(){
-    
-        $.ajax({
-            type: "POST",
-            url: "scripts/get_site_meters.php",
-            dataType: 'json',
-            data: {
-                "site_db": '<?php echo $site_db;?>'
-            },
-            success: function(data) {
-                // console.log(data.statusCode);
-                
-                console.log(data);
-
-                for(var i = 0; i < data.length; i++){
-                    
-                    var row = "<tr><td>" + data[i].meter_name +"</td><td>"+ data[i].device_type +"</td></tr>";
-                    
-                    $('#tbl_devices tbody').append(row);
-                    
-                    
-                }
-                
-            }
-            });
-    });
-    
-</script>
 
 
 
@@ -168,6 +137,29 @@ $csrf_token = generateCSRFToken();
 
 <script src="assets/bundles/mainscripts.bundle.js"></script>
 <script src="assets/js/pages/tables/jquery-datatable.js"></script>
+
+<script>
+function _esc(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+$(function sites_meters() {
+    $.ajax({
+        type: "POST",
+        url: "scripts/get_site_meters.php",
+        dataType: 'json',
+        data: { "site_db": <?= json_encode($site_db) ?> },
+        success: function(data) {
+            for (var i = 0; i < data.length; i++) {
+                var row = "<tr><td>" + _esc(data[i].meter_name) + "</td><td>" + _esc(data[i].device_type) + "</td></tr>";
+                $('#tbl_devices tbody').append(row);
+            }
+        }
+    });
+});
+</script>
 
 </body>
 </html>

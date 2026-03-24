@@ -14,7 +14,7 @@ require_once __DIR__ . '/../common/auth.php';
 require_once __DIR__ . '/../common/csrf.php';
 require_once __DIR__ . '/../common/security_logging.php';
 
-if (!isset($_SESSION['group_id']) || (int)$_SESSION['group_id'] !== 1) {
+if (!isset($_SESSION['group_id']) || (int)$_SESSION['group_id'] !== (int)ADMIN_USERGROUP_ID) {
     http_response_code(403);
     ob_clean();
     echo json_encode(['statusCode' => 'error', 'message' => 'Unauthorized – admin access required'],
@@ -166,7 +166,7 @@ try {
         $replaced = false;
         foreach ($updates as $key => $value) {
             if (preg_match('/^' . preg_quote($key, '/') . '\s*=/', $trimmed)) {
-                $updated_lines[] = $key . '=' . $value;
+                $updated_lines[] = $key . '="' . str_replace('"', '\\"', $value) . '"';
                 $written_keys[]  = $key;
                 $replaced        = true;
                 break;
@@ -178,7 +178,7 @@ try {
     // Append any keys not already in the file
     foreach ($updates as $key => $value) {
         if (!in_array($key, $written_keys, true)) {
-            $updated_lines[] = $key . '=' . $value;
+            $updated_lines[] = $key . '="' . str_replace('"', '\\"', $value) . '"';
         }
     }
 

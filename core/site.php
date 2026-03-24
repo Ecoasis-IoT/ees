@@ -152,48 +152,6 @@ $csrf_token = generateCSRFToken();
     
 </div>
 
-<script>
-
-
-    
-    //get_all_sites
-    $(function sites_name(){
-    
-        $.ajax({
-            type: "POST",
-            url: "scripts/get_all_sites.php",
-            dataType: 'json',
-            data: {
-                
-            },
-            success: function(data) {
-                var sites = data.data || [];
-
-                for (let i = 0; i < sites.length; i++) {
-                    var s       = sites[i];
-                    var gateway = parseInt(s.gateway_status) === 1
-                        ? "<p class='connected'>ONLINE</p>"
-                        : "<p class='disconnected'>OFFLINE</p>";
-                    var cap = s.capacity ? s.capacity + ' kWp' : '—';
-
-                    var row = "<tr>" +
-                        "<td>" + s.site_name + "</td>" +
-                        "<td>" + cap + "</td>" +
-                        "<td class='justify-content-center d-flex'>" + gateway + "</td>" +
-                        "<td><a href='devices.php?site=" + s.id + "' class='btn btn-primary'>" +
-                            "<i class='icon-energy' aria-hidden='true'></i> View Devices</a></td>" +
-                        "</tr>";
-
-                    $('#tbl_site tbody').append(row);
-                }
-            }
-            });
-    });
-    
-</script>
-
-
-
 
 
 <!-- Javascript -->
@@ -204,6 +162,40 @@ $csrf_token = generateCSRFToken();
 
 <script src="assets/bundles/mainscripts.bundle.js"></script>
 <script src="assets/js/pages/tables/jquery-datatable.js"></script>
+
+<script>
+function _esc(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+$(function sites_name() {
+    $.ajax({
+        type: "POST",
+        url: "scripts/get_all_sites.php",
+        dataType: 'json',
+        success: function(data) {
+            var sites = data.data || [];
+            for (var i = 0; i < sites.length; i++) {
+                var s       = sites[i];
+                var gateway = parseInt(s.gateway_status) === 1
+                    ? "<p class='connected'>ONLINE</p>"
+                    : "<p class='disconnected'>OFFLINE</p>";
+                var cap = s.capacity ? _esc(s.capacity) + ' kWp' : '—';
+                var row = "<tr>" +
+                    "<td>" + _esc(s.site_name) + "</td>" +
+                    "<td>" + cap + "</td>" +
+                    "<td class='justify-content-center d-flex'>" + gateway + "</td>" +
+                    "<td><a href='devices.php?site=" + encodeURIComponent(s.id) + "' class='btn btn-primary'>" +
+                        "<i class='icon-energy' aria-hidden='true'></i> View Devices</a></td>" +
+                    "</tr>";
+                $('#tbl_site tbody').append(row);
+            }
+        }
+    });
+});
+</script>
 <!--<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>-->
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>-->
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>-->

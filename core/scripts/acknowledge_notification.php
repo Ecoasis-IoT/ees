@@ -5,6 +5,7 @@ ini_set('display_errors', 0);
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../common/auth.php';
 require_once __DIR__ . '/../common/authorization.php';
+require_once __DIR__ . '/../common/csrf.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -16,6 +17,12 @@ if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ob_clean();
     echo json_encode(['success' => false]);
+    exit;
+}
+
+if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
+    ob_end_clean();
+    echo json_encode(['success' => false, 'error' => 'Invalid CSRF token']);
     exit;
 }
 

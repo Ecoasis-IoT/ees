@@ -11,7 +11,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $session_lifetime = defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 14400;
 
-if (isset($_SESSION['id']) && (time() - ($_SESSION['created'] ?? 0)) < $session_lifetime) {
+// Use last_activity for consistency with auth.php (idle timeout, not absolute timeout)
+if (isset($_SESSION['id']) && (time() - ($_SESSION['last_activity'] ?? 0)) < $session_lifetime) {
     header('Location: core/dashboard.php');
 } else {
     header('Location: core/login.php');

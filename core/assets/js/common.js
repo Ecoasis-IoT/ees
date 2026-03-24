@@ -331,6 +331,16 @@ $(function() {
 
 
 
+// Global 401 handler: redirect to login when the server signals session expiry
+$(document).ajaxError(function(event, xhr) {
+    if (xhr.status === 401) {
+        if (!window._ees_redirecting) {
+            window._ees_redirecting = true;
+            window.location.replace('login.php');
+        }
+    }
+});
+
 // Wraptheme Website live
 var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
 (function(){

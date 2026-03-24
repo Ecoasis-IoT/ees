@@ -90,37 +90,6 @@ $csrf_token = generateCSRFToken();
     
 </div>
 
-<script>
-    
-    //get_all_sites
-    $(function users(){
-    
-        $.ajax({
-            type: "POST",
-            url: "scripts/get_all_users.php",
-            dataType: 'json',
-            data: {
-                
-            },
-            success: function(data) {
-                // console.log(data.statusCode);
-                
-                console.log(data);
-                
-                for(var i = 0; i < data.length; i++){
-                    
-                    var row = "<tr><td>" + data[i].fullname +"</td><td>"+ data[i].email +"</td><td>"+ data[i].date_added +"</td></tr>";
-                    
-                    $('#tbl_users tbody').append(row);
-                    
-                    
-                }
-                
-            }
-            });
-    });
-    
-</script>
 
 <!-- Javascript -->
 <script src="assets/bundles/libscripts.bundle.js"></script>    
@@ -130,5 +99,27 @@ $csrf_token = generateCSRFToken();
 
 <script src="assets/bundles/mainscripts.bundle.js"></script>
 <script src="assets/js/pages/tables/jquery-datatable.js"></script>
+
+<script>
+function _esc(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+$(function users() {
+    $.ajax({
+        type: "POST",
+        url: "scripts/get_all_users.php",
+        dataType: 'json',
+        success: function(data) {
+            for (var i = 0; i < data.length; i++) {
+                var row = "<tr><td>" + _esc(data[i].fullname) + "</td><td>" + _esc(data[i].email) + "</td><td>" + _esc(data[i].date_added) + "</td></tr>";
+                $('#tbl_users tbody').append(row);
+            }
+        }
+    });
+});
+</script>
 </body>
 </html>

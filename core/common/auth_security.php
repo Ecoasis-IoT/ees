@@ -17,7 +17,7 @@ function _getAdminPDO(): PDO {
     return getDB('admin');
 }
 
-function checkAccountLockout(string $email): array {
+function checkAccountLockout(string $identifier): array {
     $pdo              = _getAdminPDO();
     $lockout_attempts = defined('ACCOUNT_LOCKOUT_ATTEMPTS') ? ACCOUNT_LOCKOUT_ATTEMPTS : 5;
     $lockout_duration = defined('ACCOUNT_LOCKOUT_DURATION') ? ACCOUNT_LOCKOUT_DURATION : 1800;
@@ -31,9 +31,9 @@ function checkAccountLockout(string $email): array {
         $stmt = $pdo->prepare(
             "SELECT attempts, last_attempt, locked_until
              FROM tbl_login_attempts
-             WHERE email = :email LIMIT 1"
+             WHERE email = :identifier LIMIT 1"
         );
-        $stmt->execute([':email' => $email]);
+        $stmt->execute([':identifier' => $identifier]);
         $row = $stmt->fetch();
 
         if (!$row) {
@@ -48,7 +48,7 @@ function checkAccountLockout(string $email): array {
         }
 
         if ($locked_until && time() >= $locked_until) {
-            resetLoginAttempts($email);
+            resetLoginAttempts($identifier);
             return ['locked' => false, 'unlock_time' => null, 'attempts' => 0];
         }
 
@@ -63,7 +63,7 @@ function checkAccountLockout(string $email): array {
     }
 }
 
-function recordFailedLoginAttempt(string $email, string $ip_address): void {
+function recordFailedLoginAttempt(string $identifier, string $ip_address): void {
     $pdo              = _getAdminPDO();
     $lockout_attempts = defined('ACCOUNT_LOCKOUT_ATTEMPTS') ? ACCOUNT_LOCKOUT_ATTEMPTS : 5;
     $lockout_duration = defined('ACCOUNT_LOCKOUT_DURATION') ? ACCOUNT_LOCKOUT_DURATION : 1800;
@@ -72,8 +72,8 @@ function recordFailedLoginAttempt(string $email, string $ip_address): void {
         $check = $pdo->query("SHOW TABLES LIKE 'tbl_login_attempts'");
         if ($check->rowCount() === 0) return;
 
-        $stmt = $pdo->prepare("SELECT attempts FROM tbl_login_attempts WHERE email = :email LIMIT 1");
-        $stmt->execute([':email' => $email]);
+        $stmt = $pdo->prepare("SELECT attempts FROM tbl_login_attempts WHERE email = :identifier LIMIT 1");
+        $stmt->execute([':identifier' => $identifier]);
         $row = $stmt->fetch();
 
         $attempts     = $row ? intval($row['attempts']) + 1 : 1;
@@ -85,27 +85,27 @@ function recordFailedLoginAttempt(string $email, string $ip_address): void {
             $stmt = $pdo->prepare(
                 "UPDATE tbl_login_attempts
                  SET attempts = :attempts, last_attempt = NOW(), ip_address = :ip, locked_until = :locked
-                 WHERE email = :email"
+                 WHERE email = :identifier"
             );
         } else {
             $stmt = $pdo->prepare(
                 "INSERT INTO tbl_login_attempts (email, attempts, last_attempt, ip_address, locked_until)
-                 VALUES (:email, :attempts, NOW(), :ip, :locked)"
+                 VALUES (:identifier, :attempts, NOW(), :ip, :locked)"
             );
         }
-        $stmt->execute([':email' => $email, ':attempts' => $attempts, ':ip' => $ip_address, ':locked' => $locked_until]);
+        $stmt->execute([':identifier' => $identifier, ':attempts' => $attempts, ':ip' => $ip_address, ':locked' => $locked_until]);
     } catch (PDOException $e) {
         error_log("recordFailedLoginAttempt error: " . $e->getMessage());
     }
 }
 
-function resetLoginAttempts(string $email): void {
+function resetLoginAttempts(string $identifier): void {
     $pdo = _getAdminPDO();
     try {
         $check = $pdo->query("SHOW TABLES LIKE 'tbl_login_attempts'");
         if ($check->rowCount() === 0) return;
-        $stmt = $pdo->prepare("UPDATE tbl_login_attempts SET attempts = 0, locked_until = NULL WHERE email = :email");
-        $stmt->execute([':email' => $email]);
+        $stmt = $pdo->prepare("UPDATE tbl_login_attempts SET attempts = 0, locked_until = NULL WHERE email = :identifier");
+        $stmt->execute([':identifier' => $identifier]);
     } catch (PDOException $e) {
         error_log("resetLoginAttempts error: " . $e->getMessage());
     }

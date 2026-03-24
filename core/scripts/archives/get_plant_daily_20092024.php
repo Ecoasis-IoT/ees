@@ -3,6 +3,16 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 
+require_once __DIR__ . '/../../../config.php';
+require_once __DIR__ . '/../../common/auth.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    echo json_encode([]);
+    exit;
+}
+
 $site_id    = intval($_POST['site_id']    ?? 0);
 $start_date = $_POST['start_date'] ?? '';
 $end_date   = $_POST['end_date']   ?? '';
@@ -11,8 +21,6 @@ if (!$site_id || !$start_date || !$end_date) {
     echo json_encode([]);
     exit;
 }
-
-require_once __DIR__ . '/../../../config.php';
 
 // Resolve site config from admin DB
 $admin = getDB('admin');

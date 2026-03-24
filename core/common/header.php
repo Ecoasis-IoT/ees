@@ -1,9 +1,8 @@
 <?php
 $_current_user_name = htmlspecialchars(
-    (isset($_SESSION['fname']) ? $_SESSION['fname'] . ' ' . ($_SESSION['lname'] ?? '') : ($_SESSION['username'] ?? 'User')),
+    (trim(($_SESSION['firstname'] ?? '') . ' ' . ($_SESSION['lastname'] ?? '')) ?: ($_SESSION['username'] ?? 'User')),
     ENT_QUOTES, 'UTF-8'
 );
-$_is_admin = isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === 1;
 ?>
 <nav class="navbar navbar-fixed-top">
     <div class="container-fluid">
@@ -36,20 +35,11 @@ $_is_admin = isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === 1;
                         </div>
                     </li>
 
-                    <!-- Profile dropdown -->
-                    <li class="dropdown">
-                        <a href="#" class="icon-menu dropdown-toggle" data-toggle="dropdown" title="<?= $_current_user_name ?>">
-                            <i class="fa fa-user-circle-o"></i>
+                    <!-- Sign Out -->
+                    <li>
+                        <a href="logout.php" class="icon-menu" title="Sign Out">
+                            <i class="fa fa-sign-out"></i>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-right">
-                            <li class="dropdown-header"><?= $_current_user_name ?></li>
-                            <li><a href="profile.php"><i class="fa fa-cog"></i>&nbsp; Profile Settings</a></li>
-                            <?php if ($_is_admin): ?>
-                            <li><a href="security_dashboard.php"><i class="fa fa-shield"></i>&nbsp; Security Dashboard</a></li>
-                            <?php endif; ?>
-                            <li class="divider"></li>
-                            <li><a href="logout.php"><i class="fa fa-sign-out"></i>&nbsp; Sign Out</a></li>
-                        </ul>
                     </li>
 
                 </ul>
@@ -65,6 +55,16 @@ $_is_admin = isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === 1;
     var $count     = document.getElementById('notif-count');
     var $list      = document.getElementById('notif-list');
     var notifIds   = [];
+    var _csrfToken = <?= json_encode(generateCSRFToken()) ?>;
+
+    function esc(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
 
     function loadNotifications() {
         if (typeof jQuery === 'undefined') return;
@@ -80,10 +80,10 @@ $_is_admin = isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === 1;
                 items.forEach(function(n) {
                     var icon = n.type === 'warning' ? 'fa-exclamation-triangle' : n.type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
                     var color = n.type === 'warning' ? '#ffc107' : n.type === 'error' ? '#dc3545' : '#26a69a';
-                    html += '<div style="padding:10px 16px;border-bottom:1px solid #f5f5f5;display:flex;align-items:flex-start;gap:10px;" data-id="' + n.id + '">' +
-                            '<i class="fa ' + icon + '" style="color:' + color + ';margin-top:2px;"></i>' +
-                            '<div style="flex:1;font-size:13px;">' + n.message + '<div style="font-size:11px;color:#bbb;margin-top:3px;">' + (n.timestamp || '') + '</div></div>' +
-                            '<span onclick="ackNotif(' + n.id + ',this)" style="cursor:pointer;color:#ccc;font-size:16px;" title="Dismiss">&times;</span>' +
+                    html += '<div style="padding:10px 16px;border-bottom:1px solid #f5f5f5;display:flex;align-items:flex-start;gap:10px;" data-id="' + esc(n.id) + '">' +
+                            '<i class="fa ' + esc(icon) + '" style="color:' + esc(color) + ';margin-top:2px;"></i>' +
+                            '<div style="flex:1;font-size:13px;">' + esc(n.message) + '<div style="font-size:11px;color:#bbb;margin-top:3px;">' + esc(n.timestamp || '') + '</div></div>' +
+                            '<span onclick="ackNotif(' + parseInt(n.id, 10) + ',this)" style="cursor:pointer;color:#ccc;font-size:16px;" title="Dismiss">&times;</span>' +
                             '</div>';
                 });
                 $list.innerHTML = html;
@@ -95,7 +95,7 @@ $_is_admin = isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === 1;
     }
 
     window.ackNotif = function(id, el) {
-        jQuery.post('scripts/acknowledge_notification.php', { id: id }, function(r) {
+        jQuery.post('scripts/acknowledge_notification.php', { id: id, csrf_token: _csrfToken }, function(r) {
             var d = typeof r === 'string' ? JSON.parse(r) : r;
             if (d.success) {
                 var row = el.closest ? el.closest('[data-id]') : jQuery(el).closest('[data-id]')[0];
@@ -112,7 +112,8 @@ $_is_admin = isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === 1;
     };
 
     window.clearAllNotifications = function() {
-        notifIds.forEach(function(id){ jQuery.post('scripts/acknowledge_notification.php', { id: id }); });
+        jQuery.post('scripts/acknowledge_notification.php', { mark_all: 1, csrf_token: _csrfToken });
+        notifIds.forEach(function(id){ jQuery.post('scripts/acknowledge_notification.php', { id: id, csrf_token: _csrfToken }); });
         notifIds = [];
         $count.style.display = 'none';
         $list.innerHTML = '<div style="padding:20px;text-align:center;color:#bbb;font-size:13px;">No new notifications</div>';

@@ -106,7 +106,7 @@ $has_db    = ($site_pdo !== null);
                 <div class="block-header">
                     <div class="row g-3">
                         <div class="col-lg-5 col-md-8 col-sm-12">                        
-                            <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Dashboard<?php echo " - $site_name" ?></h2>
+                            <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Dashboard<?= ' - ' . htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') ?></h2>
                             <ul class="breadcrumb">
                                 <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
                                 <li class="breadcrumb-item active">Dashboard</li>

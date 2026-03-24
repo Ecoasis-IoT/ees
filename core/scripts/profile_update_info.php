@@ -3,6 +3,7 @@ ob_start();
 ini_set('display_errors', 0);
 
 require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
 require_once __DIR__ . '/../common/csrf.php';
 require_once __DIR__ . '/../common/validation.php';
 require_once __DIR__ . '/../common/authorization.php';
@@ -14,8 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ob_clean(); http_response_code(405);
     echo json_encode(['status' => 'Err', 'message' => 'Method not allowed']); exit;
 }
-
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 $csrf = trim($_POST['csrf_token'] ?? '');
 if (!validateCSRFToken($csrf)) {
@@ -60,9 +59,9 @@ try {
     );
     $upd->execute([':fname' => $fname, ':lname' => $lname, ':email' => $email, ':id' => $user_id]);
 
-    // Update session
-    $_SESSION['fname'] = $fname;
-    $_SESSION['lname'] = $lname;
+    // Update session keys (must match what userlogin.php sets)
+    $_SESSION['firstname'] = $fname;
+    $_SESSION['lastname']  = $lname;
 
     logSecurityEvent('profile_updated', ['user_id' => $user_id], 'INFO');
 

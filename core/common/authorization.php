@@ -25,13 +25,41 @@ function isAuthorized(int $user_id, int $resource_user_id, bool $allow_admin = f
 }
 
 /**
- * Return the current user's ID from session, or false if not logged in.
+ * Return the current user's ID from session, or false if not logged in or session expired.
+ * Enforces the same idle-timeout logic as auth.php so AJAX scripts cannot bypass it.
  */
 function getCurrentUserId() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    return isset($_SESSION['id']) ? intval($_SESSION['id']) : false;
+
+    if (!isset($_SESSION['id'])) {
+        return false;
+    }
+
+    $session_lifetime = defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 14400;
+    if ((time() - ($_SESSION['last_activity'] ?? 0)) >= $session_lifetime) {
+        $_SESSION = [];
+        session_destroy();
+        return false;
+    }
+
+    $_SESSION['last_activity'] = time();
+    return intval($_SESSION['id']);
+}
+
+/**
+ * Abort with 401 JSON if the current session is invalid or expired.
+ * Use this at the top of AJAX-only endpoints instead of auth.php (which redirects).
+ */
+function requireAuthAjax(): int {
+    $user_id = getCurrentUserId();
+    if (!$user_id) {
+        http_response_code(401);
+        echo json_encode(['status' => 'Err', 'message' => 'Session expired. Please log in again.']);
+        exit;
+    }
+    return $user_id;
 }
 
 /**

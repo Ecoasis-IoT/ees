@@ -387,7 +387,7 @@ function is2FARequiredForUser($pdo, $user_id) {
     
     try {
         // Get admin usergroup ID from config
-        $admin_usergroup_id = defined('ADMIN_USERGROUP_ID') ? ADMIN_USERGROUP_ID : 111;
+        $admin_usergroup_id = defined('ADMIN_USERGROUP_ID') ? ADMIN_USERGROUP_ID : 1;
         
         $query = "SELECT usergroup FROM tbl_user WHERE id = ?";
         $stmt = $pdo->prepare($query);

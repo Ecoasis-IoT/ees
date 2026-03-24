@@ -3,8 +3,10 @@ ob_start();
 ini_set('display_errors', 0);
 
 require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../common/auth.php';
 require_once __DIR__ . '/../common/csrf.php';
 require_once __DIR__ . '/../common/authorization.php';
+require_once __DIR__ . '/../common/validation.php';
 require_once __DIR__ . '/../common/security_logging.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -13,8 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ob_clean(); http_response_code(405);
     echo json_encode(['status' => 'Err', 'message' => 'Method not allowed']); exit;
 }
-
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 $csrf = trim($_POST['csrf_token'] ?? '');
 if (!validateCSRFToken($csrf)) {
@@ -42,9 +42,10 @@ if ($new_pass !== $confirm_pass) {
     echo json_encode(['status' => 'Err', 'message' => 'New passwords do not match']); exit;
 }
 
-if (strlen($new_pass) < 8) {
+$strength = validatePasswordStrength($new_pass);
+if ($strength !== true) {
     ob_clean(); http_response_code(400);
-    echo json_encode(['status' => 'Err', 'message' => 'Password must be at least 8 characters']); exit;
+    echo json_encode(['status' => 'Err', 'message' => $strength]); exit;
 }
 
 try {

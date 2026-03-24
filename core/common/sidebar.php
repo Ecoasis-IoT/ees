@@ -137,10 +137,10 @@ echo"
 </div>
 
 <script>
-    var _uname = '" . htmlspecialchars(($_SESSION['firstname'] ?? '') . ' ' . ($_SESSION['lastname'] ?? '') ?: ($_SESSION['username'] ?? 'User'), ENT_QUOTES, 'UTF-8') . "';
+    var _uname = '" . htmlspecialchars(trim(($_SESSION['firstname'] ?? '') . ' ' . ($_SESSION['lastname'] ?? '')) ?: ($_SESSION['username'] ?? 'User'), ENT_QUOTES, 'UTF-8') . "';
     document.getElementById('this-username').innerHTML = _uname || 'User';
 
-    var _isAdmin = " . (isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === 1 ? 'true' : 'false') . ";
+    var _isAdmin = " . (isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === (int)ADMIN_USERGROUP_ID ? 'true' : 'false') . ";
     if (_isAdmin) {
         document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display = ''; });
     }

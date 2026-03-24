@@ -50,15 +50,20 @@ function verifyWebhookRequest(string $rawBody = ''): void
 
     // ── HMAC-SHA256 signature ──────────────────────────────────────────────
     $secret = WEBHOOK_SECRET;
-    if ($secret !== '') {
-        // ChirpStack / generic: header is "X-Signature" (hex-encoded SHA256)
-        $receivedSig = $_SERVER['HTTP_X_SIGNATURE'] ?? '';
-        $expectedSig = hash_hmac('sha256', $rawBody, $secret);
+    if ($secret === '') {
+        // Signature verification is required but no secret is configured — reject all requests.
+        error_log("Webhook blocked: WEBHOOK_REQUIRE_SIGNATURE is true but WEBHOOK_SECRET is empty");
+        http_response_code(403);
+        exit;
+    }
 
-        if (!hash_equals($expectedSig, strtolower($receivedSig))) {
-            error_log("Webhook blocked: invalid HMAC signature");
-            http_response_code(403);
-            exit;
-        }
+    // ChirpStack / generic: header is "X-Signature" (hex-encoded SHA256)
+    $receivedSig = $_SERVER['HTTP_X_SIGNATURE'] ?? '';
+    $expectedSig = hash_hmac('sha256', $rawBody, $secret);
+
+    if (!hash_equals($expectedSig, strtolower($receivedSig))) {
+        error_log("Webhook blocked: invalid HMAC signature");
+        http_response_code(403);
+        exit;
     }
 }

@@ -96,9 +96,9 @@ try {
     $mail->Password   = defined('SMTP_PASSWORD')   ? SMTP_PASSWORD   : '';
     $mail->SMTPOptions = [
         'ssl' => [
-            'verify_peer'       => false,
-            'verify_peer_name'  => false,
-            'allow_self_signed' => true,
+            'verify_peer'       => true,
+            'verify_peer_name'  => true,
+            'allow_self_signed' => false,
         ],
     ];
 
@@ -116,7 +116,7 @@ try {
         '<p>You requested to reset your platform password.</p>' .
         '<p>If you did not request this, please ignore this email.</p>' .
         '<p><a href="' . htmlspecialchars($reset_link, ENT_QUOTES, 'UTF-8') . '">Click here to reset your password</a></p>' .
-        '<p>This link will expire in 24 hours.</p>';
+        '<p>This link will expire in 1 hour.</p>';
 
     if ($mail->send()) {
         logSecurityEvent('password_reset_email_sent', ['email' => $email], 'INFO');

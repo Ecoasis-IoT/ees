@@ -19,19 +19,6 @@ if (!$user_id) {
 try {
     $pdo = getDB('admin');
 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS tbl_notifications (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        type VARCHAR(20) NOT NULL DEFAULT 'info',
-        message TEXT NOT NULL,
-        action_url VARCHAR(500) NULL,
-        action_label VARCHAR(100) NULL,
-        is_read TINYINT(1) NOT NULL DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_user_unread (user_id, is_read),
-        INDEX idx_created (created_at)
-    )");
-
     $stmt = $pdo->prepare(
         "SELECT id, type, message, action_url, action_label, created_at
          FROM tbl_notifications

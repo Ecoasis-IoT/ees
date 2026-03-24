@@ -1,11 +1,19 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/session_cookie_config.php';
+
+if (!defined('REGISTRATION_LINK_ENABLED') || !REGISTRATION_LINK_ENABLED) {
+    http_response_code(404);
+    include __DIR__ . '/error-404.php';
+    exit;
+}
 
 if (session_status() === PHP_SESSION_NONE) {
+    applySessionCookieConfig();
     session_start();
 }
 $session_lifetime = defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 14400;
-if (isset($_SESSION['id']) && (time() - ($_SESSION['created'] ?? 0)) < $session_lifetime) {
+if (isset($_SESSION['id']) && (time() - ($_SESSION['last_activity'] ?? 0)) < $session_lifetime) {
     header('Location: dashboard.php');
     exit;
 }

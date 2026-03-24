@@ -51,8 +51,8 @@ function validatePasswordStrength(string $password) {
     if (strlen($password) < MIN_PASSWORD_LENGTH) {
         return "Password must be at least " . MIN_PASSWORD_LENGTH . " characters";
     }
-    if (strlen($password) > MAX_PASSWORD_DISPLAY_LENGTH) {
-        return "Password must be no more than " . MAX_PASSWORD_DISPLAY_LENGTH . " characters";
+    if (strlen($password) > MAX_PASSWORD_LENGTH) {
+        return "Password must be no more than " . MAX_PASSWORD_LENGTH . " characters";
     }
     if (!preg_match('/[a-z]/', $password)) {
         return "Password must contain at least one lowercase letter";

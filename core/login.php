@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/session_cookie_config.php';
 
 if (session_status() === PHP_SESSION_NONE) {
+    applySessionCookieConfig();
     session_start();
 }
 $session_lifetime = defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 14400;
