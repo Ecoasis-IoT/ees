@@ -41,15 +41,12 @@
             success: function (data) {
 
                 // Populate KPI cards
-                var totalProd  = 0;
-                var totalPower = 0;
+                var totalProd = 0;
                 for (var k = 0; k < data.length; k++) {
-                    totalProd  += parseFloat(data[k].prod)        || 0;
-                    totalPower += parseFloat(data[k].active_power) || 0;
+                    totalProd += parseFloat(data[k].prod) || 0;
                 }
                 setKpi('kpi-total-sites', data.length);
-                setKpi('kpi-total-prod',  fmtNum(totalProd));
-                setKpi('kpi-total-power', fmtNum(totalPower));
+                setKpi('kpi-total-prod', fmtNum(totalProd));
 
                 for (var i = 0; i < data.length; i++) {
                     var row;

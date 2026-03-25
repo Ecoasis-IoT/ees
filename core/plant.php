@@ -80,51 +80,51 @@ $csrf_token = generateCSRFToken();
                 </div>
             </div>
 
-            <div class="card mb-3 no-border plant-legacy-filter">
-                <div class="row">
+            <div class="card mb-3 plant-filter-card plant-legacy-filter">
+                <div class="row g-3 g-lg-4 plant-filter-row align-items-lg-stretch">
                     <div class="col-lg-5">
-                        <div class="row">
-                            <div class="col-lg-6 col-xs-6 col-sm-6">
+                        <div class="row g-3">
+                            <div class="col-md-6">
                                 <div class="header">
-                                    <h2 style="font-size: 18px;">CHOOSE A PLANT:</h2>
+                                    <h2>Choose a plant</h2>
                                 </div>
                                 <div class="control">
-                                    <select name="sort" id="site_opt" class="alarms-sort" required>
+                                    <select name="sort" id="site_opt" class="alarms-sort form-select" required>
                                         <option value="">Choose a plant…</option>
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-6 col-xs-6 col-sm-6">
+                            <div class="col-md-6">
                                 <div class="header">
-                                    <h2 style="font-size: 18px;">BUDGETED PRODUCTION:</h2>
+                                    <h2>Budgeted production</h2>
                                 </div>
-                                <input type="text" id="budget_prod_input" name="budgeted" class="alarms-sort" placeholder="Insert the budgeted production">
+                                <input type="text" id="budget_prod_input" name="budgeted" class="alarms-sort form-control" placeholder="e.g. 125000" inputmode="decimal">
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-lg-6 col-xs-6 col-sm-6">
-                                <div class="header" style="margin-top: 21px;">
-                                    <h2 style="font-size: 18px;">START DATE:</h2>
+                        <div class="row g-3 mt-0 mt-lg-1">
+                            <div class="col-md-6">
+                                <div class="header">
+                                    <h2>Start date</h2>
                                 </div>
-                                <input type="date" id="startDate" name="startdate" class="alarms-sort" required>
+                                <input type="date" id="startDate" name="startdate" class="alarms-sort form-control" required>
                             </div>
-                            <div class="col-lg-6 col-xs-6 col-sm-6">
-                                <div class="header" style="margin-top: 21px;">
-                                    <h2 style="font-size: 18px;">END DATE:</h2>
+                            <div class="col-md-6">
+                                <div class="header">
+                                    <h2>End date</h2>
                                 </div>
-                                <input type="date" id="endDate" name="enddate" class="alarms-sort" required>
+                                <input type="date" id="endDate" name="enddate" class="alarms-sort form-control" required>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-5">
+                    <div class="col-lg-5 d-flex flex-column">
                         <div class="header">
-                            <h2 style="font-size: 18px;">ENTER YOUR COMMENTS:</h2>
+                            <h2>Comments</h2>
                         </div>
-                        <textarea placeholder="Enter your comments..." id="comments_input" rows="5" cols="70" maxlength="547" required></textarea>
-                        <button type="button" class="cmt-btn btn btn-primary mb-3 js-sweetalert" id="preview_btn" onclick="query();">View Changes</button>
+                        <textarea class="alarms-sort form-control flex-grow-1 plant-filter-textarea" placeholder="Enter your comments…" id="comments_input" rows="5" maxlength="547" required></textarea>
+                        <button type="button" class="cmt-btn btn btn-primary mt-3 js-sweetalert" id="preview_btn" onclick="query();">View Changes</button>
                     </div>
-                    <div class="col-lg-2">
-                        <button type="button" class="btn btn-primary mb-3" style="display: inline-block;" id="cmd" onclick="generatePdf();">Generate PDF Report</button>
+                    <div class="col-lg-2 d-flex flex-lg-column align-items-stretch justify-content-lg-end">
+                        <button type="button" class="btn btn-primary w-100 mt-3 mt-lg-0" id="cmd" onclick="generatePdf();">Generate PDF report</button>
                     </div>
                 </div>
             </div>

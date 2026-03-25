@@ -46,7 +46,7 @@ $csrf_token = generateCSRFToken();
 
 </head>
 
-<body data-theme="theme-cyan">
+<body data-theme="theme-cyan" class="page-archive">
 
 <!-- Page Loader -->
 <?php include_once("common/page-loader.php") ?>
@@ -66,7 +66,7 @@ $csrf_token = generateCSRFToken();
             <div class="block-header">
                 <div class="row g-3">
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
-                        <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left" onclick="fullwidth()"></i></a>Archive</h2>
+                        <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth" href="javascript:void(0);"><i class="fa fa-arrow-left"></i></a>Archive</h2>
                         <ul class="breadcrumb">
                             <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">Archive</li>
@@ -77,40 +77,27 @@ $csrf_token = generateCSRFToken();
 
             <div class="row clearfix g-3 mb-3">
                 <div class="col-lg-12">
-                    <div class="card">
-                        <div class="row mb-3">
-                            <div class="col-lg-3 col-md-3">
-                                <div class="header">
-                                    <h6>CHOOSE SITE</h6> 
-                                </div>           
-
-                                <select name="sort" id="site" class="alarms-sort select" onchange="validate_date()">
-                                    <option hidden>Choose a site</option>
-                                </select>    
-                            </div>  
-                            
-                            <div class="col-lg-3 col-xs-12 col-sm-12">
-                                <div class="header">
-                                    <h6>START DATE:</h6>                            
+                    <div class="card archive-filter-card">
+                        <div class="body archive-filter-inner">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="archive-filter-label" for="site">Choose site</label>
+                                    <select name="sort" id="site" class="form-select" onchange="validate_date()">
+                                        <option hidden value="">Choose a site</option>
+                                    </select>
                                 </div>
-                                <input type="date" id="startDate" name="startdate" class="alarms-sort" required>
-                            </div>
-                            
-                            <div class="col-lg-3 col-xs-12 col-sm-12">
-                                <div class="header">
-                                    <h6>END DATE:</h6>                            
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="archive-filter-label" for="startDate">Start date</label>
+                                    <input type="date" id="startDate" name="startdate" class="form-control" required>
                                 </div>
-                                <input type="date" id="endDate" name="enddate" class="alarms-sort" required>           
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="archive-filter-label" for="endDate">End date</label>
+                                    <input type="date" id="endDate" name="enddate" class="form-control" required>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <button type="button" class="btn btn-primary archive-filter-submit" onclick="query()">Submit</button>
+                                </div>
                             </div>
-                            
-                            <div class="col-lg-2 col-12 col-sm-2">    
-                                <div class="header">
-                                    <h2 style="display:inline-block;color:transparent;"></h2> 
-                                </div>           
-    
-                                <button class="btn btn-primary submit" onclick="query()">Submit</button>         
-                            </div>  
-                                                
                         </div>
                     </div>
                 </div>

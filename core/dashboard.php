@@ -71,7 +71,7 @@ $csrf_token = generateCSRFToken();
 
                 <!-- KPI Stat Cards -->
                 <div class="row g-2 mb-2">
-                    <div class="col-lg-4 col-md-6 col-sm-12">
+                    <div class="col-lg-6 col-md-6 col-sm-12">
                         <div class="ees-stat-card">
                             <div class="ees-stat-icon green">
                                 <i class="fa fa-sitemap"></i>
@@ -82,7 +82,7 @@ $csrf_token = generateCSRFToken();
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-4 col-md-6 col-sm-12">
+                    <div class="col-lg-6 col-md-6 col-sm-12">
                         <div class="ees-stat-card">
                             <div class="ees-stat-icon blue">
                                 <i class="fa fa-bolt"></i>
@@ -91,18 +91,6 @@ $csrf_token = generateCSRFToken();
                                 <div class="ees-stat-label">Today's Production</div>
                                 <div class="ees-stat-value" id="kpi-total-prod">—</div>
                                 <div class="ees-stat-sub">kWh total</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 col-sm-12">
-                        <div class="ees-stat-card">
-                            <div class="ees-stat-icon orange">
-                                <i class="fa fa-tachometer"></i>
-                            </div>
-                            <div>
-                                <div class="ees-stat-label">Active Power</div>
-                                <div class="ees-stat-value" id="kpi-total-power">—</div>
-                                <div class="ees-stat-sub">kW combined</div>
                             </div>
                         </div>
                     </div>

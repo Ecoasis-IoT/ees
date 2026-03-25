@@ -42,7 +42,6 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
-        #info-success, #info-error, #pass-success, #pass-error, #tfa-success, #tfa-error { display: none; }
         .tfa-badge-on  { display:inline-block; background:rgba(112,173,71,.15); color:#3d6d1f; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
         .tfa-badge-off { display:inline-block; background:rgba(100,116,139,.12); color:#475569; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
         #qr-setup-section { display:none; }
@@ -210,7 +209,7 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
 var CSRF_TOKEN = '<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>';
 
 function showMsg(successId, errorId, isSuccess, msg) {
-    $('#' + successId + ', #' + errorId).hide();
+    $('#' + successId + ', #' + errorId).hide().empty();
     if (isSuccess) { $('#' + successId).text(msg).show(); }
     else           { $('#' + errorId).text(msg).show(); }
 }

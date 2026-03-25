@@ -30,13 +30,53 @@
     }
 
     // =====================================================
+    // DataTables (same pattern as site.php / user-management.php)
+    // =====================================================
+    function destroyAdminTable(tableSelector) {
+        if (typeof $.fn.DataTable !== 'function') return;
+        if ($.fn.DataTable.isDataTable(tableSelector)) {
+            $(tableSelector).DataTable().destroy();
+        }
+    }
+
+    function initAdminTable(tableSelector, extraOptions) {
+        if ($(tableSelector).length === 0 || typeof $.fn.DataTable !== 'function') return;
+        destroyAdminTable(tableSelector);
+        var base = {
+            pageLength: 5,
+            lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'All']],
+            order: [[0, 'asc']],
+            autoWidth: false,
+            dom: 'lfrtip',
+            language: {
+                search: 'Search',
+                lengthMenu: 'Show _MENU_',
+                infoFiltered: '(filtered from _MAX_ total)',
+                zeroRecords: 'No matching records found'
+            }
+        };
+        $(tableSelector).DataTable($.extend(true, {}, base, extraOptions || {}));
+    }
+
+    // =====================================================
     // Users Tab
     // =====================================================
     function loadUsers() {
         $.get('scripts/admin/get_users.php', function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
+            destroyAdminTable('#tbl-users');
             var tbody = $('#tbl-users tbody').empty();
-            if (r.status !== 'ok') { showAlert('danger', r.message); return; }
+            if (r.status !== 'ok') {
+                showAlert('danger', r.message);
+                initAdminTable('#tbl-users', {
+                    language: {
+                        info: 'Showing _START_ to _END_ of _TOTAL_ users',
+                        infoEmpty: 'No users'
+                    },
+                    columnDefs: [{ targets: 5, orderable: false, searchable: false }]
+                });
+                return;
+            }
             r.data.forEach(function (u) {
                 var role = parseInt(u.group_id) === 1
                     ? '<span class="badge-admin">Admin</span>'
@@ -52,6 +92,13 @@
                         '<button class="btn btn-sm btn-danger delete-user" data-id="' + u.id + '" data-name="' + esc(u.fullname) + '"><i class="fa fa-trash"></i></button>' +
                     '</td></tr>';
                 tbody.append(row);
+            });
+            initAdminTable('#tbl-users', {
+                language: {
+                    info: 'Showing _START_ to _END_ of _TOTAL_ users',
+                    infoEmpty: 'No users'
+                },
+                columnDefs: [{ targets: 5, orderable: false, searchable: false }]
             });
         });
     }
@@ -133,8 +180,19 @@
     function loadSites() {
         $.get('scripts/admin/get_sites.php', function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
+            destroyAdminTable('#tbl-sites');
             var tbody = $('#tbl-sites tbody').empty();
-            if (r.status !== 'ok') { showAlert('danger', r.message); return; }
+            if (r.status !== 'ok') {
+                showAlert('danger', r.message);
+                initAdminTable('#tbl-sites', {
+                    language: {
+                        info: 'Showing _START_ to _END_ of _TOTAL_ sites',
+                        infoEmpty: 'No sites'
+                    },
+                    columnDefs: [{ targets: 4, orderable: false, searchable: false }]
+                });
+                return;
+            }
             r.data.forEach(function (s) {
                 var gw = parseInt(s.gateway_status) === 1
                     ? '<span class="status-online">ONLINE</span>'
@@ -150,6 +208,13 @@
                         '<button class="btn btn-sm btn-danger delete-site" data-id="' + s.id + '" data-name="' + esc(s.site_name) + '"><i class="fa fa-trash"></i></button>' +
                     '</td></tr>';
                 tbody.append(row);
+            });
+            initAdminTable('#tbl-sites', {
+                language: {
+                    info: 'Showing _START_ to _END_ of _TOTAL_ sites',
+                    infoEmpty: 'No sites'
+                },
+                columnDefs: [{ targets: 4, orderable: false, searchable: false }]
             });
         });
     }
@@ -211,8 +276,19 @@
         currentSiteId = siteId;
         $.get('scripts/admin/get_devices.php', { site_id: siteId }, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
+            destroyAdminTable('#tbl-devices');
             var tbody = $('#tbl-devices tbody').empty();
-            if (r.status !== 'ok') { showAlert('danger', r.message); return; }
+            if (r.status !== 'ok') {
+                showAlert('danger', r.message);
+                initAdminTable('#tbl-devices', {
+                    language: {
+                        info: 'Showing _START_ to _END_ of _TOTAL_ devices',
+                        infoEmpty: 'No devices'
+                    },
+                    columnDefs: [{ targets: 2, orderable: false, searchable: false }]
+                });
+                return;
+            }
             r.data.forEach(function (d) {
                 var row = '<tr>' +
                     '<td>' + esc(d.meter_name) + '</td>' +
@@ -222,6 +298,13 @@
                         '<button class="btn btn-sm btn-danger delete-device" data-id="' + d.id + '" data-name="' + esc(d.meter_name) + '"><i class="fa fa-trash"></i></button>' +
                     '</td></tr>';
                 tbody.append(row);
+            });
+            initAdminTable('#tbl-devices', {
+                language: {
+                    info: 'Showing _START_ to _END_ of _TOTAL_ devices',
+                    infoEmpty: 'No devices'
+                },
+                columnDefs: [{ targets: 2, orderable: false, searchable: false }]
             });
         });
     }
@@ -281,6 +364,16 @@
     $(document).ready(function () {
         loadUsers();
         loadSites();
+
+        // Hidden tab panes: fix column widths after tab becomes visible
+        $(document).on('shown.bs.tab', 'a[data-bs-toggle="tab"]', function () {
+            if (typeof $.fn.DataTable !== 'function') return;
+            ['#tbl-users', '#tbl-sites', '#tbl-devices'].forEach(function (sel) {
+                if ($.fn.DataTable.isDataTable(sel)) {
+                    $(sel).DataTable().columns.adjust();
+                }
+            });
+        });
 
         // Close modal on overlay click
         document.getElementById('modal-overlay').addEventListener('click', function (e) {

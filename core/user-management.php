@@ -66,7 +66,7 @@ $csrf_token = generateCSRFToken();
                         </div>
                         <div class="body">                           
                             <div class="table-responsive tbl_alerts">
-                                <table id="tbl_users" class="table table-bordered table-striped table-hover js-basic-example dataTable table-custom">
+                                <table id="tbl_users" class="table table-bordered table-striped table-hover w-100 table-custom">
                                     <thead>
                                         <tr>
                                             <th>Name</th>
@@ -99,7 +99,6 @@ $csrf_token = generateCSRFToken();
 <script src="assets/bundles/datatablescripts.bundle.js"></script>
 
 <script src="assets/bundles/mainscripts.bundle.js"></script>
-<script src="assets/js/pages/tables/jquery-datatable.js"></script>
 
 <script>
 function _esc(str) {
@@ -108,16 +107,44 @@ function _esc(str) {
         .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+function initUserListDataTable() {
+    if ($('#tbl_users').length === 0 || typeof $.fn.DataTable !== 'function') return;
+    if ($.fn.DataTable.isDataTable('#tbl_users')) {
+        $('#tbl_users').DataTable().destroy();
+    }
+    $('#tbl_users').DataTable({
+        pageLength: 5,
+        lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'All']],
+        order: [[0, 'asc']],
+        autoWidth: false,
+        dom: 'lfrtip',
+        language: {
+            search: 'Search',
+            lengthMenu: 'Show _MENU_',
+            info: 'Showing _START_ to _END_ of _TOTAL_ users',
+            infoEmpty: 'No users',
+            infoFiltered: '(filtered from _MAX_ total)',
+            zeroRecords: 'No matching users found'
+        }
+    });
+}
+
 $(function users() {
     $.ajax({
-        type: "POST",
-        url: "scripts/get_all_users.php",
+        type: 'POST',
+        url: 'scripts/get_all_users.php',
         dataType: 'json',
-        success: function(data) {
-            for (var i = 0; i < data.length; i++) {
-                var row = "<tr><td>" + _esc(data[i].fullname) + "</td><td>" + _esc(data[i].email) + "</td><td>" + _esc(data[i].date_added) + "</td></tr>";
-                $('#tbl_users tbody').append(row);
+        success: function (data) {
+            var rows = Array.isArray(data) ? data : [];
+            var $tb = $('#tbl_users tbody');
+            $tb.empty();
+            for (var i = 0; i < rows.length; i++) {
+                var row = '<tr><td>' + _esc(rows[i].fullname) + '</td><td>' + _esc(rows[i].email) + '</td><td>' + _esc(rows[i].date_added) + '</td></tr>';
+                $tb.append(row);
             }
+        },
+        complete: function () {
+            initUserListDataTable();
         }
     });
 });

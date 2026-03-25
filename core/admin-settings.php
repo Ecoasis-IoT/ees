@@ -88,7 +88,7 @@ $csrf_token = generateCSRFToken();
                                 </div>
                                 <div class="body">
                                     <div class="table-responsive">
-                                        <table id="tbl-users" class="table table-bordered table-striped table-hover js-basic-example dataTable">
+                                        <table id="tbl-users" class="table table-bordered table-striped table-hover w-100">
                                             <thead>
                                                 <tr>
                                                     <th>Name</th>
@@ -118,7 +118,7 @@ $csrf_token = generateCSRFToken();
                                 </div>
                                 <div class="body">
                                     <div class="table-responsive">
-                                        <table id="tbl-sites" class="table table-bordered table-striped table-hover dataTable">
+                                        <table id="tbl-sites" class="table table-bordered table-striped table-hover w-100">
                                             <thead>
                                                 <tr>
                                                     <th>Site Name</th>
@@ -147,7 +147,7 @@ $csrf_token = generateCSRFToken();
                                 </div>
                                 <div class="body">
                                     <div class="table-responsive">
-                                        <table id="tbl-devices" class="table table-bordered table-striped table-hover dataTable">
+                                        <table id="tbl-devices" class="table table-bordered table-striped table-hover w-100">
                                             <thead>
                                                 <tr>
                                                     <th>Device Name</th>

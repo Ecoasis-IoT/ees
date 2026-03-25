@@ -1,16 +1,81 @@
-.header {
-    padding-bottom: 0px !important;
+/* Archive page — scoped to body.page-archive (no global .header / input overrides) */
+
+/* ── Filter form ───────────────────────────────────────────── */
+body.page-archive .archive-filter-card {
+    border: 1px solid var(--ees-border, #e2e8f0) !important;
+    border-radius: var(--ees-card-radius, 12px) !important;
+    box-shadow: var(--ees-card-shadow, 0 1px 3px rgba(0, 0, 0, 0.06)) !important;
+    overflow: hidden;
 }
 
-.submit {
-    margin-top: 6px;
+body.page-archive .archive-filter-card > .archive-filter-inner.body {
+    padding: 1.25rem 1.5rem !important;
 }
 
-.btn {
-    font-size: 16px;
+body.page-archive .archive-filter-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ees-text-secondary, #475569);
+    margin-bottom: 0.4rem;
+    line-height: 1.35;
 }
 
-.dt-button {
+body.page-archive .archive-filter-card .form-select,
+body.page-archive .archive-filter-card .form-control {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+body.page-archive .archive-filter-card .form-select:focus,
+body.page-archive .archive-filter-card .form-control:focus {
+    border-color: var(--ees-primary, #70ad47) !important;
+    box-shadow: 0 0 0 3px rgba(112, 173, 71, 0.15) !important;
+}
+
+body.page-archive .archive-filter-submit {
+    width: 100%;
+    min-height: 42px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    font-weight: 600;
+}
+
+@media (min-width: 992px) {
+    body.page-archive .archive-filter-submit {
+        width: auto;
+        min-width: 7.5rem;
+    }
+}
+
+/* ── Chart toolbar ─────────────────────────────────────────── */
+body.page-archive .btn-chart {
+    display: flex;
+    justify-content: flex-end;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    margin-top: 10px;
+    align-items: center;
+    gap: 12px;
+}
+
+body.page-archive .clear-btn {
+    margin-right: 0;
+}
+
+/* ── KPI mini cards ────────────────────────────────────────── */
+body.page-archive .card-box {
+    height: 101px !important;
+    width: 100% !important;
+    border: 1px solid var(--ees-border, #e2e8f0) !important;
+    border-radius: var(--ees-radius-sm, 6px);
+}
+
+/* ── DataTables export buttons (archive.js) ─────────────────── */
+body.page-archive .dt-button {
     color: #fff;
     background-color: #0d6efd;
     border-color: #0d6efd;
@@ -19,52 +84,6 @@
     border-radius: 0.25rem;
 }
 
-table.table-bordered.dataTable thead tr:first-child th {
-    color: white;
-}
-
-input {
-    padding: 5px;
-    font-size: 14px;
-    border-radius: 1px;
-    width: auto;
-    border: 1px solid #767676;
-}
-
-.btn-chart {
-    display: flex;
-    justify-content: flex-end;
-    margin-right: 20px;
-    margin-bottom: 20px;
-    margin-top: 10px;
-    align-items: center;
-}
-
-.clear-btn {
-    margin-right: 15px;
-}
-
-.select {
-    margin-top: 1px;
-    padding-bottom: 10px !important;
-}
-
-.alarms-sort {
-    padding: 8px;
-    width: 218px;
-    font-size: 14px;
-    border-radius: 1px;
-    margin-left: 20px;
-    margin-bottom: 20px;
-}
-
-.submit {
-    margin-bottom: 15px;
-    margin-left: 20px;
-}
-
-.card-box {
-    height: 101px !important;
-    width: 100% !important;
-    border: 1px solid black !important;
+body.page-archive #tbl_archive.table-bordered.dataTable thead tr:first-child th {
+    color: #fff;
 }

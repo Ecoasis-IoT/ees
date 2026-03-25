@@ -11,35 +11,86 @@ body.page-plant #main-content .container-fluid {
     padding-right: 12px !important;
 }
 
-/* Match original inline <style> — filter field labels stay 18px (inline on h2) */
-body.page-plant .plant-legacy-filter input:not([type="button"]):not([type="submit"]),
-body.page-plant .plant-legacy-filter textarea {
-    padding: 5px;
-    margin-left: 7px;
-    margin-bottom: 15px;
-    font-size: 14px;
-    border-radius: 1px;
-    width: auto;
-    max-width: calc(100% - 7px);
-    box-sizing: border-box;
-    border: 1px solid #767676;
+/* ── Plant filter form (modern; teal accent, full-width fields, EES tokens) ── */
+body.page-plant .plant-legacy-filter.plant-filter-card {
+    border: 1px solid #3d8881 !important;
+    border-radius: var(--ees-card-radius, 12px) !important;
+    background: var(--ees-card-bg, #fff) !important;
+    box-shadow: var(--ees-card-shadow, 0 1px 3px rgba(0, 0, 0, 0.06)) !important;
+    overflow: hidden;
 }
 
-body.page-plant .plant-legacy-filter select.alarms-sort,
-body.page-plant .plant-legacy-filter input.alarms-sort {
-    margin-left: 7px;
-    padding: 8px;
-    width: 218px;
-    max-width: calc(100% - 7px);
-    font-size: 14px;
-    border-radius: 1px;
-    border: 1px solid #767676;
-    box-sizing: border-box;
+body.page-plant .plant-legacy-filter.plant-filter-card > .plant-filter-row {
+    margin: 0 !important;
+    padding: 1.25rem 1.25rem 1.35rem !important;
+}
+
+@media (min-width: 992px) {
+    body.page-plant .plant-legacy-filter.plant-filter-card > .plant-filter-row {
+        padding: 1.5rem 1.5rem 1.6rem !important;
+    }
+}
+
+body.page-plant .plant-legacy-filter .header {
+    padding: 0 0 0.4rem 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border-bottom: none !important;
 }
 
 body.page-plant .plant-legacy-filter .header h2 {
-    font-size: 18px !important;
-    font-weight: bold !important;
+    font-size: 0.8125rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ees-text-secondary, #475569) !important;
+    margin: 0 !important;
+    line-height: 1.35 !important;
+}
+
+body.page-plant .plant-legacy-filter select.alarms-sort,
+body.page-plant .plant-legacy-filter input.alarms-sort,
+body.page-plant .plant-legacy-filter textarea.alarms-sort,
+body.page-plant .plant-legacy-filter textarea {
+    display: block;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.45;
+    color: var(--ees-text-primary, #0f172a) !important;
+    background-color: #fff !important;
+    border: 1px solid var(--ees-border, #e2e8f0) !important;
+    border-radius: var(--ees-radius-sm, 6px) !important;
+    box-sizing: border-box !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.page-plant .plant-legacy-filter textarea.plant-filter-textarea {
+    min-height: 118px;
+    resize: vertical;
+}
+
+body.page-plant .plant-legacy-filter select.alarms-sort:focus,
+body.page-plant .plant-legacy-filter input.alarms-sort:focus,
+body.page-plant .plant-legacy-filter textarea:focus {
+    outline: none !important;
+    border-color: #3d8881 !important;
+    box-shadow: 0 0 0 3px rgba(61, 136, 129, 0.18) !important;
+}
+
+body.page-plant .plant-legacy-filter .cmt-btn,
+body.page-plant .plant-legacy-filter #preview_btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0 !important;
+    align-self: flex-start;
+}
+
+body.page-plant .plant-legacy-filter #cmd {
+    align-self: stretch;
 }
 
 /* Report + dashboard cards: 30px titles (original global .card .header h2) */
