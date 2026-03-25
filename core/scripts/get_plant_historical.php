@@ -10,16 +10,34 @@ $site_id  = intval($_POST['site_id']  ?? 0);
 $end_date = trim($_POST['end_date']   ?? date('Y-m-d'));
 $month    = (int)date('m', strtotime($end_date));
 
-if (!$site_id) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
+if (!$site_id) {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'code' => 'bad_params', 'message' => 'Missing site.']);
+    exit;
+}
 
 $adm  = getDB('admin');
 $stmt = $adm->prepare("SELECT db_name FROM tbl_site WHERE id = :id");
 $stmt->execute([':id' => $site_id]);
-$site = $stmt->fetch();
-if (!$site) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
+$site = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$site) {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'code' => 'site_not_found', 'message' => 'Unknown site. Refresh the page and choose a plant again.']);
+    exit;
+}
 
-$pdo = tryGetDB(ees_db_key($site['db_name']));
-if (!$pdo) { ob_end_clean(); echo json_encode([]); exit; }
+$dbKey = ees_db_key((string)$site['db_name']);
+$pdo   = tryGetDB($dbKey);
+if (!$pdo) {
+    error_log('get_plant_historical: tryGetDB failed for key ' . $dbKey . ' (site db_name=' . ($site['db_name'] ?? '') . ')');
+    ob_end_clean();
+    echo json_encode([
+        'status'  => 'Err',
+        'code'    => 'db_unavailable',
+        'message' => 'Could not connect to this plant database. Check .env credentials for the site DB (see server log for key).',
+    ]);
+    exit;
+}
 
 try {
     $hist_stmt = $pdo->prepare(
@@ -38,22 +56,22 @@ try {
 
     $current_year = (int)date('Y');
 
-    // PDO does not allow the same named param twice — use :yr_label vs :yr_filter
+    // Literal year in SELECT (int) — avoids driver issues with bound params in the SELECT list
     $curr_stmt = $pdo->prepare(
-        "SELECT :yr_label as year,
-                MAX(total_active_energy) - MIN(total_active_energy) as production
+        'SELECT ' . $current_year . ' AS year,
+                MAX(total_active_energy) - MIN(total_active_energy) AS production
          FROM tbl_main_meter
-         WHERE YEAR(date) = :yr_filter AND MONTH(date) = :month"
+         WHERE YEAR(date) = :yr_filter AND MONTH(date) = :month'
     );
-    $curr_stmt->execute([':yr_label' => $current_year, ':yr_filter' => $current_year, ':month' => $month]);
-    $current = $curr_stmt->fetch();
+    $curr_stmt->execute([':yr_filter' => $current_year, ':month' => $month]);
+    $current = $curr_stmt->fetch(PDO::FETCH_ASSOC);
 
     $irr_stmt = $pdo->prepare(
         "SELECT SUM(insolation) as insolation FROM plant_irradiance
          WHERE YEAR(date) = :yr AND MONTH(date) = :month"
     );
     $irr_stmt->execute([':yr' => $current_year, ':month' => $month]);
-    $curr_irr = $irr_stmt->fetch();
+    $curr_irr = $irr_stmt->fetch(PDO::FETCH_ASSOC);
 
     $history[] = [
         'year'       => (string)$current_year,
@@ -66,5 +84,9 @@ try {
 } catch (PDOException $e) {
     error_log("get_plant_historical error: " . $e->getMessage());
     ob_end_clean();
-    echo json_encode(['status' => 'Err']);
+    echo json_encode([
+        'status'  => 'Err',
+        'code'    => 'sql_error',
+        'message' => 'Data query failed. See server log for details.',
+    ]);
 }

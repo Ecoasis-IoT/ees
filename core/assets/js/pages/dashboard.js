@@ -4,6 +4,19 @@
 (function () {
     'use strict';
 
+    // KPI helpers
+    function setKpi(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = val;
+    }
+
+    function fmtNum(n) {
+        var num = parseFloat(n) || 0;
+        return num >= 1000
+            ? (num / 1000).toFixed(1) + 'k'
+            : num.toFixed(2);
+    }
+
     // Map initialisation
     var map = new L.map('sites_map').setView([-20.2337508, 57.5510122], 10);
 
@@ -26,6 +39,17 @@
             dataType: 'json',
             data: {},
             success: function (data) {
+
+                // Populate KPI cards
+                var totalProd  = 0;
+                var totalPower = 0;
+                for (var k = 0; k < data.length; k++) {
+                    totalProd  += parseFloat(data[k].prod)        || 0;
+                    totalPower += parseFloat(data[k].active_power) || 0;
+                }
+                setKpi('kpi-total-sites', data.length);
+                setKpi('kpi-total-prod',  fmtNum(totalProd));
+                setKpi('kpi-total-power', fmtNum(totalPower));
 
                 for (var i = 0; i < data.length; i++) {
                     var row;
@@ -53,9 +77,12 @@
                 var chart_data = {
                     labels: chart_labels,
                     datasets: [{
-                        label: 'Production (KWh)',
+                        label: 'Production (kWh)',
                         data:  chart_prod,
-                        backgroundColor: ['#00bdaa']
+                        backgroundColor: 'rgba(112,173,71,.75)',
+                        borderColor:     '#70AD47',
+                        borderWidth:     1,
+                        borderRadius:    4
                     }]
                 };
 

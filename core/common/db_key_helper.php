@@ -42,9 +42,10 @@ if (!function_exists('ees_db_key')) {
             ];
         }
 
-        // Strip .php extension if present
+        // Strip .php extension if present (tbl_site often stores e.g. phoenix_mall.php)
         $key = pathinfo($db_name, PATHINFO_FILENAME);
-        return $map[$db_name] ?? $map[$key] ?? $db_name;
+        // Prefer mapped short key; else basename so tryGetDB is not called with a .php string
+        return $map[$db_name] ?? $map[$key] ?? $key;
     }
 
 }

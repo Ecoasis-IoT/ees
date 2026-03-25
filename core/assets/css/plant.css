@@ -19,12 +19,11 @@
 /*}*/
 
 #enl-logo {
-    width:127px;
-    height:auto;
-    float:right;
-    position:absolute;
-    bottom:0;
-    right:10px;    
+    width: 127px;
+    height: auto;
+    float: right;
+    display: block;
+    margin-left: auto;
 }
 
 #textarea {
@@ -38,7 +37,9 @@
     padding: 4px;
     background-color: white;
     border-radius: 5px;
-    width:1225px;
+    width: 100%;
+    max-width: 1225px;
+    box-sizing: border-box;
     padding-right: var(--bs-gutter-x, 1rem);
     padding-left: var(--bs-gutter-x, .75rem);
     margin-right: auto;
@@ -48,11 +49,10 @@
 
 .pdf-footer > p {
     /*font-family: 'NunitoSans-Regular';*/
-    color:#C00000;
-    font-weight: bold; 
-    position:absolute;
-    bottom:0;
-    margin-bottom:0px;    
+    color: #c00000;
+    font-weight: bold;
+    position: static;
+    margin-bottom: 0;
 }
 
 .pdf-footer > p > span {

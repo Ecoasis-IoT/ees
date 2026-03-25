@@ -132,6 +132,10 @@ define('TWO_FACTOR_REQUIRED_FOR_ADMIN',   filter_var($_ENV['TWO_FACTOR_REQUIRED_
 define('TWO_FACTOR_BACKUP_CODES_COUNT',   intval($_ENV['TWO_FACTOR_BACKUP_CODES_COUNT']       ?? 10));
 define('TWO_FACTOR_WINDOW',               intval($_ENV['TWO_FACTOR_WINDOW']                   ?? 1));
 
+// Branding
+define('APP_NAME', $_ENV['APP_NAME'] ?? 'EES');
+define('APP_LOGO', $_ENV['APP_LOGO'] ?? 'assets/images/logo_icon.png');
+
 // Timezone
 date_default_timezone_set(TIMEZONE);
 

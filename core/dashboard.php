@@ -43,6 +43,7 @@ $csrf_token = generateCSRFToken();
     <!-- Main CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
     <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
     <!-- Page-specific CSS -->
     <?= assetCssTag('assets/css/pages/dashboard.css') ?>
@@ -59,22 +60,60 @@ $csrf_token = generateCSRFToken();
         <div id="main-content">
             <div class="container-fluid">
                 <div class="block-header">
-                    <div class="row g-3">
-                        <div class="col-lg-5 col-md-8 col-sm-12">
-                            <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Dashboard</h2>
-                            <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
-                                <li class="breadcrumb-item active">Dashboard</li>
-                            </ul>
+                    <div class="block-header-bar">
+                        <h2>Dashboard</h2>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
+                            <li class="breadcrumb-item active">Dashboard</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- KPI Stat Cards -->
+                <div class="row g-2 mb-2">
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon green">
+                                <i class="fa fa-sitemap"></i>
+                            </div>
+                            <div>
+                                <div class="ees-stat-label">Total Sites</div>
+                                <div class="ees-stat-value" id="kpi-total-sites">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon blue">
+                                <i class="fa fa-bolt"></i>
+                            </div>
+                            <div>
+                                <div class="ees-stat-label">Today's Production</div>
+                                <div class="ees-stat-value" id="kpi-total-prod">—</div>
+                                <div class="ees-stat-sub">kWh total</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon orange">
+                                <i class="fa fa-tachometer"></i>
+                            </div>
+                            <div>
+                                <div class="ees-stat-label">Active Power</div>
+                                <div class="ees-stat-value" id="kpi-total-power">—</div>
+                                <div class="ees-stat-sub">kW combined</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="row clearfix g-3 mb-3">
+                <!-- Sites table + chart (left) | Map (right) -->
+                <div class="row clearfix g-2 mb-2">
                     <div class="col-lg-6 col-md-12 col-sm-12">
                         <div class="card shadow-sm">
-                            <div class="header" style="padding-bottom:0px;">
-                                <h2 style="display:inline-block;">All Sites</h2>
+                            <div class="header">
+                                <h2>All Sites</h2>
                             </div>
                             <div class="body" id="tbl_production">
                                 <div class="table-responsive">
@@ -82,7 +121,7 @@ $csrf_token = generateCSRFToken();
                                         <thead>
                                             <tr>
                                                 <th>Site Name</th>
-                                                <th>Production (KWh)</th>
+                                                <th>Production (kWh)</th>
                                                 <th>Active Power (kW)</th>
                                             </tr>
                                         </thead>
@@ -91,11 +130,11 @@ $csrf_token = generateCSRFToken();
                                 </div>
                             </div>
 
-                            <div class="header" style="padding-bottom:0px;padding-top:0px;">
-                                <h2 style="display:inline-block;">Today's Production <small>All Sites production for today</small></h2>
+                            <div class="header" style="border-top:1px solid var(--ees-border);">
+                                <h2>Today's Production <small>All sites combined</small></h2>
                             </div>
                             <div class="body" id="chart-con">
-                                <div class="chartBox" style="height:400px;">
+                                <div class="chartBox" style="height:340px;">
                                     <canvas id="myChart"></canvas>
                                 </div>
                             </div>
@@ -103,9 +142,12 @@ $csrf_token = generateCSRFToken();
                     </div>
 
                     <div class="col-lg-6 col-md-12 col-sm-12">
-                        <div class="card shadow-sm" style="height:75vh;">
-                            <div id="map_container">
-                                <div id="sites_map"></div>
+                        <div class="card shadow-sm" style="min-height:560px;">
+                            <div class="header">
+                                <h2>Site Map</h2>
+                            </div>
+                            <div id="map_container" style="padding:0;">
+                                <div id="sites_map" style="height:500px;border-radius:0 0 12px 12px;"></div>
                             </div>
                         </div>
                     </div>

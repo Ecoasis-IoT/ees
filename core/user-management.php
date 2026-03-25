@@ -21,6 +21,7 @@ $csrf_token = generateCSRFToken();
 
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <style>
 

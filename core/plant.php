@@ -29,6 +29,7 @@ $csrf_token = generateCSRFToken();
 
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <!-- HTML TO PDF -->
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>-->
@@ -49,7 +50,7 @@ $csrf_token = generateCSRFToken();
 
 </head>
 
-<body data-theme="theme-cyan">
+<body data-theme="theme-cyan" class="page-plant">
 
 <!-- Page Loader -->
 <?php include_once("common/page-loader.php") ?>
@@ -66,92 +67,82 @@ $csrf_token = generateCSRFToken();
 
     <div id="main-content">
         <div class="container-fluid">
-            <div class="block-header">
+            <div class="block-header plant-legacy-block-header">
                 <div class="row g-3">
-                    <div class="col-lg-5 col-md-8 col-sm-12">                        
-                        <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left" onclick="fullwidth()"></i></a>Reports</h2>
+                    <div class="col-lg-5 col-md-8 col-sm-12">
+                        <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth" href="javascript:void(0);" aria-label="Toggle layout width"><i class="fa fa-arrow-left"></i></a>Reports</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
                             <li class="breadcrumb-item">Reports</li>
                             <li class="breadcrumb-item active">Plant</li>
                         </ul>
-                    </div>            
+                    </div>
                 </div>
-            </div>            
+            </div>
 
-            <div class="card mb-3 no-border">
+            <div class="card mb-3 no-border plant-legacy-filter">
                 <div class="row">
                     <div class="col-lg-5">
                         <div class="row">
                             <div class="col-lg-6 col-xs-6 col-sm-6">
                                 <div class="header">
-                                    <h2 style="font-size: 18px;">CHOOSE A PLANT:</h2>                            
+                                    <h2 style="font-size: 18px;">CHOOSE A PLANT:</h2>
                                 </div>
                                 <div class="control">
-                                    <select name="sort" id="site_opt" class="alarms-sort" required="">
-                                        <option value="7777" class="d-none">Phoenix Mall</option>
-                                        <option value="7778" class="d-none">Home and Leisure</option>
-                                        <option value="7779" class="d-none">Riche Terre Mall</option>
-                                        <option value="7780" class="d-none">Bo'Valon</option>
-                                        <option value="7781" class="d-none">Plaisance Catering</option>
-                                        <option value="7782" class="d-none">Moka City</option>
+                                    <select name="sort" id="site_opt" class="alarms-sort" required>
+                                        <option value="">Choose a plant…</option>
                                     </select>
-                                </div> 
+                                </div>
                             </div>
-                            
                             <div class="col-lg-6 col-xs-6 col-sm-6">
                                 <div class="header">
-                                    <h2 style="font-size: 18px;">BUDGETED PRODUCTION:</h2>                            
+                                    <h2 style="font-size: 18px;">BUDGETED PRODUCTION:</h2>
                                 </div>
-                                <input type="text" id="budget_prod_input" name="budgeted" class="alarms-sort" placeholder="Insert the budgeted production">           
+                                <input type="text" id="budget_prod_input" name="budgeted" class="alarms-sort" placeholder="Insert the budgeted production">
                             </div>
-                        </div>                        
-                        
+                        </div>
                         <div class="row">
                             <div class="col-lg-6 col-xs-6 col-sm-6">
                                 <div class="header" style="margin-top: 21px;">
-                                    <h2 style="font-size: 18px;">START DATE:</h2>                            
+                                    <h2 style="font-size: 18px;">START DATE:</h2>
                                 </div>
                                 <input type="date" id="startDate" name="startdate" class="alarms-sort" required>
                             </div>
-                            
                             <div class="col-lg-6 col-xs-6 col-sm-6">
                                 <div class="header" style="margin-top: 21px;">
-                                    <h2 style="font-size: 18px;">END DATE:</h2>                            
+                                    <h2 style="font-size: 18px;">END DATE:</h2>
                                 </div>
-                                <input type="date" id="endDate" name="enddate" class="alarms-sort" required>           
+                                <input type="date" id="endDate" name="enddate" class="alarms-sort" required>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-lg-5">
                         <div class="header">
-                            <h2 style="font-size: 18px;">ENTER YOUR COMMENTS:</h2>  
-                        </div>  
+                            <h2 style="font-size: 18px;">ENTER YOUR COMMENTS:</h2>
+                        </div>
                         <textarea placeholder="Enter your comments..." id="comments_input" rows="5" cols="70" maxlength="547" required></textarea>
-                        <button class="cmt-btn btn btn-primary mb-3 js-sweetalert" id="preview_btn" onclick="query();">View Changes</button>
+                        <button type="button" class="cmt-btn btn btn-primary mb-3 js-sweetalert" id="preview_btn" onclick="query();">View Changes</button>
                     </div>
-
                     <div class="col-lg-2">
-                        <button class="btn btn-primary mb-3" style="display: inline-block;" id="cmd" onclick="generatePdf();">Generate PDF Report</button>         
+                        <button type="button" class="btn btn-primary mb-3" style="display: inline-block;" id="cmd" onclick="generatePdf();">Generate PDF Report</button>
                     </div>
-                </div>                   
+                </div>
             </div>
-            
+
             <div class="row">
-                <div class="col-lg-12" style="overflow:auto;">
-                    <div class="pdf-container mb-3" id="content">
-                        <div class="row clearfix g-3">
+                <div class="col-lg-12 plant-report-scroll-wrap">
+                    <div class="pdf-container mb-3" id="plant_report_block">
+                        <div class="row clearfix g-3 plant-report-logo-row">
                             <div class="col-lg-12">
-                                <img src="" id="eco-logo" alt="" />
-                            </div>                    
+                                <img src="" id="eco-logo" alt="">
+                            </div>
                         </div>
 
                         <div class="row clearfix g-3 mb-3">
                             <div class="col-lg-12">
-                                <h5 class="text-center reports-title" contenteditable>ECOASIS &nbsp;- <p id="output" class="mb-0 d-inline text-uppercase"></p> - <span id="monthyear" style="text-transform:uppercase;font-family: 'Nunito Sans', sans-serif;" contenteditable></span></h5>
-                            </div>                    
-                        </div> 
+                                <h5 class="text-center reports-title" contenteditable>ECOASIS &nbsp;- <p id="output" class="mb-0 d-inline text-uppercase"></p> - <span id="monthyear" style="text-transform:uppercase;font-family: Arial;" contenteditable></span></h5>
+                            </div>
+                        </div>
 
                         <div class="row clearfix g-3 mb-3">
                             <div class="col-lg-3 col-md-5 col-sm-5 col-xs-12">
@@ -195,16 +186,16 @@ $csrf_token = generateCSRFToken();
                             <div class="col-lg-9 col-md-7 col-sm-7 col-xs-12">
                                 <div class="card text-center" style="height:452px;">
                                     <div class="header">
-                                        <h2>Production v/s Irradiance</h2>                            
+                                        <h2>Production v/s Irradiance</h2>
                                     </div>
-                                    <div class="body chartBox">                        
-                                        <canvas id="barChart"></canvas>                        
-                                    </div>                    
+                                    <div class="body chartBox">
+                                        <canvas id="barChart"></canvas>
+                                    </div>
                                 </div>
                             </div>               
                         </div>
 
-                        <div class="row clearfix g-3 mb-3">
+                        <div class="row clearfix g-3 mb-3 plant-report-dual-col">
                             <div class="col-lg-5 col-md-6 col-sm-6 col-xs-12">                                                                                                 
                                 <div class="card shadow-sm">
                                     <div class="header text-center">
@@ -266,11 +257,11 @@ $csrf_token = generateCSRFToken();
 
                                 <div class="card text-center" style="height:516px;">
                                     <div class="header">
-                                        <h2>Historical Data</h2>                            
+                                        <h2>Historical Data</h2>
                                     </div>
-                                    <div class="body chartBox2">                        
-                                        <canvas id="barChart2"></canvas>                        
-                                    </div>                    
+                                    <div class="body chartBox2">
+                                        <canvas id="barChart2"></canvas>
+                                    </div>
                                 </div>                    
                             </div>
                         </div>  
@@ -289,14 +280,14 @@ $csrf_token = generateCSRFToken();
                         </div> 
 
 
-                        <div class="row clearfix g-3">               
+                        <div class="row clearfix g-3 plant-report-footer-row">
                             <div class="col-lg-6 pdf-footer" style="position:relative;">
                                 <p style="margin-bottom:0px;">Ecoasis&nbsp; Energy Solutions Ltd<br> <span>Highlands, Mauritius | T: +230 650 6970 | E:info@ecoasis.mu</span></p>
                             </div>
 
-                            <div class="col-lg-6" style="position:relative;">
-                                <img id="enl-logo" alt="" />                         
-                            </div>                
+                            <div class="col-lg-6 plant-report-footer-logo" style="position:relative;">
+                                <img id="enl-logo" alt="">
+                            </div>
                         </div>
 
                     </div> 

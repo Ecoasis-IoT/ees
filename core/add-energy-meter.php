@@ -18,6 +18,7 @@ require_once __DIR__ . '/common/csrf.php';
 
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <link rel="stylesheet" href="assets/css/pages/form-pages.css">
 

@@ -34,6 +34,7 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
     <link rel="stylesheet" href="assets/css/pages/form-pages.css">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
@@ -41,15 +42,12 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
-        .profile-section { margin-bottom: 30px; }
-        .alert { padding: 10px 16px; border-radius: 4px; margin-bottom: 15px; display: none; }
-        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-danger  { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .tfa-badge-on  { display:inline-block; background:#28a745; color:#fff; padding:2px 10px; border-radius:12px; font-size:12px; }
-        .tfa-badge-off { display:inline-block; background:#6c757d; color:#fff; padding:2px 10px; border-radius:12px; font-size:12px; }
+        #info-success, #info-error, #pass-success, #pass-error, #tfa-success, #tfa-error { display: none; }
+        .tfa-badge-on  { display:inline-block; background:rgba(112,173,71,.15); color:#3d6d1f; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+        .tfa-badge-off { display:inline-block; background:rgba(100,116,139,.12); color:#475569; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
         #qr-setup-section { display:none; }
-        .backup-codes-list { column-count:2; list-style:none; padding:0; font-family:monospace; font-size:15px; }
-        .backup-codes-list li { padding:3px 0; }
+        .backup-codes-list { column-count:2; list-style:none; padding:0; font-family:monospace; font-size:14px; }
+        .backup-codes-list li { padding:4px 0; color:#475569; }
     </style>
 </head>
 <body data-theme="theme-cyan">
@@ -60,12 +58,13 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
     <?php include_once("common/header.php") ?>
     <?php include_once("common/sidebar.php") ?>
 
-    <div id="main-content">
-        <div class="container-fluid">
+    <div id="content">
+        <div id="main-content">
+            <div class="container-fluid">
             <div class="block-header">
                 <div class="row g-3">
                     <div class="col-lg-6 col-md-8 col-sm-12">
-                        <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Profile Settings</h2>
+                        <h2>Profile Settings</h2>
                         <ul class="breadcrumb">
                             <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
                             <li class="breadcrumb-item active">Profile</li>
@@ -82,17 +81,36 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
                         <div class="body">
                             <div class="alert alert-success" id="info-success"></div>
                             <div class="alert alert-danger"  id="info-error"></div>
-                            <table class="table table-bordered">
-                                <tr><td style="width:160px;">Username</td>
-                                    <td><input class="form-control" id="profile-username" value="<?= htmlspecialchars($user['username'] ?? '') ?>" readonly style="background:#f5f5f5;"></td></tr>
-                                <tr><td>First Name</td>
-                                    <td><input class="form-control" id="profile-fname" value="<?= htmlspecialchars($user['firstname'] ?? '') ?>"></td></tr>
-                                <tr><td>Last Name</td>
-                                    <td><input class="form-control" id="profile-lname" value="<?= htmlspecialchars($user['lastname'] ?? '') ?>"></td></tr>
-                                <tr><td>Email</td>
-                                    <td><input class="form-control" id="profile-email" value="<?= htmlspecialchars($user['email'] ?? '') ?>"></td></tr>
-                            </table>
-                            <button class="btn btn-primary" onclick="saveProfileInfo(this)">Save Changes</button>
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input class="form-control" id="profile-username"
+                                       value="<?= htmlspecialchars($user['username'] ?? '') ?>"
+                                       readonly style="background:#F8FAFC;cursor:default;">
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label class="form-label">First Name</label>
+                                        <input class="form-control" id="profile-fname"
+                                               value="<?= htmlspecialchars($user['firstname'] ?? '') ?>">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Last Name</label>
+                                        <input class="form-control" id="profile-lname"
+                                               value="<?= htmlspecialchars($user['lastname'] ?? '') ?>">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                <input class="form-control" id="profile-email"
+                                       value="<?= htmlspecialchars($user['email'] ?? '') ?>">
+                            </div>
+                            <button class="btn btn-primary" onclick="saveProfileInfo(this)">
+                                <i class="fa fa-save"></i>&nbsp; Save Changes
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -104,15 +122,21 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
                         <div class="body">
                             <div class="alert alert-success" id="pass-success"></div>
                             <div class="alert alert-danger"  id="pass-error"></div>
-                            <table class="table table-bordered">
-                                <tr><td style="width:180px;">Current Password</td>
-                                    <td><input type="password" class="form-control" id="current-pass"></td></tr>
-                                <tr><td>New Password</td>
-                                    <td><input type="password" class="form-control" id="new-pass"></td></tr>
-                                <tr><td>Confirm New Password</td>
-                                    <td><input type="password" class="form-control" id="confirm-pass"></td></tr>
-                            </table>
-                            <button class="btn btn-warning" onclick="changePassword(this)">Change Password</button>
+                            <div class="form-group">
+                                <label class="form-label">Current Password</label>
+                                <input type="password" class="form-control" id="current-pass" placeholder="Enter current password">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="new-pass" placeholder="Enter new password">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Confirm New Password</label>
+                                <input type="password" class="form-control" id="confirm-pass" placeholder="Confirm new password">
+                            </div>
+                            <button class="btn btn-warning" onclick="changePassword(this)">
+                                <i class="fa fa-lock"></i>&nbsp; Change Password
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -173,9 +197,10 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
             </div>
 
             <?php include_once("common/footer.php") ?>
-        </div>
-    </div>
-</div>
+            </div><!-- /.container-fluid -->
+        </div><!-- /#main-content -->
+    </div><!-- /#content -->
+</div><!-- /#wrapper -->
 
 <script src="assets/bundles/libscripts.bundle.js"></script>
 <script src="assets/bundles/vendorscripts.bundle.js"></script>

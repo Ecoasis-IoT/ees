@@ -1,14 +1,27 @@
-var page = document.getElementById("content");
-    page.style.display = 'none';
-    
+var page = document.getElementById("plant_report_block");
+    if (page) page.style.display = "none";
+
     var pdfbtn = document.getElementById("cmd");
-    pdfbtn.style.visibility = 'hidden';
+    if (pdfbtn) pdfbtn.style.visibility = "hidden";
 
     //Check if it is a number
     function isNumeric(str) {
       if (typeof str != "string") return false // we only process strings!  
       return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
              !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
+    }
+
+    /** After #plant_report_block is shown, chart parents may have been display:none — sync canvas to layout */
+    function resizePlantCharts() {
+        if (typeof Chart === "undefined") return;
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                ["barChart", "barChart2"].forEach(function (id) {
+                    var c = Chart.getChart(id);
+                    if (c) c.resize();
+                });
+            });
+        });
     }
     
     //Change Date Format
@@ -18,34 +31,48 @@ var page = document.getElementById("content");
     }
     
     
-    $(function sites_name(){
-    
-        $.ajax({
-            type: "POST",
-            url: "scripts/get_all_sites.php",
-            data: {
-                
-            },
-            success: function(data) {
-                var sites = data.data;
-                
-                var select = document.getElementById("site_opt");
-                
-                for(var i = 0; i < sites.length; i++){
-                    
-                    var option = document.createElement("option");
-                    option.text = sites[i][1];
-                    option.value = sites[i][0];
-                    
-                    select.appendChild(option);
-                    
+    function loadPlantSitesIntoSelect() {
+        var select = document.getElementById("site_opt");
+        if (!select) return;
+
+        fetch("scripts/get_all_sites.php", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" }
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error(res.status + " " + res.statusText);
+                return res.json();
+            })
+            .then(function (data) {
+                var raw = data && data.data;
+                var sites = Array.isArray(raw) ? raw : [];
+
+                while (select.options.length > 1) {
+                    select.remove(1);
                 }
-                
-                
-            }
+
+                for (var i = 0; i < sites.length; i++) {
+                    var s = sites[i];
+                    var option = document.createElement("option");
+                    var id = s.id != null ? s.id : s[0];
+                    var name = s.site_name != null ? s.site_name : s[1];
+                    option.value = id === undefined || id === null ? "" : String(id);
+                    option.textContent = name != null ? String(name) : "";
+                    select.appendChild(option);
+                }
+            })
+            .catch(function (err) {
+                console.error("get_all_sites failed:", err);
             });
-    });
-    
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", loadPlantSitesIntoSelect);
+    } else {
+        loadPlantSitesIntoSelect();
+    }
+
     function numberWithSpaces(x) {
         var parts = x.toString().split(".");
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -69,9 +96,12 @@ var page = document.getElementById("content");
         document.getElementById("rec-monthyear").innerHTML = month + " " + year;
 
         
-        var site_id = $('#site_opt').find(":selected").val();
-        
-        // console.log(start_date);
+        var siteOpt = document.getElementById("site_opt");
+        var site_id = siteOpt ? siteOpt.value : "";
+        if (!site_id || String(site_id).trim() === "") {
+            EES.alert("Please choose a plant from the list.", "warning");
+            return;
+        }
         
         if(!document.getElementById("startDate").value || !document.getElementById("endDate").value) {
             EES.alert('Starting and Ending Date is Missing!', 'warning');
@@ -94,6 +124,7 @@ var page = document.getElementById("content");
                 type: "POST",
                 url: "scripts/get_plant_total_prod.php",
                 dataType: 'json',
+                headers: { "X-Requested-With": "XMLHttpRequest" },
                 data: {
                     "site_id": site_id,
                     "start_date": start_date,
@@ -102,7 +133,10 @@ var page = document.getElementById("content");
                 },
                 success: function(data) {
                     EES.btnReset(queryBtn);
-                    if (!data || data.status === 'Err') return;
+                    if (!data || data.status === 'Err') {
+                        if (data && data.message) EES.alert(data.message, "warning");
+                        return;
+                    }
                     document.getElementById("plant_total_prod").innerHTML = numberWithSpaces(data.prod);
                     document.getElementById("plant_total_prod2").innerHTML = numberWithSpaces(data.prod);
                     
@@ -148,13 +182,17 @@ var page = document.getElementById("content");
                 type: "POST",
                 url: "scripts/get_plant_daily.php",
                 dataType: 'json',
+                headers: { "X-Requested-With": "XMLHttpRequest" },
                 data: {
                     "site_id": site_id,
                     "start_date": start_date,
                     "end_date": end_date
                 },
                 success: function(data) {
-                    if (!data || data.status === 'Err' || !Array.isArray(data)) return;
+                    if (!data || data.status === 'Err' || !Array.isArray(data)) {
+                        if (data && data.message) EES.alert(data.message, "warning");
+                        return;
+                    }
                     for (var i = 0; i < data.length; i++){
                         
                             var new_date = convertDate(data[i]['date']);
@@ -303,6 +341,7 @@ var page = document.getElementById("content");
                       document.getElementById('barChart'),
                       configBar
                     );
+                    resizePlantCharts();
                     
                 }
         });
@@ -323,12 +362,16 @@ var page = document.getElementById("content");
             type: "POST",
             url: "scripts/get_plant_historical.php",
             dataType: 'json',
+            headers: { "X-Requested-With": "XMLHttpRequest" },
             data: {
                 "site_id": site_id,
                 "end_date": end_date
             },
             success: function(data) {
-                if (!data || data.status === 'Err' || !Array.isArray(data)) return;
+                if (!data || data.status === 'Err' || !Array.isArray(data)) {
+                    if (data && data.message) EES.alert(data.message, "warning");
+                    return;
+                }
                 for (var i = 0; i < data.length; i++){
 
                     h_year.push(String(data[i]['year']));
@@ -439,6 +482,7 @@ var page = document.getElementById("content");
                   document.getElementById('barChart2'),
                   configBar2
                 );
+                resizePlantCharts();
                 
             }
         });
@@ -494,7 +538,7 @@ $("#endDate").on("change", function(){
 
 // document.getElementById('cmd')
 // .addEventListener('click', () => {
-//     const element = document.getElementById('content');
+//     const element = document.getElementById('plant_report_block');
 //     const options = {
 //         filename: 'Report.pdf',
 //         margin: 0,
@@ -511,32 +555,117 @@ $("#endDate").on("change", function(){
 window.jsPDF = window.jspdf.jsPDF;
 
 function generatePdf() {
-    var jsPdf = new jsPDF('p','pt','letter');
-    var htmlElement = document.getElementById('content');
+    var el = document.getElementById('plant_report_block');
+    if (!el) return;
+    if (el.style.display === 'none' || window.getComputedStyle(el).display === 'none') {
+        if (typeof EES !== 'undefined' && EES.alert) {
+            EES.alert('Run “View Changes” first so the report is visible, then generate the PDF.', 'warning');
+        }
+        return;
+    }
 
-    const opt = {
-        callback: function (jsPdf) {
-            var totalPages = jsPdf.internal.getNumberOfPages();
+    resizePlantCharts();
 
-            for (var i = 2; i <= totalPages; i++) {
-                jsPdf.setPage(i);
-                jsPdf.deletePage(i);
-                i--;
-                totalPages--;
+    var pdfBtn = document.getElementById('cmd');
+    if (typeof EES !== 'undefined' && EES.btnLoad && pdfBtn) EES.btnLoad(pdfBtn, 'Building PDF…');
+
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            if (typeof html2canvas === 'undefined') {
+                if (typeof EES !== 'undefined' && EES.btnReset && pdfBtn) EES.btnReset(pdfBtn);
+                if (typeof EES !== 'undefined' && EES.alert) EES.alert('PDF capture library failed to load.', 'error');
+                return;
             }
 
-            jsPdf.save("Report.pdf");
-            // to open the generated PDF in browser window
-            window.open(jsPdf.output('bloburl'));
-        },
-        margin:0,
-        html2canvas: {
-            dpi: 300,
-            scale: 0.5,
-            compress: false,
-        }
-    };
-    jsPdf.html(htmlElement, opt);
+            var er = el.getBoundingClientRect();
+            var captureW = Math.max(el.scrollWidth, el.offsetWidth, 1024);
+            el.querySelectorAll('canvas').forEach(function (cv) {
+                var cr = cv.getBoundingClientRect();
+                captureW = Math.max(captureW, Math.ceil(cr.right - er.left) + 16);
+            });
+            el.querySelectorAll('table').forEach(function (tb) {
+                var tr = tb.getBoundingClientRect();
+                captureW = Math.max(captureW, Math.ceil(tr.right - er.left) + 16);
+            });
+            var titleEl = el.querySelector('.reports-title');
+            if (titleEl) {
+                var t = titleEl.getBoundingClientRect();
+                captureW = Math.max(captureW, Math.ceil(t.right - er.left) + 16);
+            }
+
+            html2canvas(el, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                logging: false,
+                scrollX: 0,
+                scrollY: 0,
+                backgroundColor: '#ffffff',
+                onclone: function (clonedDoc) {
+                    var root = clonedDoc.getElementById('plant_report_block');
+                    if (!root) return;
+                    root.style.width = captureW + 'px';
+                    root.style.minWidth = captureW + 'px';
+                    root.style.maxWidth = 'none';
+                    root.style.overflow = 'visible';
+                    root.style.boxSizing = 'border-box';
+                    clonedDoc.querySelectorAll('.card, .plant-chart-card, .chartBox, .chartBox2, .table-responsive').forEach(function (node) {
+                        node.style.overflow = 'visible';
+                    });
+                    clonedDoc.querySelectorAll('.row').forEach(function (row) {
+                        row.style.maxWidth = 'none';
+                    });
+                    clonedDoc.querySelectorAll('canvas').forEach(function (cv) {
+                        var p = cv.parentElement;
+                        if (!p) return;
+                        var rw = cv.width || cv.getAttribute('width') || cv.clientWidth;
+                        rw = parseFloat(rw, 10) || 0;
+                        if (rw > 0) p.style.minWidth = Math.ceil(rw) + 'px';
+                    });
+                }
+            })
+                .then(function (canvas) {
+                    var jsPdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'letter' });
+                    var pageW = jsPdf.internal.pageSize.getWidth();
+                    var pageH = jsPdf.internal.pageSize.getHeight();
+                    var margin = 24;
+                    var contentW = pageW - 2 * margin;
+                    var contentH = pageH - 2 * margin;
+
+                    var cw = canvas.width;
+                    var ch = canvas.height;
+                    if (cw < 1 || ch < 1) {
+                        if (typeof EES !== 'undefined' && EES.btnReset && pdfBtn) EES.btnReset(pdfBtn);
+                        if (typeof EES !== 'undefined' && EES.alert) EES.alert('Could not capture report (empty canvas).', 'warning');
+                        return;
+                    }
+
+                    /* Single page: scale entire capture to fit inside printable area (preserve aspect) */
+                    var imgPdfW = contentW;
+                    var imgPdfH = (ch / cw) * contentW;
+                    if (imgPdfH > contentH) {
+                        var s = contentH / imgPdfH;
+                        imgPdfW = imgPdfW * s;
+                        imgPdfH = contentH;
+                    }
+                    var x = margin + (contentW - imgPdfW) / 2;
+                    var y = margin + (contentH - imgPdfH) / 2;
+
+                    var imgData = canvas.toDataURL('image/jpeg', 0.92);
+                    jsPdf.addImage(imgData, 'JPEG', x, y, imgPdfW, imgPdfH);
+
+                    jsPdf.save('Report.pdf');
+                    window.open(jsPdf.output('bloburl'));
+                })
+                .catch(function (err) {
+                    console.error('generatePdf', err);
+                    if (typeof EES !== 'undefined' && EES.alert) EES.alert('PDF generation failed. See console for details.', 'error');
+                })
+                .then(function () {
+                    if (typeof EES !== 'undefined' && EES.btnReset && pdfBtn) EES.btnReset(pdfBtn);
+                });
+        });
+    });
 }
 
 

@@ -87,11 +87,8 @@ a {
 footer {
 	padding: 0 30px;
 	padding-bottom: 15px;
-	position: absolute;
-	right: 0;
 
 	@include max-screen($break-small) {
-		position: relative;
 		text-align: center;
 	}
 }

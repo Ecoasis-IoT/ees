@@ -66,6 +66,7 @@ $has_db    = ($site_pdo !== null);
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/custom.css">
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>-->
 
@@ -105,13 +106,14 @@ $has_db    = ($site_pdo !== null);
             <div class="container-fluid">
                 <div class="block-header">
                     <div class="row g-3">
-                        <div class="col-lg-5 col-md-8 col-sm-12">                        
-                            <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Dashboard<?= ' - ' . htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') ?></h2>
+                        <div class="col-lg-6 col-md-8 col-sm-12">
+                            <h2><?= htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') ?></h2>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
-                                <li class="breadcrumb-item active">Dashboard</li>
+                                <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                <li class="breadcrumb-item active"><?= htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') ?></li>
                             </ul>
-                        </div>            
+                        </div>
                     </div>
                 </div>           
                 
@@ -130,148 +132,143 @@ $has_db    = ($site_pdo !== null);
                     </div>
                 </div>
                 <?php else: ?>
-                <div class="row clearfix g-3 mb-3 justify-content-center">
-                    <div class="col-lg-4 col-md-4 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/solar.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Today's Production</div>
-                                    <h5 class="number" id="daily_prod"></h5>
-                                </div>
-                            </div>                        
-                        </div>
-                    </div>        	
-    
-                    <div class="col-lg-4 col-md-4 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/solar-panel.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Monthly Production</div>
-                                    <h5 class="number" id="monthly_prod"></h5>
-                                </div>
-                            </div>                        
+                <!-- KPI Stat Cards -->
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon green">
+                                <i class="fa fa-bolt"></i>
+                            </div>
+                            <div>
+                                <div class="ees-stat-label">Today's Production</div>
+                                <div class="ees-stat-value" id="daily_prod">—</div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="col-lg-4 col-md-4 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/power.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Yearly Production</div>
-                                    <h5 class="number" id="yearly_prod"></h5>
-                                </div>
-                            </div>                        
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon blue">
+                                <i class="fa fa-calendar"></i>
+                            </div>
+                            <div>
+                                <div class="ees-stat-label">Monthly Production</div>
+                                <div class="ees-stat-value" id="monthly_prod">—</div>
+                            </div>
                         </div>
-                    </div>                    
-                </div>
-                
-                <div class="row clearfix g-3 mb-3 justify-content-center">
-                    <div class="col-lg-4 col-md-6 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info"><i class="icon-energy"></i> </div>
-                                <div class="content">
-                                    <div class="text">Current Active Power</div>
-                                    <h5 class="number" id = "active_power"></h5>
-                                </div>
-                            </div>                        
-                        </div>                        
-                    </div>                     
-                    <div class="col-lg-4 col-md-6 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/sun.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Today's Average Irradiance</div>
-                                    <h5 class="number" id = "avg_irradiance"></h5>
-                                </div>
-                            </div>                        
-                        </div>                        
-                    </div>     
-                    
-                    <div class="col-lg-4 col-md-6 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/daytime.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Today's Sun Hours</div>
-                                    <h5 class="number" id="sun_hours"></h5>
-                                </div>
-                            </div>                        
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon orange">
+                                <i class="fa fa-line-chart"></i>
+                            </div>
+                            <div>
+                                <div class="ees-stat-label">Yearly Production</div>
+                                <div class="ees-stat-value" id="yearly_prod">—</div>
+                            </div>
                         </div>
-                    </div>        	
-    
-                    <!--<div class="col-lg-3 col-md-6 col-sm-6">-->
-                    <!--    <div class="card top_counter">-->
-                    <!--        <div class="body">-->
-                    <!--            <div class="icon text-info" style="line-height:45px;"><img src="assets/images/grid.png" style="width:40px;height:auto;"> </div>-->
-                    <!--            <div class="content">-->
-                    <!--                <div class="text">Today's Grid Availability</div>-->
-                    <!--                <h5 class="number" id="grid_availability"></h5>-->
-                    <!--            </div>-->
-                    <!--        </div>                        -->
-                    <!--    </div>-->
-                    <!--</div>-->
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon teal">
+                                <i class="fa fa-tachometer"></i>
+                            </div>
+                            <div>
+                                <div class="ees-stat-label">Active Power</div>
+                                <div class="ees-stat-value" id="active_power">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon orange">
+                                <i class="fa fa-sun-o"></i>
+                            </div>
+                            <div>
+                                <div class="ees-stat-label">Avg Irradiance</div>
+                                <div class="ees-stat-value" id="avg_irradiance">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon blue">
+                                <i class="fa fa-clock-o"></i>
+                            </div>
+                            <div>
+                                <div class="ees-stat-label">Sun Hours</div>
+                                <div class="ees-stat-value" id="sun_hours">—</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 
-                <div class="row clearfix g-3 mb-3">
-                    <div class="col-lg-12">
-                        <div class="datepicker">
-                            <label>Choose date:</label>
-                            <button class="dateBtn" id="prevDate" type="button"><i class="fa fa-angle-left"></i></button>
-                            <input type="date" id="calendar" style="padding:6px;" onchange="render();" max="<?php echo date("Y-m-d"); ?>">                            
-                            <button class="dateBtn" id="nextDate" type="button"><i class="fa fa-angle-right"></i></button>
-                        </div>
-                    </div>
-                </div>
-                            
-                <div class="row clearfix g-3 mb-3">
-                    <div class="col-lg-12">
-                        <div class="card shadow-sm">
-                            <div class="header">
-                                <h2 style="display: inline-block;">Plant KPI<small>Production | Irradiance | Power</small> </h2> 
-                                <button class="btn btn-primary" id="zoom_reset" onclick="resetZoomBtn(kpi)">Reset Zoom</button>
-                                <i class="fa fa-download" onclick="downloadKPI()"  title="Download"></i>
-                            </div>
-        
-                            <div class="body chartKPI">                        
-                                <canvas id="kpi"></canvas>                        
-                            </div>                    
-                        </div>
-                    </div>                     
-                </div>
-                
-                <div class="row clearfix g-3 mb-3">
-                    
-                    <div class="col-lg-6 col-md-12 col-sm-12">
-                        <div class="card shadow-sm">
-                            <div class="header">
-                                <h2 style="display: inline-block;">Production <small>Hourly Production</small> </h2> 
-                            </div>	
-                    		<div class="body" id="chart-con" style="height: 100%;">
-        	                    <div class="chartBox" style="height: 499px;">
-        	                        <canvas id="barChart"></canvas> 
-        	                    </div> 
+                <!-- Date Picker -->
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="body" style="padding:14px 20px;">
+                                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                    <span style="font-size:13px;font-weight:700;color:var(--ees-text-secondary);">Choose date:</span>
+                                    <button class="btn btn-secondary btn-sm" id="prevDate" type="button">
+                                        <i class="fa fa-angle-left"></i>
+                                    </button>
+                                    <input type="date" id="calendar" class="form-control" style="width:auto;"
+                                           onchange="render();" max="<?php echo date('Y-m-d'); ?>">
+                                    <button class="btn btn-secondary btn-sm" id="nextDate" type="button">
+                                        <i class="fa fa-angle-right"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                        
-                    <div class="col-lg-6">
+                </div>
+
+                <!-- KPI Chart -->
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-12">
                         <div class="card shadow-sm">
-                            <div class="header">
-                                <h2 style="display: inline-block;">Weather<small>Irradiance | Ambient Temperature | Panel Temperature</small> </h2> 
-                            </div>	
-                    		<div class="body" id="chart-con" style="height: 100%;">
-        	                    <div class="chartBox" style="height: 499px;">
-        	                        <canvas id="lineChart"></canvas> 
-        	                    </div> 
+                            <div class="header" style="display:flex;align-items:center;gap:12px;">
+                                <h2 style="flex:1;">Plant KPI <small>Production | Irradiance | Power</small></h2>
+                                <button class="btn btn-secondary btn-sm" id="zoom_reset" onclick="resetZoomBtn(kpi)">
+                                    <i class="fa fa-search-minus"></i> Reset Zoom
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="downloadKPI()" title="Download">
+                                    <i class="fa fa-download"></i>
+                                </button>
+                            </div>
+                            <div class="body chartKPI">
+                                <canvas id="kpi"></canvas>
                             </div>
                         </div>
-                        
+                    </div>
+                </div>
+
+                <!-- Production + Weather Charts -->
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-6 col-md-12">
+                        <div class="card shadow-sm">
+                            <div class="header">
+                                <h2>Production <small>Hourly</small></h2>
+                            </div>
+                            <div class="body">
+                                <div style="height:400px;">
+                                    <canvas id="barChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-12">
+                        <div class="card shadow-sm">
+                            <div class="header">
+                                <h2>Weather <small>Irradiance | Temperature</small></h2>
+                            </div>
+                            <div class="body">
+                                <div style="height:400px;">
+                                    <canvas id="lineChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

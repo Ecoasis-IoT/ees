@@ -10,18 +10,34 @@ $site_id    = intval($_POST['site_id']    ?? 0);
 $start_date = trim($_POST['start_date']   ?? '');
 $end_date   = trim($_POST['end_date']     ?? '');
 
-if (!$site_id || empty($start_date) || empty($end_date)) {
-    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
+if (!$site_id || $start_date === '' || $end_date === '') {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'code' => 'bad_params', 'message' => 'Missing site or date range.']);
+    exit;
 }
 
 $adm  = getDB('admin');
 $stmt = $adm->prepare("SELECT db_name, capacity, main_meter FROM tbl_site WHERE id = :id");
 $stmt->execute([':id' => $site_id]);
-$site = $stmt->fetch();
-if (!$site) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
+$site = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$site) {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'code' => 'site_not_found', 'message' => 'Unknown site. Refresh the page and choose a plant again.']);
+    exit;
+}
 
-$pdo = tryGetDB(ees_db_key($site['db_name']));
-if (!$pdo) { ob_end_clean(); echo json_encode([]); exit; }
+$dbKey = ees_db_key((string)$site['db_name']);
+$pdo   = tryGetDB($dbKey);
+if (!$pdo) {
+    error_log('get_plant_daily: tryGetDB failed for key ' . $dbKey . ' (site db_name=' . ($site['db_name'] ?? '') . ')');
+    ob_end_clean();
+    echo json_encode([
+        'status'  => 'Err',
+        'code'    => 'db_unavailable',
+        'message' => 'Could not connect to this plant database. Check .env credentials for the site DB (see server log for key).',
+    ]);
+    exit;
+}
 $capacity   = (float)$site['capacity'];
 $main_meter = (int)$site['main_meter'];
 
@@ -64,5 +80,9 @@ try {
 } catch (PDOException $e) {
     error_log("get_plant_daily error: " . $e->getMessage());
     ob_end_clean();
-    echo json_encode(['status' => 'Err']);
+    echo json_encode([
+        'status'  => 'Err',
+        'code'    => 'sql_error',
+        'message' => 'Data query failed. See server log for details.',
+    ]);
 }

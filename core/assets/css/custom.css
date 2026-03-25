@@ -1,46 +1,110 @@
+/**
+ * EES — small app utilities only.
+ * Layout, cards, tables, alerts, typography: see ees-theme.css (loaded after main.css).
+ * Do not add global rules that fight Bootstrap / ees-theme (.card, .table, .alert, .show, body, #content).
+ */
+
+/* DataTables export / print buttons */
 .dt-button {
     color: #fff !important;
-    background-color: #0d6efd !important;
-    border-color: #0d6efd !important;
+    background-color: #70ad47 !important;
+    border-color: #5d9638 !important;
     border: 1px solid transparent !important;
     padding: 0.375rem 0.75rem !important;
-    border-radius: 0.25rem !important;        
-}      
+    border-radius: 0.25rem !important;
+}
 
 .dateBtn {
     color: #fff;
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+    background-color: #70ad47;
+    border-color: #5d9638;
     border: 1px solid transparent;
     padding: 0.375rem 0.75rem;
-    border-radius: 0.25rem;    
+    border-radius: 0.25rem;
 }
 
 .fa-angle-left {
-    font-size:20px;
+    font-size: 20px;
 }
 
-.card {
-	height: 100%;
+/* Legacy horizontal tabs (not Bootstrap nav-tabs) */
+.tab {
+    overflow: hidden;
 }
 
-.alert {
-    display: none;
+.tab button {
+    background-color: #70ad47;
+    float: left;
+    border: 1px solid #ccc;
+    outline: none;
+    cursor: pointer;
+    padding: 10px;
+    transition: 0.3s;
+    font-size: 15px;
+    color: #fff;
+    border-radius: 5px;
+    margin: 5px;
 }
 
-.filterDiv {
-  float: left;
-  background-color: #2196F3;
-  color: #ffffff;
-  width: 100px;
-  line-height: 100px;
-  text-align: center;
-  margin: 2px;
-  display: none;
+.tab button:hover {
+    background-color: #5d9638;
 }
 
-.show {
-  display: block;
+.tab button.active {
+    background-color: #4a7d2e;
+}
+
+.tabcontent {
+    padding: 6px 12px;
+    -webkit-animation: fadeEffect 1s;
+    animation: fadeEffect 1s;
+}
+
+@-webkit-keyframes fadeEffect {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeEffect {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Alarm / severity chips (not Bootstrap .alert) */
+.alert-critical {
+    color: #fff;
+    background-color: #7b3131;
+}
+
+.alert-medium {
+    color: #fff;
+    background-color: #c00;
+}
+
+.alert-low {
+    color: #fff;
+    background-color: #f60;
+}
+
+.alert-notcritical {
+    color: #333;
+    background-color: #fc0;
+}
+
+.alert-con {
+    height: 600px;
+    border-right: 1px solid #ddd;
+}
+
+.alert-body {
+    overflow: auto;
+    height: 480px;
+    float: left;
+}
+
+.tbl_alerts {
+    padding: 0 20px 10px 20px;
+    margin-top: 0;
 }
 
 .alarms-sort {
@@ -48,148 +112,48 @@
     padding: 8px;
     width: auto;
     font-size: 14px;
-    border-radius: 1px; 
-}
-
-.alert-critical {
-	color: white;
-	background-color: #7b3131;
-}
-
-.alert-medium {
-	color: white;
-	background-color: #CC0000;
-}
-
-.alert-low {
-	color: white;
-	background-color: #FF6600;
-}
-.alert-notcritical {
-	color: white;
-	background-color: #FFCC00;
-}
-
-.fa {
-	padding-right: 5px;
-}
-
-.alert-con {
-    height: 600px;
-    border-right:1px solid #ddd;
-}
-
-.alert-body {
-	overflow: auto;
-	height:480px;
-	float:left;
-}
-
-.tbl_alerts {
-	padding:0px 20px 10px 20px;
-    margin-top: 56px;
-}
-
-.table {
-    border-color: #9e9e9e;
-}
-
-.tab {
-    overflow: hidden;
-}
-
-/* Style the buttons inside the tab */
-.tab button {
-	background-color: #00bdaa;
-	float: left;
-	border: 1px solid #ccc;
-	outline: none;
-	cursor: pointer;
-	padding: 10px;
-	transition: 0.3s;
-	font-size: 15px;
-	color: white;
-	border-radius: 5px;
-	margin: 5px;
-}
-
-/* Change background color of buttons on hover */
-.tab button:hover {
-    background-color: #04665c;
-}
-
-/* Create an active/current tablink class */
-.tab button.active {
-    background-color: #04665c;
-}
-
-/* Style the tab content */
-.tabcontent {
-    padding: 6px 12px;
-    -webkit-animation: fadeEffect 1s;
-    animation: fadeEffect 1s;
-}
-
-/* Fade in tabs */
-@-webkit-keyframes fadeEffect {
-    from {opacity: 0;}
-    to {opacity: 1;}
-}
-
-@keyframes fadeEffect {
-    from {opacity: 0;}
-    to {opacity: 1;}
+    border-radius: 4px;
 }
 
 .chart-col {
-	border-right: 1px solid #ddd;
+    border-right: 1px solid #ddd;
 }
 
-.alerts-col{
-	position: relative;
+.alerts-col {
+    position: relative;
 }
 
 .alerts-contents {
-	text-align: center;  
-	margin: 0;
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
+    text-align: center;
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .doughBox {
-	height: 200px;
+    height: 200px;
 }
 
 .number {
-	font-size: 22px;
-	--bs-text-opacity: 1;
-    color: #6c757d;
+    font-size: 22px;
+    color: #64748b;
 }
 
 .chartBox {
-	height: 200px;
+    height: 200px;
 }
 
 .chartKPI {
     height: 450px;
     width: 100%;
-    margin-bottom:20px;
-}
-
-.show {
-  display: block;
-}
-
-#main-content {
-    min-height: 100%;
+    margin-bottom: 20px;
 }
 
 .datepicker {
-    float:right;
-    margin-bottom:5px;
-    /*margin-right:20px;    */
+    float: right;
+    margin-bottom: 5px;
 }
 
 .date-container {

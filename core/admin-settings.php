@@ -26,6 +26,7 @@ $csrf_token = generateCSRFToken();
 
     <link rel="stylesheet" href="assets/css/dataTables.min.css">
     <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
     <?= assetCssTag('assets/css/pages/admin-settings.css') ?>
 </head>
 <body data-theme="theme-cyan">
@@ -41,7 +42,7 @@ $csrf_token = generateCSRFToken();
             <div class="block-header">
                 <div class="row g-3">
                     <div class="col-lg-5 col-md-8 col-sm-12">
-                        <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Admin Settings</h2>
+                        <h2>Admin Settings</h2>
                         <ul class="breadcrumb">
                             <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
                             <li class="breadcrumb-item active">Admin Settings</li>

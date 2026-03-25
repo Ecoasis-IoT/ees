@@ -24,6 +24,7 @@ $csrf_token = generateCSRFToken();
 
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <!-- QUERY CSS-->
 <link rel="stylesheet" href="assets/css/query.css">
@@ -56,7 +57,7 @@ $csrf_token = generateCSRFToken();
 
 
 </head>
-<body data-theme="theme-cyan">
+<body data-theme="theme-cyan" class="page-query">
 
 <!-- Page Loader -->
 <?php include_once("common/page-loader.php") ?>
@@ -75,15 +76,13 @@ $csrf_token = generateCSRFToken();
     <div id="main-content">
         <div class="container-fluid">
             <div class="block-header">
-                <div class="row g-3">
-                    <div class="col-lg-5 col-md-8 col-sm-12">                        
-                        <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a>Reports</h2>
-                        <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
-                            <li class="breadcrumb-item">Reports</li>
-                            <li class="breadcrumb-item active">Energy Meters</li>
-                        </ul>
-                    </div>            
+                <div class="block-header-bar">
+                    <h2>Reports</h2>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
+                        <li class="breadcrumb-item">Reports</li>
+                        <li class="breadcrumb-item active">Energy Meters</li>
+                    </ul>
                 </div>
             </div>
      
@@ -91,8 +90,8 @@ $csrf_token = generateCSRFToken();
                 <div class="col-lg-12 col-md-12">
                     <div class="card no-bg">
                         <div class="body p-0">
-                            <div class="card no-radius-bottom">
-                                <div class="body">
+                            <div class="card no-radius-bottom query-tabs-wrap">
+                                <div class="body query-tabs-body">
                                     <ul class="nav nav-tabs-new2">
                                         <li class="nav-item"><a class="nav-link active show" data-bs-toggle="tab" href="#Day">Day</a></li>
                                         <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#Month">Month</a></li>
@@ -105,46 +104,32 @@ $csrf_token = generateCSRFToken();
                                 <div class="tab-pane show active" id="Day">
                                     <div class="card no-radius">
                                         <div class="body no-ptb">
-                                            <div class="row mb-3">
-                                                <div class="col-lg-2 col-12 col-sm-3">
+                                            <div class="row mb-3 g-3 query-toolbar align-items-end">
+                                                <div class="col-lg-2 col-md-6 col-sm-6">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE SITE</h2> 
-                                                    </div>           
-                
-                                                    <select name="sites_opt_day" id="sites_opt_day" class="alarms-sort" onchange="filter_meters(1)">
+                                                        <h2>Choose site</h2>
+                                                    </div>
+                                                    <select name="sites_opt_day" id="sites_opt_day" class="form-select alarms-sort" onchange="filter_meters(1)">
                                                         <option hidden>Choose a site</option>
-                                                    </select>    
-                                                </div>
-                                                    
-                                                <div class="col-lg-3 col-12 col-sm-5" style="margin-right:-64px;">    
-                                                    <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE ENERGY METER</h2> 
-                                                    </div>           
-                
-                                                    <select name="meters_opt_day" id="meters_opt_day" class="alarms-sort">
-                                                        <option hidden>Choose an Energy Meter</option>
-                                                        
                                                     </select>
                                                 </div>
-                                                
-                                                <div class="col-lg-2 col-6 col-sm-3">    
+                                                <div class="col-lg-3 col-md-6 col-sm-6">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE DATE</h2> 
-                                                    </div>           
-                
-                                                    <input type="date" id="date_day" style="padding:6px;">
-        
+                                                        <h2>Energy meter</h2>
+                                                    </div>
+                                                    <select name="meters_opt_day" id="meters_opt_day" class="form-select alarms-sort">
+                                                        <option hidden>Choose an Energy Meter</option>
+                                                    </select>
                                                 </div>
-                                                
-                                                
-                                                <div class="col-lg-2 col-6 col-sm-2">    
+                                                <div class="col-lg-2 col-md-4 col-sm-6">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;color:transparent;"></h2> 
-                                                    </div>           
-                
-                                                    <button class="btn btn-primary submit" onclick="get_day()">Submit</button>         
-        
-                                                </div>                                        
+                                                        <h2>Date</h2>
+                                                    </div>
+                                                    <input type="date" id="date_day" class="form-control query-date-input">
+                                                </div>
+                                                <div class="col-lg-auto col-md-4 col-sm-6 d-flex align-items-end query-toolbar-action">
+                                                    <button type="button" class="btn btn-primary submit" onclick="get_day()">Submit</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -282,56 +267,42 @@ $csrf_token = generateCSRFToken();
                                 <div class="tab-pane" id="Month">
                                     <div class="card no-radius">
                                         <div class="body no-ptb">                                    
-                                            <div class="row mb-3" style="position:relative;">
-                                                <div class="col-lg-2 col-md-3">
+                                            <div class="row mb-3 g-3 query-toolbar align-items-end" style="position:relative;">
+                                                <div class="col-lg-2 col-md-6">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE SITE</h2> 
-                                                    </div>           
-                
-                                                    <select name="sort" id="sites_opt_month" class="alarms-sort"  onchange="filter_meters(2)">
+                                                        <h2>Choose site</h2>
+                                                    </div>
+                                                    <select name="sort" id="sites_opt_month" class="form-select alarms-sort" onchange="filter_meters(2)">
                                                         <option hidden>Choose a site</option>
-
-                                                    </select>    
+                                                    </select>
                                                 </div>
-                                                    
-                                                <div class="col-lg-3 col-md-5" style="margin-right:-64px;">    
+                                                <div class="col-lg-3 col-md-6">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE ENERGY METER</h2> 
-                                                    </div>           
-                
-                                                    <select name="sort" id="meters_opt_month" class="alarms-sort">
+                                                        <h2>Energy meter</h2>
+                                                    </div>
+                                                    <select name="sort" id="meters_opt_month" class="form-select alarms-sort">
                                                         <option hidden>Choose an Energy Meter</option>
                                                     </select>
                                                 </div>
-                                                
-                                                <div class="col-lg-2 col-md-3">    
+                                                <div class="col-lg-2 col-md-4">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE MONTH</h2> 
-                                                    </div>           
-                
-                                                    <select name="sort" id="month_opt" class="alarms-sort">
+                                                        <h2>Month</h2>
+                                                    </div>
+                                                    <select name="sort" id="month_opt" class="form-select alarms-sort">
                                                         <option hidden>Choose a month</option>
                                                     </select>
-                                                </div>  
-                                                
-                                                <div class="col-lg-2 col-md-3">    
+                                                </div>
+                                                <div class="col-lg-2 col-md-4">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE YEAR</h2> 
-                                                    </div>           
-                
-                                                    <select name="sort" id="m_year_opt" class="alarms-sort">
+                                                        <h2>Year</h2>
+                                                    </div>
+                                                    <select name="sort" id="m_year_opt" class="form-select alarms-sort">
                                                         <option hidden>Choose a year</option>
                                                     </select>
-                                                </div>                                                
-                                                
-                                                <div class="col-lg-2 col-6 col-sm-2">    
-                                                    <div class="header">
-                                                        <h2 style="display:inline-block;color:transparent;"></h2> 
-                                                    </div>           
-                
-                                                    <button class="btn btn-primary submit" onclick="get_month()">Submit</button>         
-        
-                                                </div>                                         
+                                                </div>
+                                                <div class="col-lg-auto col-md-4 d-flex align-items-end query-toolbar-action">
+                                                    <button type="button" class="btn btn-primary submit" onclick="get_month()">Submit</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -467,46 +438,34 @@ $csrf_token = generateCSRFToken();
                                 <div class="tab-pane" id="Year">
                                     <div class="card no-radius">
                                         <div class="body no-ptb">                                    
-                                            <div class="row mb-3" style="position:relative;">
-                                                <div class="col-lg-2 col-md-3">
+                                            <div class="row mb-3 g-3 query-toolbar align-items-end" style="position:relative;">
+                                                <div class="col-lg-2 col-md-6">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE SITE</h2> 
-                                                    </div>           
-                
-                                                    <select name="sort" id="sites_opt_year" class="alarms-sort"  onchange="filter_meters(3)">
+                                                        <h2>Choose site</h2>
+                                                    </div>
+                                                    <select name="sort" id="sites_opt_year" class="form-select alarms-sort" onchange="filter_meters(3)">
                                                         <option hidden>Choose a site</option>
-
-                                                    </select>    
+                                                    </select>
                                                 </div>
-                                                    
-                                                <div class="col-lg-3 col-md-5" style="margin-right:-64px;">    
+                                                <div class="col-lg-3 col-md-6">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE ENERGY METER</h2> 
-                                                    </div>           
-                
-                                                    <select name="sort" id="meters_opt_year" class="alarms-sort">
+                                                        <h2>Energy meter</h2>
+                                                    </div>
+                                                    <select name="sort" id="meters_opt_year" class="form-select alarms-sort">
                                                         <option hidden>Choose an Energy Meter</option>
                                                     </select>
                                                 </div>
-                                                
-                                                <div class="col-lg-2 col-md-3">    
+                                                <div class="col-lg-2 col-md-4">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE YEAR</h2> 
-                                                    </div>           
-                
-                                                    <select name="sort" id="year_opt" class="alarms-sort">
+                                                        <h2>Year</h2>
+                                                    </div>
+                                                    <select name="sort" id="year_opt" class="form-select alarms-sort">
                                                         <option hidden>Choose a Year</option>
                                                     </select>
-                                                </div> 
-                                                
-                                                <div class="col-lg-2 col-6 col-sm-2">    
-                                                    <div class="header">
-                                                        <h2 style="display:inline-block;color:transparent;"></h2> 
-                                                    </div>           
-                
-                                                    <button class="btn btn-primary submit" onclick="get_year()">Submit</button>         
-        
-                                                </div>                                         
+                                                </div>
+                                                <div class="col-lg-auto col-md-4 d-flex align-items-end query-toolbar-action">
+                                                    <button type="button" class="btn btn-primary submit" onclick="get_year()">Submit</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -641,30 +600,27 @@ $csrf_token = generateCSRFToken();
                                 <div class="tab-pane" id="Custom">
                                     <div class="card no-radius-top g-3 mb-3">
                                         <div class="body no-ptb">                                     
-                                            <div class="row mb-3">
-                                                <div class="col-lg-2 col-md-3">
+                                            <div class="row mb-3 g-3 query-toolbar align-items-end">
+                                                <div class="col-lg-2 col-md-4">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">CHOOSE SITE</h2> 
-                                                    </div>           
-                
-                                                    <select name="sort" id="sites_opt_custom" class="alarms-sort"  onchange="filter_meters(4)">
+                                                        <h2>Choose site</h2>
+                                                    </div>
+                                                    <select name="sort" id="sites_opt_custom" class="form-select alarms-sort" onchange="filter_meters(4)">
                                                         <option hidden>Choose a site</option>
-                                                    </select>    
+                                                    </select>
                                                 </div>
-                                                    
-                                                <div class="col-lg-3 col-md-5" style="margin-right:-120px;">   
+                                                <div class="col-lg-3 col-md-4">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">START DATE</h2> 
+                                                        <h2>Start date</h2>
                                                     </div>
-                                                    <input type="date" id="start_date" onchange="start_date_validate()" style="padding:6px;">                                        
+                                                    <input type="date" id="start_date" class="form-control query-date-input" onchange="start_date_validate()">
                                                 </div>
-                                                
-                                                <div class="col-lg-3 col-md-5">   
+                                                <div class="col-lg-3 col-md-4">
                                                     <div class="header">
-                                                        <h2 style="display:inline-block;">END DATE</h2> 
+                                                        <h2>End date</h2>
                                                     </div>
-                                                    <input type="date" id="end_date" style="padding:6px;">                                        
-                                                </div>      
+                                                    <input type="date" id="end_date" class="form-control query-date-input">
+                                                </div>
                                             </div>
                                             
                                             <div class="row clearfix g-3 mb-3">

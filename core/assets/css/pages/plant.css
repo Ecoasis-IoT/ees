@@ -1,28 +1,246 @@
-/* Plant page — supplementary styles (appended to existing plant.css) */
+/* Plant page — legacy look from original plant.php (scoped; load after ees-theme) */
 
-.card .header h2 {
-    font-weight: bold;
-    font-size: 30px;
+body.page-plant #main-content,
+body.page-plant #main-content .container-fluid {
+    font-family: Arial, Helvetica, sans-serif !important;
 }
 
-input {
+/* Slightly tighter horizontal padding so report uses more of the viewport */
+body.page-plant #main-content .container-fluid {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+/* Match original inline <style> — filter field labels stay 18px (inline on h2) */
+body.page-plant .plant-legacy-filter input:not([type="button"]):not([type="submit"]),
+body.page-plant .plant-legacy-filter textarea {
     padding: 5px;
     margin-left: 7px;
     margin-bottom: 15px;
     font-size: 14px;
     border-radius: 1px;
     width: auto;
+    max-width: calc(100% - 7px);
+    box-sizing: border-box;
     border: 1px solid #767676;
 }
 
-.alarms-sort {
+body.page-plant .plant-legacy-filter select.alarms-sort,
+body.page-plant .plant-legacy-filter input.alarms-sort {
     margin-left: 7px;
     padding: 8px;
     width: 218px;
+    max-width: calc(100% - 7px);
     font-size: 14px;
     border-radius: 1px;
+    border: 1px solid #767676;
+    box-sizing: border-box;
 }
 
-.table {
-    font-family: 'Nunito Sans', sans-serif;
+body.page-plant .plant-legacy-filter .header h2 {
+    font-size: 18px !important;
+    font-weight: bold !important;
+}
+
+/* Report + dashboard cards: 30px titles (original global .card .header h2) */
+body.page-plant #plant_report_block .card .header h2 {
+    font-weight: bold !important;
+    font-size: 30px !important;
+}
+
+body.page-plant #plant_report_block .table {
+    font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* block-header "Reports" — Arial, not theme heading font */
+body.page-plant .plant-legacy-block-header h2 {
+    font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* Legacy plant.css pinned PDF button — use normal flow in app shell */
+body.page-plant #cmd {
+    position: relative !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin-right: 0 !important;
+}
+
+body.page-plant .plant-report-scroll-wrap {
+    overflow: auto;
+}
+
+/*
+ * Report preview: use full width of main content (no 1225px cap) so charts/tables use available space.
+ */
+body.page-plant .pdf-container,
+body.page-plant #plant_report_block {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    min-height: 0 !important;
+    background-color: #fff !important;
+    display: flow-root;
+    overflow-x: auto;
+    /* Legacy outer frame: thin teal border (plant.css / original report) */
+    border: 1px solid #3d8881 !important;
+    border-radius: 5px !important;
+    box-shadow: 0 1px 2px rgba(61, 136, 129, 0.12) !important;
+}
+
+/* KPI tiles, charts, Daily Values / Analysis cards — same teal border as original plant.css */
+body.page-plant #plant_report_block .card {
+    border: 1px solid #3d8881 !important;
+    border-radius: 5px !important;
+    box-shadow: 0 1px 2px rgba(61, 136, 129, 0.08) !important;
+}
+
+body.page-plant #plant_report_block .reports-title {
+    overflow: visible;
+    max-width: none;
+    white-space: normal;
+}
+
+/*
+ * ees-theme equal-height columns: stacked .card in one col stretch badly.
+ * Do not target .card.text-center — those use legacy inline heights (charts, KPIs).
+ */
+body.page-plant #plant_report_block .row.clearfix > [class*="col"] > .card:not(.text-center),
+body.page-plant #plant_report_block .row.g-3 > [class*="col"] > .card:not(.text-center) {
+    height: auto !important;
+}
+
+/*
+ * ees-theme forces .row.g-3 > .col > .card { height: 100% !important } and .card { overflow: hidden }.
+ * That overrides inline height:101px on KPI tiles and clips the label under the value
+ * (Performace Ratio, Kg CO2 Avoided on the last two cards).
+ */
+body.page-plant #plant_report_block .row > .col-lg-3 > .card.text-center.mb-3,
+body.page-plant #plant_report_block .row > [class*="col-lg-3"] > .card.text-center.mb-3 {
+    height: auto !important;
+    min-height: 101px;
+    overflow: visible !important;
+}
+
+body.page-plant #plant_report_block .row > .col-lg-3 > .card.text-center.mb-3 .body,
+body.page-plant #plant_report_block .row > [class*="col-lg-3"] > .card.text-center.mb-3 .body {
+    overflow: visible !important;
+}
+
+/* Fixed-height chart cards keep explicit inline height; inner plot scrolls if needed */
+body.page-plant #plant_report_block .card.text-center .body.chartBox,
+body.page-plant #plant_report_block .card.text-center .body.chartBox2 {
+    overflow-x: auto !important;
+    overflow-y: hidden;
+}
+
+body.page-plant .plant-report-logo-row {
+    overflow: hidden;
+}
+
+body.page-plant #eco-logo {
+    float: right;
+    max-width: min(200px, 45vw);
+    height: auto;
+}
+
+body.page-plant .chartBox,
+body.page-plant .chartBox2 {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    position: relative;
+}
+
+body.page-plant .chartBox canvas,
+body.page-plant .chartBox2 canvas {
+    max-width: 100%;
+}
+
+body.page-plant #plant_report_block .chartBox canvas,
+body.page-plant #plant_report_block .chartBox2 canvas {
+    max-width: none;
+    display: block;
+}
+
+body.page-plant .tbl_analysis tbody tr td {
+    width: auto !important;
+    max-width: none;
+}
+
+@media (min-width: 992px) {
+    body.page-plant .tbl_analysis tbody tr td:first-child {
+        max-width: 62%;
+    }
+}
+
+/* Daily Values — legacy green header + tight rows (override ees-theme grey thead) */
+body.page-plant #plant_report_block #plantTable.tbl_daily thead th,
+body.page-plant #plant_report_block #plantTable.tbl_daily thead > tr > th {
+    background-color: #3d8881 !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.12) !important;
+    border-top: none !important;
+    padding: 6px 8px !important;
+    line-height: 1.3 !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
+}
+
+body.page-plant #plant_report_block #plantTable.tbl_daily td,
+body.page-plant #plant_report_block #plantTable.tbl_daily tbody > tr > td {
+    padding: 5px 8px !important;
+    line-height: 1.35 !important;
+    font-size: 13px !important;
+    vertical-align: middle !important;
+}
+
+/* ── Overlap fixes (prod: table vs chart column; footer vs ENL logo) ── */
+/*
+ * Flex columns default to min-width:auto, so wide table/chart intrinsic width
+ * can exceed the Bootstrap % width and the right column paints over the left.
+ */
+body.page-plant #plant_report_block .row > [class*="col-"] {
+    min-width: 0;
+}
+
+body.page-plant #plant_report_block .plant-report-dual-col {
+    align-items: flex-start;
+}
+
+body.page-plant #plant_report_block .plant-report-dual-col > [class*="col-"] > .card.shadow-sm,
+body.page-plant #plant_report_block .plant-report-dual-col .table-responsive {
+    max-width: 100%;
+}
+
+body.page-plant #plant_report_block .plant-report-dual-col .card.text-center {
+    max-width: 100%;
+}
+
+/*
+ * plant.css floats #enl-logo right — inside a flex column that can collapse
+ * and overlap the left footer text / look like a second card on top.
+ */
+body.page-plant #plant_report_block #enl-logo {
+    float: none !important;
+    display: block;
+    width: 127px;
+    max-width: 100%;
+    height: auto;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+body.page-plant #plant_report_block .plant-report-footer-row {
+    align-items: flex-end;
+}
+
+body.page-plant #plant_report_block .plant-report-footer-logo {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
 }

@@ -25,6 +25,7 @@ $csrf_token = generateCSRFToken();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/dataTables.min.css">
     <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
     <!-- DataTables Buttons -->
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
 
@@ -73,9 +74,7 @@ $csrf_token = generateCSRFToken();
             <div class="block-header">
                 <div class="row g-3">
                     <div class="col-lg-8 col-md-8 col-sm-12">
-                        <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a>
-                            Security Dashboard <small>Last 7 days</small>
-                        </h2>
+                        <h2>Security Dashboard <small>Last 7 days</small></h2>
                         <ul class="breadcrumb">
                             <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
                             <li class="breadcrumb-item active">Security</li>
