@@ -1,8 +1,16 @@
 <?php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/authorization.php';
 require_once __DIR__ . '/common/csrf.php';
 require_once __DIR__ . '/common/asset_helper.php';
+
+if (!isAdmin()) {
+    http_response_code(403);
+    include __DIR__ . '/error-404.php';
+    exit;
+}
+
 $csrf_token = generateCSRFToken();
 ?>
 
@@ -135,12 +143,31 @@ $(function users() {
         url: 'scripts/get_all_users',
         dataType: 'json',
         success: function (data) {
+            if (data && data.status === 'Err') {
+                var msg = data.message || 'You do not have permission to load this list.';
+                if (typeof EES !== 'undefined' && EES.alert) {
+                    EES.alert(msg, 'error');
+                }
+                return;
+            }
             var rows = Array.isArray(data) ? data : [];
             var $tb = $('#tbl_users tbody');
             $tb.empty();
             for (var i = 0; i < rows.length; i++) {
                 var row = '<tr><td>' + _esc(rows[i].fullname) + '</td><td>' + _esc(rows[i].email) + '</td><td>' + _esc(rows[i].date_added) + '</td></tr>';
                 $tb.append(row);
+            }
+        },
+        error: function (xhr) {
+            var msg = 'Could not load users.';
+            try {
+                var j = typeof xhr.responseJSON === 'object' ? xhr.responseJSON : JSON.parse(xhr.responseText || '{}');
+                if (j && j.message) {
+                    msg = j.message;
+                }
+            } catch (e) { /* ignore */ }
+            if (typeof EES !== 'undefined' && EES.alert) {
+                EES.alert(msg, 'error');
             }
         },
         complete: function () {

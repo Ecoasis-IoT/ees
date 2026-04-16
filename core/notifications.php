@@ -7,8 +7,9 @@ require_once __DIR__ . '/common/asset_helper.php';
 $csrf_token = generateCSRFToken();
 $user_id    = (int)$_SESSION['id'];
 
+require_once __DIR__ . '/scripts/create_notification.php';
 $pdo = getDB('admin');
-
+ees_ensure_notifications_table($pdo);
 
 $filter  = $_GET['filter'] ?? 'all';
 $page    = max(1, intval($_GET['page'] ?? 1));

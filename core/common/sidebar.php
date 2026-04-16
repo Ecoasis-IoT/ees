@@ -79,7 +79,8 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
             </div>
         </div>
 
-        <!-- User Management -->
+        <?php if ($_is_admin): ?>
+        <!-- User Management (admin only; API scripts require admin) -->
         <div class="ees-nav-group<?= $_users_open ? ' open' : '' ?>">
             <button class="ees-nav-item">
                 <i class="fa fa-users nav-icon"></i>
@@ -92,15 +93,14 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
                    <i class="fa fa-user ees-nav-subicon" aria-hidden="true"></i>
                    <span>All Users</span>
                 </a>
-                <?php if ($_is_admin): ?>
                 <a href="admin-settings"
                    class="ees-nav-subitem<?= $_cur === 'admin-settings.php' ? ' active' : '' ?>">
                    <i class="fa fa-cog ees-nav-subicon" aria-hidden="true"></i>
                    <span>Admin Settings</span>
                 </a>
-                <?php endif; ?>
             </div>
         </div>
+        <?php endif; ?>
 
         <div class="ees-nav-section-label">Other</div>
 

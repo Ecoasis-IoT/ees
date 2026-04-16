@@ -34,7 +34,9 @@ if (!$user_id) {
 }
 
 try {
+    require_once __DIR__ . '/create_notification.php';
     $pdo = getDB('admin');
+    ees_ensure_notifications_table($pdo);
 
     // Mark all as read
     if (!empty($_POST['mark_all'])) {

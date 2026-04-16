@@ -1,8 +1,16 @@
 <?php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/authorization.php';
 require_once __DIR__ . '/common/csrf.php';
 require_once __DIR__ . '/common/asset_helper.php';
+
+if (!isAdmin()) {
+    http_response_code(403);
+    include __DIR__ . '/error-404.php';
+    exit;
+}
+
 $csrf_token = generateCSRFToken();
 ?>
 
