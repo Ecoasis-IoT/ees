@@ -78,7 +78,7 @@
             Something went wrong on our end.<br>
             Please try again in a few moments.
         </p>
-        <a href="dashboard.php" class="btn-home">
+        <a href="dashboard" class="btn-home">
             <i class="fa fa-home"></i> Go to Dashboard
         </a>
     </div>

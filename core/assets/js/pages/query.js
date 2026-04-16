@@ -203,7 +203,7 @@ $(function sites_name(){
 
         $.ajax({
             type: "POST",
-            url: "scripts/get_all_sites.php",
+            url: "scripts/get_all_sites",
             dataType: 'json',
             data: {},
             success: function(data) {
@@ -267,7 +267,7 @@ function filter_meters(tab){
     // let meters = document.getElementById("meters_opt");
     $.ajax({
             type: "POST",
-            url: "scripts/get_query_meters.php",
+            url: "scripts/get_query_meters",
             data: {
                 "site": site
             },
@@ -407,10 +407,10 @@ function get_day(){
     let arr_multiple = ["7780","7779"]; // Sites with more than one PVDB (Main meters)
     
     if(arr_multiple.includes(document.getElementById("sites_opt_day").value)){
-        url = "scripts/query_dayv2.php"
+        url = "scripts/query_dayv2"
     }
     else{
-        url = "scripts/query_day.php"
+        url = "scripts/query_day"
     }
     
     $.ajax({
@@ -672,7 +672,7 @@ function get_month(){
     
     $.ajax({
         type: "POST",
-        url: "scripts/query_month.php",
+        url: "scripts/query_month",
         async : true,
         data: {
             "site": document.getElementById("sites_opt_month").value,
@@ -934,7 +934,7 @@ function get_year(){
     
     $.ajax({
         type: "POST",
-        url: "scripts/query_year.php",
+        url: "scripts/query_year",
         async : true,
         data: {
             "site": document.getElementById("sites_opt_year").value,
@@ -1436,7 +1436,7 @@ function get_custom(){
         
         $.ajax({
             type: "POST",
-            url: "scripts/query_custom.php",
+            url: "scripts/query_custom",
             data: {
                 
                 "site": site,

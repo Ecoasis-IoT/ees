@@ -17,7 +17,7 @@ $(function get_card_data(){
 
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_card_data.php",
+        url: "scripts/get_site_card_data",
         async: false,
         data: {
             "site_db": SITE_DB
@@ -62,7 +62,7 @@ function get_barchart_data(date){
 
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_barchart.php",
+        url: "scripts/get_site_barchart",
         async: false,
         data: {
             "site_db": SITE_DB,
@@ -83,7 +83,7 @@ function get_linechart_data(date){
 
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_irradiance.php",
+        url: "scripts/get_site_irradiance",
         async: false,
         data: {
             "site_db": SITE_DB,
@@ -105,7 +105,7 @@ function getActivePower(date){
 
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_active_power.php",
+        url: "scripts/get_site_active_power",
         async: false,
         data: {
             "site_db": SITE_DB,

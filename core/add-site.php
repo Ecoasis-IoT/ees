@@ -45,7 +45,7 @@ require_once __DIR__ . '/common/csrf.php';
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Add Site</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">Site</li>
                             <li class="breadcrumb-item active">Add Site</li>
                         </ul>
@@ -100,7 +100,7 @@ require_once __DIR__ . '/common/csrf.php';
                                     </tbody>
                                 </table>
                                 
-                                <a class="btn btn-outline-dark" href="site.php">Discard</a>
+                                <a class="btn btn-outline-dark" href="site">Discard</a>
                                 <input class="btn btn-danger" type="button" value="Delete" onclick="">
                                 <input class="btn btn-primary" type="submit" value="Save Changes" onclick="">
 

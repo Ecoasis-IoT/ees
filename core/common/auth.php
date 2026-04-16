@@ -3,9 +3,10 @@
  * Authentication and Session Guard
  * Include at the top of every protected page under core/.
  *
- * Redirect target: login.php (relative; resolves to core/login.php from any page under core/).
+ * Redirect target: extensionless login URL (see .htaccess_production).
  */
 
+require_once dirname(__DIR__, 2) . '/config.php';
 require_once __DIR__ . '/session_cookie_config.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -35,7 +36,7 @@ if (!isset($_SESSION['id']) || (time() - ($_SESSION['last_activity'] ?? 0)) >= $
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['status' => 'Err', 'message' => 'Session expired. Please log in again.']);
     } else {
-        header('Location: login.php');
+        header('Location: ' . ees_url_path('login.php'));
     }
     die();
 }

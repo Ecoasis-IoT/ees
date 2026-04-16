@@ -78,7 +78,7 @@
             The page you are looking for might have been removed,<br>
             had its name changed, or is temporarily unavailable.
         </p>
-        <a href="dashboard.php" class="btn-home">
+        <a href="dashboard" class="btn-home">
             <i class="fa fa-home"></i> Go to Dashboard
         </a>
     </div>

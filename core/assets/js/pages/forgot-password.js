@@ -22,7 +22,7 @@
 
         $.ajax({
             type:     'POST',
-            url:      'scripts/password_reset_email.php',
+            url:      'scripts/password_reset_email',
             dataType: 'json',
             data: { email: email, csrf_token: getCSRFToken() },
             success: function (data) {

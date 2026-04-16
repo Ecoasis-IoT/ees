@@ -62,7 +62,7 @@
     // Users Tab
     // =====================================================
     function loadUsers() {
-        $.get('scripts/admin/get_users.php', function (res) {
+        $.get('scripts/admin/get_users', function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             destroyAdminTable('#tbl-users');
             var tbody = $('#tbl-users tbody').empty();
@@ -125,7 +125,7 @@
         EES.btnLoad(btn, 'Creating…');
         var data = $('#user-form').serializeArray().reduce(function (o, f) { o[f.name] = f.value; return o; }, {});
         data.csrf_token = csrfToken;
-        $.post('scripts/admin/user_create.php', data, function (res) {
+        $.post('scripts/admin/user_create', data, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             closeModal();
             if (r.status === 'ok') { showAlert('success', r.message); loadUsers(); }
@@ -139,7 +139,7 @@
         var data = $('#user-form').serializeArray().reduce(function (o, f) { o[f.name] = f.value; return o; }, {});
         data.id = id;
         data.csrf_token = csrfToken;
-        $.post('scripts/admin/user_update.php', data, function (res) {
+        $.post('scripts/admin/user_update', data, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             closeModal();
             if (r.status === 'ok') { showAlert('success', r.message); loadUsers(); }
@@ -167,7 +167,7 @@
     $(document).on('click', '.delete-user', function () {
         var id = $(this).data('id'), name = $(this).data('name');
         if (!confirm('Delete user "' + name + '"? This cannot be undone.')) return;
-        $.post('scripts/admin/user_delete.php', { id: id, csrf_token: csrfToken }, function (res) {
+        $.post('scripts/admin/user_delete', { id: id, csrf_token: csrfToken }, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             if (r.status === 'ok') { showAlert('success', 'User deleted'); loadUsers(); }
             else showAlert('danger', r.message);
@@ -178,7 +178,7 @@
     // Sites Tab
     // =====================================================
     function loadSites() {
-        $.get('scripts/admin/get_sites.php', function (res) {
+        $.get('scripts/admin/get_sites', function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             destroyAdminTable('#tbl-sites');
             var tbody = $('#tbl-sites tbody').empty();
@@ -240,7 +240,7 @@
         var data = $('#site-form').serializeArray().reduce(function (o, f) { o[f.name] = f.value; return o; }, {});
         data.id = id;
         data.csrf_token = csrfToken;
-        $.post('scripts/admin/site_update.php', data, function (res) {
+        $.post('scripts/admin/site_update', data, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             closeModal();
             if (r.status === 'ok') { showAlert('success', r.message); loadSites(); }
@@ -251,7 +251,7 @@
     $(document).on('click', '.delete-site', function () {
         var id = $(this).data('id'), name = $(this).data('name');
         if (!confirm('Delete site "' + name + '"?')) return;
-        $.post('scripts/admin/site_delete.php', { id: id, csrf_token: csrfToken }, function (res) {
+        $.post('scripts/admin/site_delete', { id: id, csrf_token: csrfToken }, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             if (r.status === 'ok') { showAlert('success', 'Site deleted'); loadSites(); }
             else showAlert('danger', r.message);
@@ -274,7 +274,7 @@
     function loadDevices(siteId) {
         if (!siteId) return;
         currentSiteId = siteId;
-        $.get('scripts/admin/get_devices.php', { site_id: siteId }, function (res) {
+        $.get('scripts/admin/get_devices', { site_id: siteId }, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             destroyAdminTable('#tbl-devices');
             var tbody = $('#tbl-devices tbody').empty();
@@ -330,7 +330,7 @@
         data.site_id   = currentSiteId;
         data.device_id = deviceId;
         data.csrf_token = csrfToken;
-        $.post('scripts/admin/device_update.php', data, function (res) {
+        $.post('scripts/admin/device_update', data, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             closeModal();
             if (r.status === 'ok') { showAlert('success', r.message); loadDevices(currentSiteId); }
@@ -341,7 +341,7 @@
     $(document).on('click', '.delete-device', function () {
         var devId = $(this).data('id'), devName = $(this).data('name');
         if (!confirm('Delete device "' + devName + '"?')) return;
-        $.post('scripts/admin/device_delete.php', { site_id: currentSiteId, device_id: devId, csrf_token: csrfToken }, function (res) {
+        $.post('scripts/admin/device_delete', { site_id: currentSiteId, device_id: devId, csrf_token: csrfToken }, function (res) {
             var r = typeof res === 'string' ? JSON.parse(res) : res;
             if (r.status === 'ok') { showAlert('success', 'Device deleted'); loadDevices(currentSiteId); }
             else showAlert('danger', r.message);

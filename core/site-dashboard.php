@@ -7,7 +7,7 @@ require_once __DIR__ . '/common/asset_helper.php';
 $site_id = intval($_GET['site'] ?? 0);
 
 if (!$site_id) {
-    header('Location: dashboard.php');
+    header('Location: ' . ees_url_path('dashboard.php'));
     exit;
 }
 
@@ -19,12 +19,12 @@ try {
     $site_details = $stmt->fetch();
 } catch (PDOException $e) {
     error_log("site-dashboard PDO error: " . $e->getMessage());
-    header('Location: dashboard.php');
+    header('Location: ' . ees_url_path('dashboard.php'));
     exit;
 }
 
 if (!$site_details) {
-    header('Location: dashboard.php');
+    header('Location: ' . ees_url_path('dashboard.php'));
     exit;
 }
 
@@ -109,8 +109,8 @@ $has_db    = ($site_pdo !== null);
                         <div class="col-lg-6 col-md-8 col-sm-12">
                             <h2><?= htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') ?></h2>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="dashboard">Dashboard</a></li>
                                 <li class="breadcrumb-item active"><?= htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') ?></li>
                             </ul>
                         </div>
@@ -126,7 +126,7 @@ $has_db    = ($site_pdo !== null);
                                 <h3 class="text-muted">No Data Available</h3>
                                 <p class="text-muted mb-0">The database for <strong><?= htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') ?></strong> has not been configured yet.</p>
                                 <p class="text-muted">This site's dashboard will be available once data collection begins.</p>
-                                <a href="dashboard.php" class="btn btn-primary mt-2"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>
+                                <a href="dashboard" class="btn btn-primary mt-2"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>
                             </div>
                         </div>
                     </div>

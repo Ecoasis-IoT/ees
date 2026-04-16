@@ -7,7 +7,7 @@ require_once __DIR__ . '/common/asset_helper.php';
 $site_id = intval($_GET['site'] ?? 0);
 
 if (!$site_id) {
-    header('Location: dashboard.php');
+    header('Location: ' . ees_url_path('dashboard.php'));
     exit;
 }
 
@@ -19,12 +19,12 @@ try {
     $site_details = $stmt->fetch();
 } catch (PDOException $e) {
     error_log("devices.php PDO error: " . $e->getMessage());
-    header('Location: dashboard.php');
+    header('Location: ' . ees_url_path('dashboard.php'));
     exit;
 }
 
 if (!$site_details) {
-    header('Location: dashboard.php');
+    header('Location: ' . ees_url_path('dashboard.php'));
     exit;
 }
 
@@ -79,7 +79,7 @@ $csrf_token = generateCSRFToken();
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Devices</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">Device Management</li>
                             <li class="breadcrumb-item active">Devices</li>
                         </ul>
@@ -92,7 +92,7 @@ $csrf_token = generateCSRFToken();
                     <div class="card">
                         <div class="header">
                             <h2 style="display:inline-block;">Device List - <?= htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') ?></h2> 
-                            <!--<a href="add-energy-meter.php" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add Device</a>     -->
+                            <!--<a href="add-energy-meter" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add Device</a>     -->
                         </div>
                         <div class="body">                           
                             <div class="table-responsive tbl_alerts">
@@ -149,7 +149,7 @@ function _esc(str) {
 $(function sites_meters() {
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_meters.php",
+        url: "scripts/get_site_meters",
         dataType: 'json',
         data: { "site_db": <?= json_encode($site_db) ?> },
         success: function(data) {

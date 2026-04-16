@@ -46,6 +46,28 @@ define('BASE_URL',          $_ENV['BASE_URL']           ?? '');
 define('SESSION_LIFETIME',  intval($_ENV['SESSION_LIFETIME'] ?? 14400));
 define('ENVIRONMENT',       $_ENV['ENVIRONMENT']        ?? 'production');
 
+/**
+ * Strip a trailing .php from the path part only (before ?query or #fragment).
+ * Relative URLs only — no regex, avoids delimiter edge cases.
+ */
+function ees_url_path(string $path): string {
+    $qpos = strpos($path, '?');
+    $hpos = strpos($path, '#');
+    $end  = strlen($path);
+    if ($qpos !== false) {
+        $end = min($end, $qpos);
+    }
+    if ($hpos !== false) {
+        $end = min($end, $hpos);
+    }
+    $base   = substr($path, 0, $end);
+    $suffix = substr($path, $end);
+    if (strlen($base) >= 4 && substr($base, -4) === '.php') {
+        $base = substr($base, 0, -4);
+    }
+    return $base . $suffix;
+}
+
 // HTTPS / Security headers
 define('HTTPS_ENABLED',  filter_var($_ENV['HTTPS_ENABLED']  ?? 'false', FILTER_VALIDATE_BOOLEAN));
 define('CSP_ENABLED',    filter_var($_ENV['CSP_ENABLED']    ?? 'true',  FILTER_VALIDATE_BOOLEAN));

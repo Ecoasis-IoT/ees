@@ -13,8 +13,8 @@ $session_lifetime = defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 14400;
 
 // Use last_activity for consistency with auth.php (idle timeout, not absolute timeout)
 if (isset($_SESSION['id']) && (time() - ($_SESSION['last_activity'] ?? 0)) < $session_lifetime) {
-    header('Location: core/dashboard.php');
+    header('Location: ' . ees_url_path('core/dashboard.php'));
 } else {
-    header('Location: core/login.php');
+    header('Location: ' . ees_url_path('core/login.php'));
 }
 exit;

@@ -8,7 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 $session_lifetime = defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 14400;
 if (isset($_SESSION['id']) && (time() - ($_SESSION['created'] ?? 0)) < $session_lifetime) {
-    header('Location: dashboard.php');
+    header('Location: ' . ees_url_path('dashboard.php'));
     exit;
 }
 
@@ -95,7 +95,7 @@ $csrf_token = generateCSRFToken();
 
                 <div class="ees-auth-footer-link" style="margin-top:16px;">
                     <i class="fa fa-lock" style="margin-right:4px;opacity:.5;"></i>
-                    <a href="forgot-password.php">Forgot your password?</a>
+                    <a href="forgot-password">Forgot your password?</a>
                 </div>
             </form>
 

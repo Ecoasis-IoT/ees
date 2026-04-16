@@ -79,7 +79,7 @@ $csrf_token = generateCSRFToken();
                 <div class="block-header-bar">
                     <h2>Reports</h2>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
+                        <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
                         <li class="breadcrumb-item">Reports</li>
                         <li class="breadcrumb-item active">Energy Meters</li>
                     </ul>

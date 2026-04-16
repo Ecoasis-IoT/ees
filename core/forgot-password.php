@@ -82,7 +82,7 @@ $expired    = isset($_GET['expired']) && $_GET['expired'] === '1';
                 </div>
 
                 <div class="ees-auth-footer-link" style="margin-top:16px;">
-                    <a href="login.php"><i class="fa fa-arrow-left" style="margin-right:4px;"></i> Back to Sign In</a>
+                    <a href="login"><i class="fa fa-arrow-left" style="margin-right:4px;"></i> Back to Sign In</a>
                 </div>
             </form>
 

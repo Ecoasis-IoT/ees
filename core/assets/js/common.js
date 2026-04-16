@@ -408,7 +408,7 @@ $(document).ajaxError(function(event, xhr) {
     if (xhr.status === 401) {
         if (!window._ees_redirecting) {
             window._ees_redirecting = true;
-            window.location.replace('login.php');
+            window.location.replace('login');
         }
     }
 });

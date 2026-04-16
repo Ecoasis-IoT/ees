@@ -4,7 +4,7 @@ require_once __DIR__ . '/common/auth.php';
 require_once __DIR__ . '/common/csrf.php';
 
 $site_id = intval($_GET['site'] ?? 0);
-if (!$site_id) { header('Location: dashboard.php'); exit; }
+if (!$site_id) { header('Location: ' . ees_url_path('dashboard.php')); exit; }
 
 try {
     $stmt = getDB('admin')->prepare("SELECT site_name, db_name FROM tbl_site WHERE id = :id LIMIT 1");
@@ -12,9 +12,9 @@ try {
     $site_details = $stmt->fetch();
 } catch (PDOException $e) {
     error_log("site-dashboardv4 PDO error: " . $e->getMessage());
-    header('Location: dashboard.php'); exit;
+    header('Location: ' . ees_url_path('dashboard.php')); exit;
 }
-if (!$site_details) { header('Location: dashboard.php'); exit; }
+if (!$site_details) { header('Location: ' . ees_url_path('dashboard.php')); exit; }
 
 $site_name  = $site_details['site_name'];
 $site_db    = $site_details['db_name'];
@@ -153,8 +153,8 @@ $csrf_token = generateCSRFToken();
                         <div class="col-lg-6 col-md-8 col-sm-12">
                             <h2><?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?></h2>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="dashboard">Dashboard</a></li>
                                 <li class="breadcrumb-item active"><?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?></li>
                             </ul>
                         </div>            
@@ -337,7 +337,7 @@ var kpi_active_power = [];
     
         $.ajax({
             type: "POST",
-            url: "scripts/get_site_card_data.php",
+            url: "scripts/get_site_card_data",
             async: false,
             data: {
                 "site_db": '<?php echo $site_db;?>'
@@ -390,7 +390,7 @@ function get_barchart_data(date){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_barchart.php",
+        url: "scripts/get_site_barchart",
         async: false,
         data: {
             "site_db": '<?php echo $site_db;?>',
@@ -419,7 +419,7 @@ function get_linechart_data(date){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_irradiance.php",
+        url: "scripts/get_site_irradiance",
         async: false,
         data: {
             "site_db": '<?php echo $site_db;?>',
@@ -450,7 +450,7 @@ function getActivePower(date){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_active_power.php",
+        url: "scripts/get_site_active_power",
         async: false,
         data: {
             "site_db": '<?php echo $site_db;?>',

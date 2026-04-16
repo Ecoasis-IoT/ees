@@ -35,7 +35,7 @@
     $(function site_power() {
         $.ajax({
             type:     'POST',
-            url:      'scripts/get_dashboard.php',
+            url:      'scripts/get_dashboard',
             dataType: 'json',
             data: {},
             success: function (data) {

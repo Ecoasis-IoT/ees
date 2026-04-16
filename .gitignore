@@ -3,6 +3,7 @@ database/
 
 # Environment / secrets
 .env
+.env.prod
 .env.backup
 .env.local
 .env.*.local

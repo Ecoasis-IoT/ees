@@ -49,7 +49,7 @@ $csrf_token = generateCSRFToken();
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Users</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">User Management</li>
                             <li class="breadcrumb-item active">Users</li>
                         </ul>
@@ -62,7 +62,7 @@ $csrf_token = generateCSRFToken();
                     <div class="card">
                         <div class="header">
                             <h2 style="display:inline-block;">List of Users</h2> 
-                            <a href="add-user.php" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add User</a>                                               
+                            <a href="add-user" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add User</a>                                               
                         </div>
                         <div class="body">                           
                             <div class="table-responsive tbl_alerts">
@@ -132,7 +132,7 @@ function initUserListDataTable() {
 $(function users() {
     $.ajax({
         type: 'POST',
-        url: 'scripts/get_all_users.php',
+        url: 'scripts/get_all_users',
         dataType: 'json',
         success: function (data) {
             var rows = Array.isArray(data) ? data : [];

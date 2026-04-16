@@ -6,7 +6,7 @@ require_once __DIR__ . '/common/asset_helper.php';
 
 // Admin only
 if (!isset($_SESSION['group_id']) || (int)$_SESSION['group_id'] !== (int)ADMIN_USERGROUP_ID) {
-    header('Location: dashboard.php');
+    header('Location: ' . ees_url_path('dashboard.php'));
     exit;
 }
 
@@ -56,6 +56,8 @@ $csrf_token = generateCSRFToken();
         .badge-severity-ERROR    { background:#fd7e14; color:#fff; }
         .badge-severity-CRITICAL { background:#dc3545; color:#fff; }
         #logs-table_wrapper .dataTables_filter { display: none; }
+        #events-table_wrapper .dataTables_length,
+        #events-table_wrapper .dataTables_filter { font-size: 13px; }
         .log-detail-pre { white-space: pre-wrap; word-break: break-word; font-size: 12px;
                           max-height: 200px; overflow-y: auto; background: #f8f9fa;
                           border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; margin: 0; }
@@ -76,7 +78,7 @@ $csrf_token = generateCSRFToken();
                     <div class="col-lg-8 col-md-8 col-sm-12">
                         <h2>Security Dashboard <small>Last 7 days</small></h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
                             <li class="breadcrumb-item active">Security</li>
                         </ul>
                     </div>
@@ -147,7 +149,7 @@ $csrf_token = generateCSRFToken();
             <div class="row clearfix g-3 mb-3">
                 <div class="col-lg-12">
                     <div class="card">
-                        <div class="header"><h2>Recent Security Events <small>Latest 20</small></h2></div>
+                        <div class="header"><h2>Recent Security Events <small>10 per page · up to 100 latest</small></h2></div>
                         <div class="body">
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover" id="events-table">
@@ -694,10 +696,11 @@ $csrf_token = generateCSRFToken();
 <script>
 var CSRF_TOKEN = '<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>';
 var loginChart, eventChart;
+var recentEventsTable = null;
 
 function loadStats() {
     $.ajax({
-        type: 'POST', url: 'scripts/get_security_stats.php',
+        type: 'POST', url: 'scripts/get_security_stats',
         data: { csrf_token: CSRF_TOKEN },
         success: function(r) {
             var d = typeof r === 'string' ? JSON.parse(r) : r;
@@ -767,23 +770,67 @@ function renderEventChart(data) {
 }
 
 function renderRecentEvents(events) {
+    if ($.fn.DataTable.isDataTable('#events-table')) {
+        $('#events-table').DataTable().clear().destroy();
+        recentEventsTable = null;
+    }
+    $('#events-tbody').empty();
+
     if (!events.length) {
         $('#events-tbody').html('<tr><td colspan="5" class="text-center text-muted">No recent events</td></tr>');
         return;
     }
-    var rows = '';
-    $.each(events, function(i, e) {
-        var sev = (e.severity || 'INFO').toUpperCase();
-        var sevClass = sev === 'CRITICAL' ? 'severity-critical' : sev === 'ERROR' ? 'severity-error' : sev === 'WARNING' ? 'severity-warning' : 'severity-info';
-        rows += '<tr>' +
-            '<td>' + $('<span>').text(e.event_type).html() + '</td>' +
-            '<td><span class="' + sevClass + '">' + sev + '</span></td>' +
-            '<td>' + $('<span>').text(e.ip_address || '—').html() + '</td>' +
-            '<td>' + (e.user_id || '—') + '</td>' +
-            '<td>' + $('<span>').text(e.created_at).html() + '</td>' +
-            '</tr>';
+
+    recentEventsTable = $('#events-table').DataTable({
+        data: events,
+        columns: [
+            {
+                data: 'event_type',
+                render: function (d) { return $('<span>').text(d || '').html(); }
+            },
+            {
+                data: 'severity',
+                render: function (d) {
+                    var sev = (d || 'INFO').toUpperCase();
+                    var sevClass = sev === 'CRITICAL' ? 'severity-critical'
+                        : sev === 'ERROR' ? 'severity-error'
+                        : sev === 'WARNING' ? 'severity-warning' : 'severity-info';
+                    return '<span class="' + sevClass + '">' + sev + '</span>';
+                }
+            },
+            {
+                data: 'ip_address',
+                defaultContent: '—',
+                render: function (d) {
+                    return d ? $('<span>').text(d).html() : '<span class="text-muted">—</span>';
+                }
+            },
+            {
+                data: 'user_id',
+                defaultContent: '—',
+                render: function (d) {
+                    return (d !== null && d !== undefined && d !== '') ? $('<span>').text(String(d)).html() : '<span class="text-muted">—</span>';
+                }
+            },
+            {
+                data: 'created_at',
+                render: function (d) { return $('<span>').text(d || '').html(); }
+            }
+        ],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+        order: [[4, 'desc']],
+        searching: true,
+        dom: 'lfrtip',
+        autoWidth: false,
+        language: {
+            lengthMenu: 'Show _MENU_ rows',
+            info: 'Showing _START_–_END_ of _TOTAL_ events',
+            infoEmpty: 'No events',
+            zeroRecords: 'No matching events',
+            search: 'Filter:'
+        }
     });
-    $('#events-tbody').html(rows);
 }
 
 $(document).ready(function() {
@@ -809,7 +856,7 @@ $(document).on('submit', '.cfg-form', function(e) {
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving…');
 
     $.ajax({
-        url: 'scripts/save_config.php',
+        url: 'scripts/save_config',
         type: 'POST',
         data: formData,
         processData: false,
@@ -851,7 +898,7 @@ function initLogsTable() {
         serverSide: true,
         deferLoading: 0,           // Don't auto-load — wait for user action
         ajax: {
-            url: 'scripts/get_security_logs.php',
+            url: 'scripts/get_security_logs',
             type: 'POST',
             data: function(d) {
                 d.csrf_token        = CSRF_TOKEN;

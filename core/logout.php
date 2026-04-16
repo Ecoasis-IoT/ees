@@ -28,7 +28,7 @@ if (ini_get('session.use_cookies')) {
     <title>Logging Out | EES</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="2;url=login.php">
+    <meta http-equiv="refresh" content="2;url=login">
     <link rel="shortcut icon" type="image/x-icon" href="assets/images/logo_icon.png">
     <style>
         * { box-sizing: border-box; }

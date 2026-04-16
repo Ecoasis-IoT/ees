@@ -35,7 +35,7 @@ var page = document.getElementById("plant_report_block");
         var select = document.getElementById("site_opt");
         if (!select) return;
 
-        fetch("scripts/get_all_sites.php", {
+        fetch("scripts/get_all_sites", {
             method: "POST",
             credentials: "same-origin",
             headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" }
@@ -122,7 +122,7 @@ var page = document.getElementById("plant_report_block");
             
             $.ajax({
                 type: "POST",
-                url: "scripts/get_plant_total_prod.php",
+                url: "scripts/get_plant_total_prod",
                 dataType: 'json',
                 headers: { "X-Requested-With": "XMLHttpRequest" },
                 data: {
@@ -180,7 +180,7 @@ var page = document.getElementById("plant_report_block");
         
         $.ajax({
                 type: "POST",
-                url: "scripts/get_plant_daily.php",
+                url: "scripts/get_plant_daily",
                 dataType: 'json',
                 headers: { "X-Requested-With": "XMLHttpRequest" },
                 data: {
@@ -360,7 +360,7 @@ var page = document.getElementById("plant_report_block");
         
         $.ajax({
             type: "POST",
-            url: "scripts/get_plant_historical.php",
+            url: "scripts/get_plant_historical",
             dataType: 'json',
             headers: { "X-Requested-With": "XMLHttpRequest" },
             data: {

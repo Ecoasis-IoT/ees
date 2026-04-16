@@ -37,7 +37,7 @@
 
         $.ajax({
             type:     'POST',
-            url:      'scripts/password_reset.php',
+            url:      'scripts/password_reset',
             dataType: 'json',
             data: {
                 token:      token,
@@ -49,12 +49,12 @@
 
                 if (data.statusCode === 'ok') {
                     showAlert('success', 'Password reset successfully! Redirecting to login...');
-                    setTimeout(function () { window.location.replace('login.php'); }, 2000);
+                    setTimeout(function () { window.location.replace('login'); }, 2000);
                 } else if (data.statusCode === 'Err1') {
                     showAlert('danger', 'Passwords do not match.');
                 } else if (data.statusCode === 'expired') {
                     showAlert('danger', 'Reset link has expired. Please request a new one.');
-                    setTimeout(function () { window.location.replace('forgot-password.php'); }, 3000);
+                    setTimeout(function () { window.location.replace('forgot-password'); }, 3000);
                 } else {
                     showAlert('danger', data.message || 'Error resetting password. Please contact the administrator.');
                 }

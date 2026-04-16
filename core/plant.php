@@ -72,7 +72,7 @@ $csrf_token = generateCSRFToken();
                     <div class="col-lg-5 col-md-8 col-sm-12">
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth" href="javascript:void(0);" aria-label="Toggle layout width"><i class="fa fa-arrow-left"></i></a>Reports</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
                             <li class="breadcrumb-item">Reports</li>
                             <li class="breadcrumb-item active">Plant</li>
                         </ul>

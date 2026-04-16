@@ -54,11 +54,11 @@ try {
             GROUP BY event_type ORDER BY count DESC LIMIT 10");
         $stats['event_types_chart'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Recent events
+        // Recent events (cap for security dashboard DataTable client-side paging)
         $stmt = $pdo->query("
             SELECT event_type, severity, ip_address, user_id, created_at
             FROM tbl_security_logs
-            ORDER BY created_at DESC LIMIT 20");
+            ORDER BY created_at DESC LIMIT 100");
         $stats['recent_events'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $stats['failed_logins_24h']   = 0;

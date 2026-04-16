@@ -44,17 +44,19 @@ $(function sites_name(){
 
     $.ajax({
         type:     "POST",
-        url:      "scripts/get_all_sites.php",
+        url:      "scripts/get_archive_sites",
         dataType: "json",
         success: function(data) {
-            
-            let sites = data.data;
-            
-            for(var i = 0; i < sites.length; i++){
-                
-                let option = "<option value = '"+ sites[i].id +"'>"+ sites[i].site_name +"</option>";
-                
-                $('#site').append(option);
+            let sites = data.data || [];
+            var $sel = $('#site');
+            $sel.empty();
+            if (sites.length === 0) {
+                $sel.append('<option value="" selected disabled>No sites with archive records</option>');
+                return;
+            }
+            $sel.append('<option hidden value="">Choose a site</option>');
+            for (var i = 0; i < sites.length; i++) {
+                $sel.append("<option value='" + sites[i].id + "'>" + sites[i].site_name + '</option>');
             }
         }
     });
@@ -68,7 +70,7 @@ function validate_date(){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_archive_date_bounds.php",
+        url: "scripts/get_archive_date_bounds",
         dataType: "json",
         data: {
             "site" : site_id
@@ -224,18 +226,43 @@ function render_chart(dates, prod_dataset, ins_dataset){
 
 }
 
+function dateInputToYmd(inputEl) {
+    var v = inputEl && inputEl.value;
+    if (!v) {
+        return null;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        return v;
+    }
+    var d = new Date(v);
+    if (isNaN(d.getTime())) {
+        return null;
+    }
+    return d.toISOString().split('T')[0];
+}
+
 function query(){
-    var btn = document.querySelector('.submit');
+    var btn = document.querySelector('.archive-filter-submit');
     EES.btnLoad(btn, 'Loading…');
 
     let site = document.getElementById("site").value;
-    
-    let start_date = new Date(document.getElementById("startDate").value).toISOString().split('T')[0];
-    let end_date = new Date(document.getElementById("endDate").value).toISOString().split('T')[0];
-    
+    let start_date = dateInputToYmd(document.getElementById("startDate"));
+    let end_date = dateInputToYmd(document.getElementById("endDate"));
+
+    if (!site) {
+        EES.btnReset(btn);
+        EES.alert('Please select a site.', 'warning');
+        return;
+    }
+    if (!start_date || !end_date) {
+        EES.btnReset(btn);
+        EES.alert('Please select a start date and an end date.', 'warning');
+        return;
+    }
+
     $.ajax({
         type: "POST",
-        url: "scripts/get_archive_data.php",
+        url: "scripts/get_archive_data",
         dataType: "json",
         data: {
             "site" : site,
@@ -245,7 +272,10 @@ function query(){
         success: function(data) {
             EES.btnReset(btn);
             if (!data || data.status === 'Err' || !Array.isArray(data.archive)) {
-                EES.alert('Failed to load archive data. Please try again.', 'error');
+                EES.alert(
+                    (data && data.message) ? data.message : 'Failed to load archive data. Please try again.',
+                    'error'
+                );
                 return;
             }
 
@@ -264,8 +294,11 @@ function query(){
                 for(let i = 0; i < archive.length; i++){
                     
                     tempDate = new Date(archive[i].date);
-                    
-                    date = [tempDate.getDate(), tempDate.getMonth() + 1, tempDate.getFullYear()].join('/');
+                    if (isNaN(tempDate.getTime())) {
+                        date = String(archive[i].date || '');
+                    } else {
+                        date = [tempDate.getDate(), tempDate.getMonth() + 1, tempDate.getFullYear()].join('/');
+                    }
                     
                     prod = archive[i].production;
                     insolation = archive[i].insolation;

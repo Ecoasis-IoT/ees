@@ -78,7 +78,7 @@ try {
         '<p>' . htmlspecialchars($invited_by, ENT_QUOTES, 'UTF-8') . ' wants to add you as a new user.</p>' .
         '<p>If you received this message by mistake, please ignore this email.</p>' .
         '<p>If you are the intended recipient, please register here: ' .
-        '<a href="' . $base_url . '/core/register.php">Click Here to Register</a></p>';
+        '<a href="' . $base_url . '/core/register">Click Here to Register</a></p>';
 
     if ($mail->send()) {
         ob_end_clean();

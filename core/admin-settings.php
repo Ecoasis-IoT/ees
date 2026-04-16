@@ -44,7 +44,7 @@ $csrf_token = generateCSRFToken();
                     <div class="col-lg-5 col-md-8 col-sm-12">
                         <h2>Admin Settings</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
                             <li class="breadcrumb-item active">Admin Settings</li>
                         </ul>
                     </div>

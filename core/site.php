@@ -95,7 +95,7 @@ $csrf_token = generateCSRFToken();
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Site</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">Device Management</li>
                             <li class="breadcrumb-item active">Site</li>
                         </ul>
@@ -108,7 +108,7 @@ $csrf_token = generateCSRFToken();
                     <div class="card">
                         <div class="header">
                             <h2 style="display:inline-block;">Site List</h2> 
-                            <!--<a href="add-site.php" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add Site</a>     -->
+                            <!--<a href="add-site" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add Site</a>     -->
                         </div>
                         <div class="body">                           
                             <div class="table-responsive tbl_alerts">
@@ -127,14 +127,14 @@ $csrf_token = generateCSRFToken();
                                         <!--    <td>Phoenix Mall</td> -->
                                         <!--    <td>720</td>-->
                                         <!--    <td><button class="disconnected"></button></td>-->
-                                        <!--    <td><a href="edit-site.php" class="btn btn-primary"><i class="icon-pencil" aria-hidden="true"></i> View Meters</a></td>  -->
+                                        <!--    <td><a href="edit-site" class="btn btn-primary"><i class="icon-pencil" aria-hidden="true"></i> View Meters</a></td>  -->
                                         <!--</tr>-->
                                         
                                         <!--<tr>-->
                                         <!--    <td>Phoenix Mall</td> -->
                                         <!--    <td>737</td>-->
                                         <!--    <td><button class="connected"></button></td>-->
-                                        <!--    <td><a href="edit-site.php" class="btn btn-primary"><i class="icon-pencil" aria-hidden="true"></i> View Meters</a></td>  -->
+                                        <!--    <td><a href="edit-site" class="btn btn-primary"><i class="icon-pencil" aria-hidden="true"></i> View Meters</a></td>  -->
                                         <!--</tr>                                        -->
                                         
                                     </tbody>
@@ -198,7 +198,7 @@ function initSiteListDataTable() {
 $(function sites_name() {
     $.ajax({
         type: 'POST',
-        url: 'scripts/get_all_sites.php',
+        url: 'scripts/get_all_sites',
         dataType: 'json',
         success: function (data) {
             var sites = data.data || [];
@@ -214,7 +214,7 @@ $(function sites_name() {
                     '<td>' + _esc(s.site_name) + '</td>' +
                     '<td>' + cap + '</td>' +
                     "<td class='text-center'>" + gateway + '</td>' +
-                    "<td class='text-center'><a href='devices.php?site=" + encodeURIComponent(s.id) + "' class='btn btn-primary'>" +
+                    "<td class='text-center'><a href='devices?site=" + encodeURIComponent(s.id) + "' class='btn btn-primary'>" +
                     "<i class='icon-energy' aria-hidden='true'></i> View Devices</a></td>" +
                     '</tr>';
                 $tb.append(row);

@@ -114,7 +114,7 @@ $totalPages = (int)ceil($total / $perPage);
                                 <?php endif; ?>
                             </h2>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
                                 <li class="breadcrumb-item active">Notifications</li>
                             </ul>
                         </div>
@@ -136,16 +136,16 @@ $totalPages = (int)ceil($total / $perPage);
                                     <?= $total ?> notification<?= $total !== 1 ? 's' : '' ?>
                                 </h2>
                                 <div class="filter-bar d-flex gap-2">
-                                    <a href="notifications.php?filter=all"
+                                    <a href="notifications?filter=all"
                                        class="btn btn-sm <?= $filter === 'all'    ? 'btn-primary' : 'btn-outline-secondary' ?>">All</a>
-                                    <a href="notifications.php?filter=unread"
+                                    <a href="notifications?filter=unread"
                                        class="btn btn-sm <?= $filter === 'unread' ? 'btn-primary' : 'btn-outline-secondary' ?>">
                                         Unread
                                         <?php if ($unreadCount > 0): ?>
                                             <span class="badge bg-danger ms-1"><?= $unreadCount ?></span>
                                         <?php endif; ?>
                                     </a>
-                                    <a href="notifications.php?filter=read"
+                                    <a href="notifications?filter=read"
                                        class="btn btn-sm <?= $filter === 'read'   ? 'btn-primary' : 'btn-outline-secondary' ?>">Read</a>
                                 </div>
                             </div>
@@ -254,7 +254,7 @@ $totalPages = (int)ceil($total / $perPage);
 
     function acknowledge(id, $item) {
         $.ajax({
-            url: 'scripts/acknowledge_notification.php',
+            url: 'scripts/acknowledge_notification',
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: { notification_id: id, csrf_token: CSRF },
@@ -278,7 +278,7 @@ $totalPages = (int)ceil($total / $perPage);
         var $btn = $(this);
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Marking...');
         $.ajax({
-            url: 'scripts/acknowledge_notification.php',
+            url: 'scripts/acknowledge_notification',
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: { mark_all: 1, csrf_token: CSRF },

@@ -34,7 +34,7 @@ $_current_user_name = htmlspecialchars(
         <span class="ees-topbar-username"><?= $_current_user_name ?></span>
 
         <!-- Sign out -->
-        <a href="logout.php" class="ees-topbar-btn" title="Sign Out">
+        <a href="logout" class="ees-topbar-btn" title="Sign Out">
             <i class="fa fa-sign-out"></i>
         </a>
 
@@ -63,7 +63,7 @@ $_current_user_name = htmlspecialchars(
 
     function loadNotifications() {
         if (typeof jQuery === 'undefined') return;
-        jQuery.post('scripts/get_notifications.php', {}, function (r) {
+        jQuery.post('scripts/get_notifications', {}, function (r) {
             var d = typeof r === 'string' ? JSON.parse(r) : r;
             if (!d.success) return;
             var items = d.notifications || [];
@@ -91,7 +91,7 @@ $_current_user_name = htmlspecialchars(
     }
 
     window.ackNotif = function (id, el) {
-        jQuery.post('scripts/acknowledge_notification.php', { id: id, csrf_token: _csrfToken }, function (r) {
+        jQuery.post('scripts/acknowledge_notification', { id: id, csrf_token: _csrfToken }, function (r) {
             var d = typeof r === 'string' ? JSON.parse(r) : r;
             if (d.success) {
                 var row = el.closest ? el.closest('[data-id]') : jQuery(el).closest('[data-id]')[0];
@@ -108,9 +108,9 @@ $_current_user_name = htmlspecialchars(
     };
 
     window.clearAllNotifications = function () {
-        jQuery.post('scripts/acknowledge_notification.php', { mark_all: 1, csrf_token: _csrfToken });
+        jQuery.post('scripts/acknowledge_notification', { mark_all: 1, csrf_token: _csrfToken });
         notifIds.forEach(function (id) {
-            jQuery.post('scripts/acknowledge_notification.php', { id: id, csrf_token: _csrfToken });
+            jQuery.post('scripts/acknowledge_notification', { id: id, csrf_token: _csrfToken });
         });
         notifIds = [];
         $count.style.display = 'none';

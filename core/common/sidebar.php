@@ -1,5 +1,5 @@
 <?php
-$_cur       = basename($_SERVER['PHP_SELF']);
+$_cur       = basename($_SERVER['SCRIPT_FILENAME'] ?? $_SERVER['PHP_SELF'] ?? '');
 $_is_admin  = isset($_SESSION['group_id']) && (int)$_SESSION['group_id'] === (int)ADMIN_USERGROUP_ID;
 $_username  = htmlspecialchars(
     trim(($_SESSION['firstname'] ?? '') . ' ' . ($_SESSION['lastname'] ?? '')) ?: ($_SESSION['username'] ?? 'User'),
@@ -19,7 +19,7 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
 
     <!-- Logo -->
     <div class="ees-sidebar-logo">
-        <a href="dashboard.php">
+        <a href="dashboard">
             <?php if (defined('APP_LOGO') && APP_LOGO): ?>
             <img src="<?= htmlspecialchars(APP_LOGO, ENT_QUOTES, 'UTF-8') ?>"
                  alt="<?= htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'EES', ENT_QUOTES, 'UTF-8') ?>">
@@ -34,7 +34,7 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
         <div class="ees-nav-section-label">Main</div>
 
         <!-- Dashboard -->
-        <a href="dashboard.php"
+        <a href="dashboard"
            class="ees-nav-item<?= $_cur === 'dashboard.php' ? ' active' : '' ?>">
             <i class="fa fa-tachometer nav-icon"></i>
             <span class="nav-label">Dashboard</span>
@@ -48,12 +48,12 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
                 <i class="fa fa-chevron-right ees-nav-arrow"></i>
             </button>
             <div class="ees-nav-sub">
-                <a href="plant.php"
+                <a href="plant"
                    class="ees-nav-subitem<?= $_cur === 'plant.php' ? ' active' : '' ?>">
                    <i class="fa fa-line-chart ees-nav-subicon" aria-hidden="true"></i>
                    <span>Plant Report</span>
                 </a>
-                <a href="query.php"
+                <a href="query"
                    class="ees-nav-subitem<?= $_cur === 'query.php' ? ' active' : '' ?>">
                    <i class="fa fa-search ees-nav-subicon" aria-hidden="true"></i>
                    <span>Query</span>
@@ -71,7 +71,7 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
                 <i class="fa fa-chevron-right ees-nav-arrow"></i>
             </button>
             <div class="ees-nav-sub">
-                <a href="site.php"
+                <a href="site"
                    class="ees-nav-subitem<?= $_cur === 'site.php' ? ' active' : '' ?>">
                    <i class="fa fa-building-o ees-nav-subicon" aria-hidden="true"></i>
                    <span>All Sites</span>
@@ -87,13 +87,13 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
                 <i class="fa fa-chevron-right ees-nav-arrow"></i>
             </button>
             <div class="ees-nav-sub">
-                <a href="user-management.php"
+                <a href="user-management"
                    class="ees-nav-subitem<?= $_cur === 'user-management.php' ? ' active' : '' ?>">
                    <i class="fa fa-user ees-nav-subicon" aria-hidden="true"></i>
                    <span>All Users</span>
                 </a>
                 <?php if ($_is_admin): ?>
-                <a href="admin-settings.php"
+                <a href="admin-settings"
                    class="ees-nav-subitem<?= $_cur === 'admin-settings.php' ? ' active' : '' ?>">
                    <i class="fa fa-cog ees-nav-subicon" aria-hidden="true"></i>
                    <span>Admin Settings</span>
@@ -105,21 +105,21 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
         <div class="ees-nav-section-label">Other</div>
 
         <!-- Archive -->
-        <a href="archive.php"
+        <a href="archive"
            class="ees-nav-item<?= $_cur === 'archive.php' ? ' active' : '' ?>">
             <i class="fa fa-archive nav-icon"></i>
             <span class="nav-label">Archive</span>
         </a>
 
         <!-- Notifications -->
-        <a href="notifications.php"
+        <a href="notifications"
            class="ees-nav-item<?= $_cur === 'notifications.php' ? ' active' : '' ?>">
             <i class="fa fa-bell nav-icon"></i>
             <span class="nav-label">Notifications</span>
         </a>
 
         <!-- Profile -->
-        <a href="profile.php"
+        <a href="profile"
            class="ees-nav-item<?= $_cur === 'profile.php' ? ' active' : '' ?>">
             <i class="fa fa-user-circle-o nav-icon"></i>
             <span class="nav-label">My Profile</span>
@@ -127,7 +127,7 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
 
         <?php if ($_is_admin): ?>
         <!-- Security -->
-        <a href="security_dashboard.php"
+        <a href="security_dashboard"
            class="ees-nav-item<?= $_cur === 'security_dashboard.php' ? ' active' : '' ?>">
             <i class="fa fa-shield nav-icon"></i>
             <span class="nav-label">Security</span>

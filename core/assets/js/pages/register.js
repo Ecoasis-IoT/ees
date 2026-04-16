@@ -26,7 +26,7 @@
 
         $.ajax({
             type:     'POST',
-            url:      'scripts/userregister.php',
+            url:      'scripts/userregister',
             dataType: 'json',
             data: {
                 username:   username,
@@ -38,7 +38,7 @@
             },
             success: function (data) {
                 if (data.statusCode === 'auth') {
-                    window.location.replace('login.php');
+                    window.location.replace('login');
                 } else if (data.statusCode === 'duplicate') {
                     EES.btnReset(btn);
                     EES.alert('Username or email already exists. Please choose a different one.', 'warning');

@@ -1,6 +1,6 @@
 /**
  * Login page — AJAX authentication
- * Sends credentials + CSRF token to core/scripts/userlogin.php
+ * Sends credentials + CSRF token to scripts/userlogin (extensionless)
  */
 (function () {
     'use strict';
@@ -41,7 +41,7 @@
 
         $.ajax({
             type:     'POST',
-            url:      'scripts/userlogin.php',
+            url:      'scripts/userlogin',
             dataType: 'json',
             data: {
                 username:   username,
@@ -50,15 +50,17 @@
             },
             success: function (data) {
                 if (data.statusCode === 'auth') {
-                    window.location.replace('dashboard.php');
+                    window.location.replace('dashboard');
                 } else {
                     if (btn) { btn.disabled = false; btn.value = 'Sign In'; }
                     if (data.statusCode === 'locked') {
                         showError('Account locked due to too many failed attempts. Please try again later.');
                     } else if (data.statusCode === 'blocked') {
-                        showError('This account has been disabled. Please contact the administrator.');
+                        showError(data.message || 'This account has been disabled. Please contact the administrator.');
                     } else if (data.statusCode === 'rate_limit') {
                         showError('Too many login attempts. Please wait a moment and try again.');
+                    } else if (data.message) {
+                        showError(data.message);
                     } else {
                         showError('Incorrect username or password.');
                     }

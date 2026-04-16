@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 $session_lifetime = defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 14400;
 if (isset($_SESSION['id']) && (time() - ($_SESSION['last_activity'] ?? 0)) < $session_lifetime) {
-    header('Location: dashboard.php');
+    header('Location: ' . ees_url_path('dashboard.php'));
     exit;
 }
 
@@ -105,7 +105,7 @@ $csrf_token = generateCSRFToken();
                 </div>
 
                 <div class="ees-auth-footer-link" style="margin-top:16px;">
-                    Already have an account? <a href="login.php">Sign In</a>
+                    Already have an account? <a href="login">Sign In</a>
                 </div>
             </form>
 

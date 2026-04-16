@@ -13,6 +13,25 @@ require_once __DIR__ . '/../common/security_logging.php';
 require_once __DIR__ . '/../common/auth_security.php';
 require_once __DIR__ . '/../common/session_cookie_config.php';
 
+/**
+ * Verify password (bcrypt via password_verify, or legacy unsalted MD5) and whether to rehash in DB.
+ *
+ * @return array{0: bool, 1: bool} [matches, needs_rehash]
+ */
+function ees_login_password_verify(string $plain, string $stored): array {
+    if ($plain === '' || $stored === '') {
+        return [false, false];
+    }
+    if (password_verify($plain, $stored)) {
+        return [true, password_needs_rehash($stored, PASSWORD_DEFAULT)];
+    }
+    $md5 = strtolower($stored);
+    if (strlen($md5) === 32 && ctype_xdigit($md5) && hash_equals($md5, md5($plain))) {
+        return [true, true];
+    }
+    return [false, false];
+}
+
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -66,10 +85,10 @@ try {
     $stmt = $pdo->prepare(
         "SELECT id, firstname, lastname, username, email, password, group_id, is_active
          FROM tbl_user
-         WHERE username = :username
+         WHERE username = :login OR email = :login_email
          LIMIT 1"
     );
-    $stmt->execute([':username' => $username]);
+    $stmt->execute([':login' => $username, ':login_email' => $username]);
     $user = $stmt->fetch();
 } catch (PDOException $e) {
     // If is_active column doesn't exist yet, retry without it
@@ -78,10 +97,10 @@ try {
             $stmt = $pdo->prepare(
                 "SELECT id, firstname, lastname, username, email, password, group_id
                  FROM tbl_user
-                 WHERE username = :username
+                 WHERE username = :login OR email = :login_email
                  LIMIT 1"
             );
-            $stmt->execute([':username' => $username]);
+            $stmt->execute([':login' => $username, ':login_email' => $username]);
             $user = $stmt->fetch();
         } catch (PDOException $e2) {
             error_log("userlogin PDO error: " . $e2->getMessage());
@@ -106,7 +125,20 @@ if ($user && isset($user['is_active']) && (int)$user['is_active'] === 0) {
     exit;
 }
 
-if ($user && password_verify($pass, $user['password'])) {
+[$password_ok, $needs_rehash] = $user
+    ? ees_login_password_verify($pass, (string)($user['password'] ?? ''))
+    : [false, false];
+
+if ($user && $password_ok) {
+    if ($needs_rehash) {
+        try {
+            $newHash = password_hash($pass, PASSWORD_DEFAULT);
+            $rehash  = $pdo->prepare('UPDATE tbl_user SET password = :p WHERE id = :id LIMIT 1');
+            $rehash->execute([':p' => $newHash, ':id' => $user['id']]);
+        } catch (PDOException $e) {
+            error_log('userlogin password rehash error: ' . $e->getMessage());
+        }
+    }
     // Successful login
     session_regenerate_id(true);
     $_SESSION['id']            = $user['id'];
@@ -126,10 +158,13 @@ if ($user && password_verify($pass, $user['password'])) {
     ob_end_clean();
     echo json_encode(['statusCode' => 'auth']);
 } else {
-    // Failed login
+    // Failed login (unknown user or bad password — same response to avoid user enumeration)
     recordFailedLoginAttempt($username, $ip_address);
     logSecurityEvent('login_failed', ['username' => $username, 'ip' => $ip_address], 'WARNING');
 
     ob_end_clean();
-    echo json_encode(['statusCode' => 'Err']);
+    echo json_encode([
+        'statusCode' => 'Err',
+        'message'    => 'Invalid username or password.',
+    ]);
 }

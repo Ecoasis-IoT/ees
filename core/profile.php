@@ -65,7 +65,7 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
                     <div class="col-lg-6 col-md-8 col-sm-12">
                         <h2>Profile Settings</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
                             <li class="breadcrumb-item active">Profile</li>
                         </ul>
                     </div>
@@ -217,7 +217,7 @@ function showMsg(successId, errorId, isSuccess, msg) {
 function saveProfileInfo(btn) {
     EES.btnLoad(btn, 'Saving…');
     $.ajax({
-        type: 'POST', url: 'scripts/profile_update_info.php',
+        type: 'POST', url: 'scripts/profile_update_info',
         data: {
             csrf_token: CSRF_TOKEN,
             fname: $('#profile-fname').val(),
@@ -236,7 +236,7 @@ function saveProfileInfo(btn) {
 function changePassword(btn) {
     EES.btnLoad(btn, 'Saving…');
     $.ajax({
-        type: 'POST', url: 'scripts/profile_update_password.php',
+        type: 'POST', url: 'scripts/profile_update_password',
         data: {
             csrf_token:       CSRF_TOKEN,
             current_password: $('#current-pass').val(),
@@ -256,7 +256,7 @@ function changePassword(btn) {
 function initiate2FA(btn) {
     EES.btnLoad(btn, 'Loading…');
     $.ajax({
-        type: 'POST', url: 'scripts/profile_setup_2fa.php',
+        type: 'POST', url: 'scripts/profile_setup_2fa',
         data: { csrf_token: CSRF_TOKEN },
         success: function(r) {
             var d = typeof r === 'string' ? JSON.parse(r) : r;
@@ -279,7 +279,7 @@ function initiate2FA(btn) {
 function verify2FA(btn) {
     EES.btnLoad(btn, 'Verifying…');
     $.ajax({
-        type: 'POST', url: 'scripts/profile_verify_2fa.php',
+        type: 'POST', url: 'scripts/profile_verify_2fa',
         data: { csrf_token: CSRF_TOKEN, code: $('#tfa-verify-code').val() },
         success: function(r) {
             var d = typeof r === 'string' ? JSON.parse(r) : r;
@@ -298,7 +298,7 @@ function verify2FA(btn) {
 function disable2FA(btn) {
     EES.btnLoad(btn, 'Disabling…');
     $.ajax({
-        type: 'POST', url: 'scripts/profile_disable_2fa.php',
+        type: 'POST', url: 'scripts/profile_disable_2fa',
         data: { csrf_token: CSRF_TOKEN, password: $('#tfa-disable-pass').val() },
         success: function(r) {
             var d = typeof r === 'string' ? JSON.parse(r) : r;

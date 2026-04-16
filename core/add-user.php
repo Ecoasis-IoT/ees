@@ -51,7 +51,7 @@ input, select {
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Add User</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard/dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">Users</li>
                             <li class="breadcrumb-item active">Add User</li>
                         </ul>
@@ -82,7 +82,7 @@ input, select {
                                     </tbody>
                                 </table>
                                 
-                                <a class="btn btn-outline-dark" href="user-management.php">Discard</a>
+                                <a class="btn btn-outline-dark" href="user-management">Discard</a>
                                 <input class="btn btn-primary" id="btn-add-user" type="button" value="Add User" onclick="send_email(this)">
 
                             </div>
@@ -115,7 +115,7 @@ function send_email(btn){
     EES.btnLoad(btn, 'Sending…');
     $.ajax({
         type: "POST",
-        url: "scripts/send_new_user_email.php",
+        url: "scripts/send_new_user_email",
         data: {
             "csrf_token": "<?php echo htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>",
             "old_user": "<?php echo htmlspecialchars($_SESSION['name'] ?? '', ENT_QUOTES, 'UTF-8') ?>",
@@ -127,7 +127,7 @@ function send_email(btn){
                 EES.alert('Failed to Add User!', 'error');
             } else if (data.statusCode == "ok") {
                 EES.alert('An email has been sent to the user!', 'success');
-                setTimeout(function(){ window.location.replace("user-management.php"); }, 1500);
+                setTimeout(function(){ window.location.replace("user-management"); }, 1500);
             }
         },
         error: function() {

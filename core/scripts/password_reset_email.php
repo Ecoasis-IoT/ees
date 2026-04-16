@@ -83,7 +83,7 @@ try {
 }
 
 $base_url   = defined('BASE_URL') ? BASE_URL : 'https://ees.ecoasisenergy.com';
-$reset_link = $base_url . '/core/reset-password.php?token=' . urlencode($token);
+$reset_link = $base_url . '/core/reset-password?token=' . urlencode($token);
 
 try {
     $mail = new PHPMailer();
