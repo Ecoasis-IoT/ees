@@ -23,6 +23,15 @@ var page = document.getElementById("plant_report_block");
             });
         });
     }
+
+    var plantChartZoom = {
+        pan: { enabled: true, modifierKey: 'ctrl' },
+        zoom: {
+            wheel: { enabled: true },
+            pinch: { enabled: true },
+            mode: 'xy'
+        }
+    };
     
     //Change Date Format
     function convertDate(dateString){
@@ -320,7 +329,8 @@ var page = document.getElementById("plant_report_block");
                             legend: {
                                 position: 'bottom',
                                 display: true,
-                            }
+                            },
+                            zoom: plantChartZoom
                         },
                         maintainAspectRatio:false,
                         responsive: true,
@@ -461,7 +471,8 @@ var page = document.getElementById("plant_report_block");
                         legend: {
                             position: 'bottom',
                             display: true,
-                        }        
+                        },
+                        zoom: plantChartZoom
                     },
                     responsive: true, 
                     maintainAspectRatio: false,
@@ -578,7 +589,8 @@ function generatePdf() {
             }
 
             var er = el.getBoundingClientRect();
-            var captureW = Math.max(el.scrollWidth, el.offsetWidth, 1024);
+            /* Force a desktop-width layout in the PDF clone (mobile/tablet viewports are too narrow) */
+            var captureW = Math.max(el.scrollWidth, el.offsetWidth, 1280);
             el.querySelectorAll('canvas').forEach(function (cv) {
                 var cr = cv.getBoundingClientRect();
                 captureW = Math.max(captureW, Math.ceil(cr.right - er.left) + 16);

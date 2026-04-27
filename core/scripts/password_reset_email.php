@@ -82,8 +82,12 @@ try {
     exit;
 }
 
-$base_url   = defined('BASE_URL') ? BASE_URL : 'https://ees.ecoasisenergy.com';
-$reset_link = $base_url . '/core/reset-password?token=' . urlencode($token);
+// Public URL must match .htaccess routing (extensionless, no /core/ prefix for docroot install)
+$base = rtrim((string)(defined('BASE_URL') ? BASE_URL : ''), '/');
+if ($base === '') {
+    $base = 'https://ees.ecoasisenergy.com';
+}
+$reset_link = $base . '/' . ltrim(ees_url_path('reset-password.php?token=' . urlencode($token)), '/');
 
 try {
     $mail = new PHPMailer();

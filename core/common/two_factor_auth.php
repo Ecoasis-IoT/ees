@@ -207,10 +207,29 @@ function verifyBackupCode($stored_hashes, $code) {
 }
 
 /**
+ * Ensure 2FA storage table exists (was missing from some environments).
+ */
+function ees_ensure_tbl_user_2fa(PDO $pdo): void {
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS `tbl_user_2fa` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `user_id` int(11) NOT NULL,
+            `secret` varchar(128) DEFAULT NULL,
+            `backup_codes` text DEFAULT NULL,
+            `enabled` tinyint(1) NOT NULL DEFAULT 0,
+            `updated_at` datetime DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `uk_user_2fa_user` (`user_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+}
+
+/**
  * Store 2FA secret for user
  */
 function store2FASecret($pdo, $user_id, $secret, $backup_codes = null) {
     try {
+        ees_ensure_tbl_user_2fa($pdo);
         // Hash backup codes if provided
         $backup_codes_hashed = null;
         if ($backup_codes !== null && is_array($backup_codes)) {
@@ -282,6 +301,7 @@ function disable2FA($pdo, $user_id) {
  */
 function get2FAStatus($pdo, $user_id) {
     try {
+        ees_ensure_tbl_user_2fa($pdo);
         $query = "SELECT enabled, secret, backup_codes FROM tbl_user_2fa WHERE user_id = ?";
         $stmt = $pdo->prepare($query);
         $stmt->execute([$user_id]);

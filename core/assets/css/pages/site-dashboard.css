@@ -1,3 +1,14 @@
+/* Site dashboard — download / header controls (icon contrast on light cards) */
+.page-site-dashboard .ees-site-dash-kpi-header .btn-outline-secondary {
+  color: var(--ees-text-primary, #0f172a) !important;
+  border-color: var(--ees-border, #cbd5e1) !important;
+  background: var(--ees-card-bg, #fff) !important;
+}
+.page-site-dashboard .ees-site-dash-kpi-header .btn-outline-secondary .fa {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
 .top_counter .icon i {
     font-size: 35px;
     color: #00bdaa;

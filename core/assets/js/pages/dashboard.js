@@ -12,9 +12,10 @@
 
     function fmtNum(n) {
         var num = parseFloat(n) || 0;
-        return num >= 1000
+        var v = num >= 1000
             ? (num / 1000).toFixed(1) + 'k'
             : num.toFixed(2);
+        return v + ' kWh total';
     }
 
     // Map initialisation
@@ -46,18 +47,14 @@
                     totalProd += parseFloat(data[k].prod) || 0;
                 }
                 setKpi('kpi-total-sites', data.length);
-                setKpi('kpi-total-prod', fmtNum(totalProd));
+                var prodEl = document.getElementById('kpi-total-prod');
+                if (prodEl) {
+                    prodEl.textContent = fmtNum(totalProd);
+                }
 
                 for (var i = 0; i < data.length; i++) {
-                    var row;
-
-                    if (data[i].id === '7780') {
-                        row = "<tr><td><a href='site-dashboardv2?site=" + data[i].id + "'>" + data[i].site_name + "</a></td><td>" + data[i].prod + "</td><td>" + data[i].active_power + "</td></tr>";
-                    } else if (data[i].id === '7779') {
-                        row = "<tr><td><a href='site-dashboardv3?site=" + data[i].id + "'>" + data[i].site_name + "</a></td><td>" + data[i].prod + "</td><td>" + data[i].active_power + "</td></tr>";
-                    } else {
-                        row = "<tr><td><a href='site-dashboard?site=" + data[i].id + "'>" + data[i].site_name + "</a></td><td>" + data[i].prod + "</td><td>" + data[i].active_power + "</td></tr>";
-                    }
+                    var href = (data[i].dashboard_href || 'site-dashboard') + '?site=' + encodeURIComponent(data[i].id);
+                    var row = "<tr><td><a href='" + href + "'>" + data[i].site_name + "</a></td><td>" + data[i].prod + "</td><td>" + data[i].active_power + "</td></tr>";
 
                     $('#tbl_site_prod tbody').append(row);
 
@@ -83,13 +80,23 @@
                     }]
                 };
 
+                var zoomOpts = {
+                    pan: { enabled: true, modifierKey: 'ctrl' },
+                    zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                        mode: 'xy'
+                    }
+                };
+
                 var config = {
                     type: 'bar',
                     data: chart_data,
                     options: {
                         scales:  { y: { beginAtZero: true } },
                         maintainAspectRatio: false,
-                        responsive: true
+                        responsive: true,
+                        plugins: { zoom: zoomOpts }
                     }
                 };
 

@@ -74,6 +74,7 @@ $has_db    = ($site_pdo !== null);
 <!--<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
 <!--<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>-->
 <!--<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>-->
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
@@ -85,7 +86,7 @@ $has_db    = ($site_pdo !== null);
 <link rel="stylesheet" href="assets/css/pages/site-dashboard.css">
 
 </head>
-<body data-theme="theme-cyan">
+<body data-theme="theme-cyan" class="page-site-dashboard">
 
 <!-- Page Loader -->
 <?php include_once("common/page-loader.php") ?>
@@ -228,13 +229,13 @@ $has_db    = ($site_pdo !== null);
                 <div class="row g-3 mb-3">
                     <div class="col-lg-12">
                         <div class="card shadow-sm">
-                            <div class="header" style="display:flex;align-items:center;gap:12px;">
+                            <div class="header ees-site-dash-kpi-header" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                                 <h2 style="flex:1;">Plant KPI <small>Production | Irradiance | Power</small></h2>
-                                <button class="btn btn-secondary btn-sm" id="zoom_reset" onclick="resetZoomBtn(kpi)">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="zoom_reset" onclick="resetZoomBtn(kpi)">
                                     <i class="fa fa-search-minus"></i> Reset Zoom
                                 </button>
-                                <button class="btn btn-secondary btn-sm" onclick="downloadKPI()" title="Download">
-                                    <i class="fa fa-download"></i>
+                                <button type="button" class="btn btn-outline-secondary btn-sm ees-site-dash-dl" onclick="downloadKPI()" title="Download chart as PNG">
+                                    <i class="fa fa-download" aria-hidden="true"></i><span class="sr-only">Download</span>
                                 </button>
                             </div>
                             <div class="body chartKPI">

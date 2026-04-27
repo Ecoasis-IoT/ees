@@ -23,6 +23,15 @@ try {
 $timenow = date('Y-m-d');
 
 foreach ($sites as &$site) {
+    $dk = ees_db_key($site['db_name']);
+    if ($dk === 'rtm') {
+        $site['dashboard_href'] = 'site-dashboardv3';
+    } elseif ($dk === 'bovalon') {
+        $site['dashboard_href'] = 'site-dashboardv2';
+    } else {
+        $site['dashboard_href'] = 'site-dashboard';
+    }
+
     if ((int)$site['commissioned'] !== 1) {
         $site['prod']         = 0;
         $site['active_power'] = 0;

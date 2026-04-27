@@ -119,6 +119,23 @@ body.page-query .custom-header {
     border-radius: 0.25rem 0.25rem 0 0 !important;
 }
 
+/* Override ees-theme .card .header h2 (uses !important) so labels stay visible on green band */
+body.page-query .card .header.custom-header h2 {
+    color: #ffffff !important;
+}
+
+/* Custom tab — "Add to chart" and outline buttons readable on light theme */
+body.page-query #Custom .btn-outline-secondary {
+    color: var(--ees-text-primary, #0f172a) !important;
+    border-color: var(--ees-border, #cbd5e1) !important;
+    background-color: var(--ees-card-bg, #ffffff) !important;
+}
+body.page-query #Custom .btn-outline-secondary:hover {
+    color: var(--ees-text-primary, #0f172a) !important;
+    background-color: var(--ees-bg-subtle, #f8fafc) !important;
+    border-color: var(--ees-border, #94a3b8) !important;
+}
+
 body.page-query .main-con {
     margin: 5px;
     border: 1px solid var(--ees-border, #e2e8f0);

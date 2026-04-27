@@ -33,9 +33,11 @@ $csrf_token = generateCSRFToken();
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-    <!-- Chart.js -->
+    <!-- Chart.js + zoom (Hammer is required for chartjs-plugin-zoom gestures) -->
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="assets/css/dataTables.min.css">
@@ -89,8 +91,7 @@ $csrf_token = generateCSRFToken();
                             </div>
                             <div>
                                 <div class="ees-stat-label">Today's Production</div>
-                                <div class="ees-stat-value" id="kpi-total-prod">—</div>
-                                <div class="ees-stat-sub">kWh total</div>
+                                <div class="ees-stat-value ees-stat-value--prod-line" id="kpi-total-prod">—</div>
                             </div>
                         </div>
                     </div>

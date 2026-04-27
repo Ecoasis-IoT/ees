@@ -1,7 +1,7 @@
 <?php
 /**
- * Sites that have at least one row in tbl_archive (per-site DB).
- * Used by the Archive page dropdown so users only pick sites that can load archive data.
+ * Sites whose per-site DB has a tbl_archive table (empty or not).
+ * Used by the Archive page so only sites that can run archive queries are listed.
  */
 
 require_once __DIR__ . '/../../config.php';
@@ -30,8 +30,11 @@ foreach ($all_sites as $site) {
         continue;
     }
     try {
-        $check = $pdo->query('SELECT 1 FROM tbl_archive LIMIT 1');
-        if ($check && $check->fetch() !== false) {
+        $t = $pdo->query(
+            "SELECT COUNT(*) FROM information_schema.tables
+             WHERE table_schema = DATABASE() AND table_name = 'tbl_archive'"
+        );
+        if ($t && (int) $t->fetchColumn() > 0) {
             $with_archive[] = [
                 'id'              => $site['id'],
                 'site_name'       => $site['site_name'],

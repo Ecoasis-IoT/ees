@@ -132,6 +132,16 @@ const white_back = {
   }
 };
 
+/** chartjs-plugin-zoom options (bar + line charts) */
+const siteChartZoomOpts = {
+  pan: { enabled: true, modifierKey: 'ctrl' },
+  zoom: {
+    wheel: { enabled: true },
+    pinch: { enabled: true },
+    mode: 'x'
+  }
+};
+
 var kpi;
 
 function renderKpiChart(){
@@ -299,7 +309,8 @@ function renderBarchart(){
           }
         },
         maintainAspectRatio: false,
-        responsive: true
+        responsive: true,
+        plugins: { zoom: siteChartZoomOpts }
       },
       plugins: [white_back],
     };
@@ -399,6 +410,7 @@ function renderLineChart(){
         maintainAspectRatio: false,
         responsive: true,
         interaction: { mode: 'index' },
+        plugins: { zoom: siteChartZoomOpts }
       },
       plugins: [white_back],
     };
