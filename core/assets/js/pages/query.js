@@ -1,5 +1,4 @@
-$("#con_meter_parameters").hide();
-$("#chart_type").hide()
+$("#chart_type").hide();
 
 $(".meter_param").change(function () {
     $(".meter_param").not(this).prop('checked', false);
@@ -394,7 +393,7 @@ function filter_meters(tab){
 //============================================================Day Script=============================================================
 
 function get_day(){
-    var _btn = document.querySelector('#tab-day .submit');
+    var _btn = document.querySelector('#Day .submit');
     EES.btnLoad(_btn, 'Loading…');
 
     let chart_labels = [];
@@ -662,7 +661,7 @@ function get_day(){
 //===========================================MONTH SCRIPT=========================================================
 
 function get_month(){
-    var _btn = document.querySelector('#tab-month .submit');
+    var _btn = document.querySelector('#Month .submit');
     EES.btnLoad(_btn, 'Loading…');
 
     let chart_labels = [];
@@ -922,7 +921,7 @@ function get_month(){
 //===========================================YEAR SCRIPT=========================================================
 
 function get_year(){
-    var _btn = document.querySelector('#tab-year .submit');
+    var _btn = document.querySelector('#Year .submit');
     EES.btnLoad(_btn, 'Loading…');
 
     let chart_labels = [];
@@ -1337,7 +1336,7 @@ var custom_kpi;
 var color_count = 0;
 
 function get_custom(){
-    var _btn = document.querySelector('#tab-custom .btn-outline-secondary');
+    var _btn = document.querySelector('#Custom .btn-add-custom-chart');
     EES.btnLoad(_btn, 'Loading…');
 
     let chart_colors = ['#3366cc','#dc3912','#ff9900','#109618','#990099','#0099c6','#dd4477','#66aa00','#b82e2e','#316395','#994499','#22aa99','#aaaa11','#6633cc','#e67300','#8b0707','#651067','#329262','#5574a6','#3b3eac','#b77322','#16d620','#b91383','#f4359e','#9c5935','#a9c413','#2a778d','#668d1c','#bea413','#0c5922','#743411'];
@@ -1680,8 +1679,9 @@ function get_custom(){
                document.getElementById('irradiance_param').checked = false;
                document.getElementById('ambientTemp_param').checked = false;
                document.getElementById('panelTemp_param').checked = false;
-                $("#con_meter_parameters").hide();
-                $("#chart_type").hide()
+                // Keep parameter panels visible; only reset chart type until Production is selected again
+                $("#chart_type").hide();
+                $("#con_meter_parameters").show();
             },
             complete: function() { EES.btnReset(_btn); }
         });

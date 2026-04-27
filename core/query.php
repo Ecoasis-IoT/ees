@@ -683,7 +683,7 @@ $csrf_token = generateCSRFToken();
                                                     
 
                                                     
-                                                    <button class="btn btn-outline-secondary" style="width:100%;" onclick="get_custom()"> Add to Chart</button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-add-custom-chart" style="width:100%;" onclick="get_custom()">Add to Chart</button>
                                                 </div>    
                                                 
                                                 <div class="col-lg-9 col-md-9">

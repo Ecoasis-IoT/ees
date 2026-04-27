@@ -5,7 +5,8 @@ body.page-query .chartBox {
     height: 100%;
 }
 
-body.page-query #main-content input {
+/* Exclude checkboxes/radios — the broad rule was collapsing native checkboxes in Custom Query */
+body.page-query #main-content input:not([type="checkbox"]):not([type="radio"]) {
     padding: 5px;
     margin-left: 7px;
     margin-bottom: 15px;
@@ -55,7 +56,16 @@ body.page-query #main-content li {
 
 body.page-query input[type="checkbox"],
 body.page-query input[type="radio"] {
-    margin-right: 5px;
+    width: 1.125rem;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    margin: 0 6px 4px 0;
+    margin-left: 0;
+    padding: 0;
+    vertical-align: middle;
+    border: 1px solid var(--ees-border, #cbd5e1);
+    border-radius: 0.25rem;
+    cursor: pointer;
 }
 
 body.page-query .submit {
@@ -215,9 +225,61 @@ body.page-query #meters_opt_custom li {
     text-align: left;
     font-size: 13px;
 }
+/* Custom tab: labels must stay readable (theme cards can otherwise inherit light text) */
+body.page-query #Custom .main-con,
+body.page-query #Custom .main-con .checkbox-container {
+    color: var(--ees-text-primary, #0f172a);
+    font-size: 13px;
+    line-height: 1.45;
+}
+body.page-query #Custom #con_meter_parameters {
+    min-height: 3rem;
+}
+body.page-query #Custom .btn-add-custom-chart {
+    margin-top: 0.75rem;
+    flex-shrink: 0;
+}
+/* Left rail: do not collapse in flex layouts; keeps params + button above fold on more breakpoints */
+body.page-query #Custom .row.clearfix.g-3 > .col-lg-3 {
+    min-width: min(100%, 280px);
+}
+
+/*
+ * ees-theme forces .row.clearfix > .col > .card { height: 100% !important } for equal-height rows.
+ * On Custom Query, three .card blocks are stacked in one column — that rule breaks inline heights
+ * and .card { overflow: hidden } clips the Weather / meter params areas (old query.php used fixed heights).
+ * Reset to auto height + scroll like the legacy page.
+ */
+body.page-query #Custom .row.clearfix.g-3 > .col-lg-3 > .card.text-center {
+    height: auto !important;
+    max-height: none;
+    overflow-x: visible !important;
+    overflow-y: auto !important;
+}
+body.page-query #Custom .row.clearfix.g-3 > .col-lg-3 > .card.text-center:nth-child(2) {
+    min-height: 180px;
+    max-height: 256px;
+}
+body.page-query #Custom .row.clearfix.g-3 > .col-lg-3 > .card.text-center:nth-child(4),
+body.page-query #Custom .row.clearfix.g-3 > .col-lg-3 > .card.text-center:nth-child(6) {
+    min-height: 100px;
+    max-height: 200px;
+}
 body.page-query .datacheckbox {
     margin-right: 6px;
     cursor: pointer;
+}
+
+/*
+ * Bootstrap tabs: only the pane with .active may be visible.
+ * If a prior pane keeps .show after switching (bundle / timing), two panes stay
+ * display:block and the Custom controls end up below a huge Day/Month/Year block.
+ */
+body.page-query .tab-content > .tab-pane {
+    display: none !important;
+}
+body.page-query .tab-content > .tab-pane.active {
+    display: block !important;
 }
 
 /* —— Reports toolbar (Day / Month / Year / Custom filters) —— */
