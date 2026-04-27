@@ -315,7 +315,7 @@ var kpi_active_power3 = [];
                 function nInt(v) { var x = parseInt(v, 10); return isNaN(x) ? 0 : x; }
 
                 if (!data || data.status === 'Err') {
-                    console.warn('get_site_card_datav3 failed or returned Err', data && data.reason, data);
+                    console.warn('get_site_card_datav3 failed or returned Err', data && data.reason, data && data.error, data);
                     return;
                 }
 

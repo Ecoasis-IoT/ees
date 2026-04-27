@@ -26,14 +26,16 @@ try {
 }
 
 try {
+    // Backtick `date` and `datetime` — reserved words in MySQL; unquoted names break on some servers/sql_modes.
+    // One named param per occurrence — PDO MySQL native prepare does not reliably bind the same name twice in one statement.
     $ap = $pdo->prepare(
-        "(SELECT '100' as meter_id, active_power FROM plant_active_power WHERE DATE(date) = DATE(:now) AND meter_id = 100 ORDER BY date DESC LIMIT 1)
-         UNION
-         (SELECT '101' as meter_id, active_power FROM plant_active_power WHERE DATE(date) = DATE(:now) AND meter_id = 101 ORDER BY date DESC LIMIT 1)
-         UNION
-         (SELECT '102' as meter_id, active_power FROM plant_active_power WHERE DATE(date) = DATE(:now) AND meter_id = 102 ORDER BY date DESC LIMIT 1)"
+        "(SELECT 100 AS meter_id, active_power FROM plant_active_power WHERE DATE(`date`) = DATE(:now1) AND meter_id = 100 ORDER BY `date` DESC LIMIT 1)
+         UNION ALL
+         (SELECT 101 AS meter_id, active_power FROM plant_active_power WHERE DATE(`date`) = DATE(:now2) AND meter_id = 101 ORDER BY `date` DESC LIMIT 1)
+         UNION ALL
+         (SELECT 102 AS meter_id, active_power FROM plant_active_power WHERE DATE(`date`) = DATE(:now3) AND meter_id = 102 ORDER BY `date` DESC LIMIT 1)"
     );
-    $ap->execute([':now' => $timenow]);
+    $ap->execute([':now1' => $timenow, ':now2' => $timenow, ':now3' => $timenow]);
     $rows = $ap->fetchAll(PDO::FETCH_ASSOC);
     $by_meter = [100 => null, 101 => null, 102 => null];
     foreach ($rows as $row) {
@@ -43,23 +45,23 @@ try {
         }
     }
 
-    $daily = $pdo->prepare("SELECT ROUND(SUM(production),2) as daily FROM tbl_hourly_prod WHERE meter_id >= 100 AND DATE(datetime) = DATE(:now)");
+    $daily = $pdo->prepare('SELECT ROUND(SUM(production),2) AS daily FROM tbl_hourly_prod WHERE meter_id >= 100 AND DATE(`datetime`) = DATE(:now)');
     $daily->execute([':now' => $timenow]);
     $site_daily = $daily->fetch();
 
-    $monthly = $pdo->prepare("SELECT ROUND(SUM(production),2) as monthly FROM tbl_hourly_prod WHERE meter_id >= 100 AND MONTH(datetime) = MONTH(DATE(:now))");
+    $monthly = $pdo->prepare('SELECT ROUND(SUM(production),2) AS monthly FROM tbl_hourly_prod WHERE meter_id >= 100 AND MONTH(`datetime`) = MONTH(DATE(:now))');
     $monthly->execute([':now' => $timenow]);
     $site_monthly = $monthly->fetch();
 
-    $yearly = $pdo->prepare("SELECT ROUND(SUM(production),2) as yearly FROM tbl_hourly_prod WHERE meter_id >= 100 AND YEAR(datetime) = YEAR(DATE(:now))");
+    $yearly = $pdo->prepare('SELECT ROUND(SUM(production),2) AS yearly FROM tbl_hourly_prod WHERE meter_id >= 100 AND YEAR(`datetime`) = YEAR(DATE(:now))');
     $yearly->execute([':now' => $timenow]);
     $site_yearly = $yearly->fetch();
 
-    $irr = $pdo->prepare("SELECT AVG(irradiance) as avg FROM plant_irradiance WHERE DATE(date) = DATE(:now) AND irradiance != 0");
+    $irr = $pdo->prepare('SELECT AVG(irradiance) AS avg FROM plant_irradiance WHERE DATE(`date`) = DATE(:now) AND irradiance != 0');
     $irr->execute([':now' => $timenow]);
     $avg_irradiance = $irr->fetch();
 
-    $sun = $pdo->prepare("SELECT TIMESTAMPDIFF(MINUTE,MIN(date),MAX(date)) as minutes FROM plant_irradiance WHERE DATE(date) = DATE(:now) AND irradiance != 0");
+    $sun = $pdo->prepare('SELECT TIMESTAMPDIFF(MINUTE, MIN(`date`), MAX(`date`)) AS minutes FROM plant_irradiance WHERE DATE(`date`) = DATE(:now) AND irradiance != 0');
     $sun->execute([':now' => $timenow]);
     $sun_hours = $sun->fetch();
 
@@ -77,5 +79,10 @@ try {
 } catch (PDOException $e) {
     error_log('get_site_card_datav3 error: ' . $e->getMessage());
     ob_end_clean();
-    echo json_encode(['status' => 'Err', 'reason' => 'database']);
+    $out = ['status' => 'Err', 'reason' => 'database'];
+    if ((defined('ENVIRONMENT') && ENVIRONMENT !== 'production')
+        || (defined('DISPLAY_ERRORS') && DISPLAY_ERRORS)) {
+        $out['error'] = $e->getMessage();
+    }
+    echo json_encode($out);
 }
