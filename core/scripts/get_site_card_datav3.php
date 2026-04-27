@@ -7,17 +7,23 @@ require_once __DIR__ . '/../common/db_key_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Guard: must be an XMLHttpRequest (jQuery sends this automatically)
-if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
-    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
-}
-
 $site_db = trim($_POST['site_db'] ?? '');
 $timenow = date('Y-m-d H:i');
 
-if (empty($site_db)) { ob_end_clean(); echo json_encode(['status' => 'Err']); exit; }
+if ($site_db === '') {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'reason' => 'missing_site_db']);
+    exit;
+}
 
-$pdo = getDB(ees_db_key($site_db));
+try {
+    $pdo = getDB(ees_db_key($site_db));
+} catch (InvalidArgumentException $e) {
+    error_log('get_site_card_datav3: unknown db key for site_db=' . $site_db . ' — ' . $e->getMessage());
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'reason' => 'unknown_db_key']);
+    exit;
+}
 
 try {
     $ap = $pdo->prepare(
@@ -28,7 +34,14 @@ try {
          (SELECT '102' as meter_id, active_power FROM plant_active_power WHERE DATE(date) = DATE(:now) AND meter_id = 102 ORDER BY date DESC LIMIT 1)"
     );
     $ap->execute([':now' => $timenow]);
-    $site_power = $ap->fetchAll();
+    $rows = $ap->fetchAll(PDO::FETCH_ASSOC);
+    $by_meter = [100 => null, 101 => null, 102 => null];
+    foreach ($rows as $row) {
+        $mid = isset($row['meter_id']) ? (int) $row['meter_id'] : 0;
+        if ($mid >= 100 && $mid <= 102) {
+            $by_meter[$mid] = $row['active_power'] ?? null;
+        }
+    }
 
     $daily = $pdo->prepare("SELECT ROUND(SUM(production),2) as daily FROM tbl_hourly_prod WHERE meter_id >= 100 AND DATE(datetime) = DATE(:now)");
     $daily->execute([':now' => $timenow]);
@@ -52,17 +65,17 @@ try {
 
     ob_end_clean();
     echo json_encode([
-        'active_power1' => round((float)($site_power[0]['active_power'] ?? 0), 2),
-        'active_power2' => round((float)($site_power[1]['active_power'] ?? 0), 2),
-        'active_power3' => round((float)($site_power[2]['active_power'] ?? 0), 2),
-        'daily_prod'    => round((float)($site_daily['daily']           ?? 0), 2),
-        'monthly_prod'  => round((float)($site_monthly['monthly']       ?? 0), 2),
-        'yearly_prod'   => round((float)($site_yearly['yearly']         ?? 0), 2),
-        'avg_irr'       => round((float)($avg_irradiance['avg']         ?? 0), 2),
-        'sun_hours'     => (int)($sun_hours['minutes']                  ?? 0),
+        'active_power1' => round((float)($by_meter[100] ?? 0), 2),
+        'active_power2' => round((float)($by_meter[101] ?? 0), 2),
+        'active_power3' => round((float)($by_meter[102] ?? 0), 2),
+        'daily_prod'    => round((float)($site_daily['daily']     ?? 0), 2),
+        'monthly_prod'  => round((float)($site_monthly['monthly'] ?? 0), 2),
+        'yearly_prod'   => round((float)($site_yearly['yearly']    ?? 0), 2),
+        'avg_irr'       => round((float)($avg_irradiance['avg']   ?? 0), 2),
+        'sun_hours'     => (int)($sun_hours['minutes']            ?? 0),
     ]);
 } catch (PDOException $e) {
-    error_log("get_site_card_datav3 error: " . $e->getMessage());
+    error_log('get_site_card_datav3 error: ' . $e->getMessage());
     ob_end_clean();
-    echo json_encode(['status' => 'Err']);
+    echo json_encode(['status' => 'Err', 'reason' => 'database']);
 }

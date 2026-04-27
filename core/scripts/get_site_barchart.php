@@ -6,11 +6,6 @@ require_once __DIR__ . '/../common/db_key_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Guard: must be an XMLHttpRequest (jQuery sends this automatically)
-if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
-    ob_end_clean(); echo json_encode(['status' => 'Err']); exit;
-}
-
 $site_db = trim($_POST['site_db'] ?? '');
 $date    = trim($_POST['date']    ?? date('Y-m-d'));
 

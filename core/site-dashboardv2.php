@@ -299,47 +299,47 @@ var kpi_active_power2 = [];
             type: "POST",
             url: "scripts/get_site_card_datav2",
             async: false,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            dataType: 'json',
             data: {
                 "site_db": '<?php echo $site_db;?>'
             },
-            success: function(dataResult) {
-                var data = dataResult;
-                
-                // console.log(data);
-                
-                document.getElementById('active_power1').innerHTML = data.active_power1.toFixed(2) + " kW";
-                document.getElementById('active_power2').innerHTML = data.active_power2.toFixed(2) + " kW";
-                
-                
-                if(data.daily_prod < 1000){
-                    document.getElementById('daily_prod').innerHTML = data.daily_prod.toFixed(2) + " kWh";    
+            success: function(data) {
+                function n(v) { var x = parseFloat(v); return isNaN(x) ? 0 : x; }
+                function nInt(v) { var x = parseInt(v, 10); return isNaN(x) ? 0 : x; }
+
+                if (!data || data.status === 'Err') {
+                    console.warn('get_site_card_datav2 failed or returned Err', data);
+                    return;
                 }
-                else{
-                    document.getElementById('daily_prod').innerHTML = (data.daily_prod/1000).toFixed(2) + " MWh";
-                }
-                
-                if(data.monthly_prod < 1000){
-                    document.getElementById('monthly_prod').innerHTML = data.monthly_prod.toFixed(2) + " kWh";    
-                }
-                else{
-                    document.getElementById('monthly_prod').innerHTML = (data.monthly_prod/1000).toFixed(2) + " MWh";
-                }
-                
-                if(data.yearly_prod < 1000){
-                    document.getElementById('yearly_prod').innerHTML = data.yearly_prod.toFixed(2) + " kWh";    
-                }
-                else{
-                    document.getElementById('yearly_prod').innerHTML = (data.yearly_prod/1000).toFixed(2) + " MWh";
-                }
-                
-                document.getElementById('avg_irradiance').innerHTML = data.avg_irr + " W/m<sup>2<sup>";
-                
-                
-                let sun_hours = Math.floor(parseInt(data.sun_hours) / 60);          
-                let sun_minutes = parseInt(data.sun_hours) % 60;
-                
+
+                document.getElementById('active_power1').innerHTML = n(data.active_power1).toFixed(2) + " kW";
+                document.getElementById('active_power2').innerHTML = n(data.active_power2).toFixed(2) + " kW";
+
+                var dp = n(data.daily_prod);
+                document.getElementById('daily_prod').innerHTML = dp < 1000
+                    ? dp.toFixed(2) + " kWh"
+                    : (dp / 1000).toFixed(2) + " MWh";
+
+                var mp = n(data.monthly_prod);
+                document.getElementById('monthly_prod').innerHTML = mp < 1000
+                    ? mp.toFixed(2) + " kWh"
+                    : (mp / 1000).toFixed(2) + " MWh";
+
+                var yp = n(data.yearly_prod);
+                document.getElementById('yearly_prod').innerHTML = yp < 1000
+                    ? yp.toFixed(2) + " kWh"
+                    : (yp / 1000).toFixed(2) + " MWh";
+
+                document.getElementById('avg_irradiance').innerHTML = n(data.avg_irr).toFixed(2) + " W/m<sup>2</sup>";
+
+                var sunM = nInt(data.sun_hours);
+                var sun_hours = Math.floor(sunM / 60);
+                var sun_minutes = sunM % 60;
                 document.getElementById('sun_hours').innerHTML = sun_hours + " hours " + sun_minutes + " minutes ";
-                
+            },
+            error: function(xhr, st, err) {
+                console.warn('get_site_card_datav2 request error', st, err);
             }
         });
     });

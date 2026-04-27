@@ -9,6 +9,32 @@
   opacity: 1 !important;
 }
 
+/* Download control: old global `.fa-download` used margin-right:-134px (legacy float layout) and hid the icon inside <button> */
+.page-site-dashboard .ees-site-dash-dl {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2rem;
+  padding: 0.375rem 0.6rem;
+}
+.page-site-dashboard .ees-site-dash-dl .fa,
+.page-site-dashboard .ees-site-dash-dl .fa-download {
+  display: inline-block !important;
+  float: none !important;
+  position: static !important;
+  margin: 0 !important;
+  width: 1.1em;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  color: var(--ees-text-primary, #0f172a) !important;
+  font-family: FontAwesome !important; /* do not inherit Nunito from .btn, or glyph missing */
+  font-style: normal;
+  font-weight: normal;
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
+}
+
 .top_counter .icon i {
     font-size: 35px;
     color: #00bdaa;
@@ -40,12 +66,12 @@
     float: right;
 }
 
-.fa-download {
+/* Legacy only: free-standing download icon in old headers (not inside .ees-site-dash-dl) */
+.page-site-dashboard .card > .header:not(.ees-site-dash-kpi-header) .fa-download {
     font-size: 18px;
     float: right;
     cursor: pointer;
-    margin-right: -134px;
-    margin-top: 9px;
+    margin-top: 4px;
 }
 
 @media (max-width: 820px) {

@@ -3,12 +3,7 @@ $(function hideCards(){
 });
 
 
-// Setup - add a text input to each footer cell
-$('#tbl_archive thead tr')
-    .clone(true)
-    .addClass('filters')
-    .appendTo('#tbl_archive thead');
-
+// One header row only: initComplete adds a search input on Date/Time (older code cloned thead and duplicated labels).
 var archive_table = $('#tbl_archive').DataTable({
     ordering: false,
     autoWidth: false,
