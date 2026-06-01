@@ -179,11 +179,17 @@ body.page-plant #plant_report_block .row > [class*="col-lg-3"] > .card.text-cent
     overflow: visible !important;
 }
 
-/* Fixed-height chart cards keep explicit inline height; inner plot scrolls if needed */
+/* Fixed-height chart cards — no horizontal scroll / wheel zoom on chart area */
 body.page-plant #plant_report_block .card.text-center .body.chartBox,
 body.page-plant #plant_report_block .card.text-center .body.chartBox2 {
-    overflow-x: auto !important;
-    overflow-y: hidden;
+    overflow: hidden !important;
+    touch-action: pan-y;
+}
+
+body.page-plant #plant_report_block .chartBox canvas,
+body.page-plant #plant_report_block .chartBox2 canvas {
+    max-width: 100%;
+    display: block;
 }
 
 body.page-plant .plant-report-logo-row {
@@ -207,12 +213,6 @@ body.page-plant .chartBox2 {
 body.page-plant .chartBox canvas,
 body.page-plant .chartBox2 canvas {
     max-width: 100%;
-}
-
-body.page-plant #plant_report_block .chartBox canvas,
-body.page-plant #plant_report_block .chartBox2 canvas {
-    max-width: none;
-    display: block;
 }
 
 body.page-plant .tbl_analysis tbody tr td {

@@ -40,6 +40,7 @@ if (!$pdo) {
 }
 $capacity   = (float)$site['capacity'];
 $main_meter = (int)$site['main_meter'];
+$meter_min  = $main_meter > 0 ? $main_meter : 100;
 
 try {
     $energy_stmt = $pdo->prepare(
@@ -48,7 +49,7 @@ try {
          WHERE DATE(DATETIME) >= DATE(:start) AND DATE(DATETIME) <= DATE(:end) AND meter_id >= :meter
          GROUP BY DATE(DATETIME)"
     );
-    $energy_stmt->execute([':start' => $start_date, ':end' => $end_date, ':meter' => $main_meter]);
+    $energy_stmt->execute([':start' => $start_date, ':end' => $end_date, ':meter' => $meter_min]);
     $energy = $energy_stmt->fetchAll();
 
     $irr_stmt = $pdo->prepare(

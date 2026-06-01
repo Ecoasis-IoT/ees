@@ -24,13 +24,16 @@ var page = document.getElementById("plant_report_block");
         });
     }
 
-    var plantChartZoom = {
-        pan: { enabled: true, modifierKey: 'ctrl' },
-        zoom: {
-            wheel: { enabled: true },
-            pinch: { enabled: true },
-            mode: 'xy'
-        }
+    function updatePlantReportTitle() {
+        var select = document.getElementById('site_opt');
+        var output = document.getElementById('output');
+        if (!select || !output) return;
+        var opt = select.options[select.selectedIndex];
+        output.textContent = (opt && opt.value) ? opt.textContent.trim() : '';
+    }
+
+    var plantChartInteraction = {
+        mode: 'index'
     };
     
     //Change Date Format
@@ -111,6 +114,8 @@ var page = document.getElementById("plant_report_block");
             EES.alert("Please choose a plant from the list.", "warning");
             return;
         }
+
+        updatePlantReportTitle();
         
         if(!document.getElementById("startDate").value || !document.getElementById("endDate").value) {
             EES.alert('Starting and Ending Date is Missing!', 'warning');
@@ -149,7 +154,9 @@ var page = document.getElementById("plant_report_block");
                     document.getElementById("plant_total_prod").innerHTML = numberWithSpaces(data.prod);
                     document.getElementById("plant_total_prod2").innerHTML = numberWithSpaces(data.prod);
                     
-                    var deviation = ((data.prod - parseFloat(budget_prod))/data.prod) * 100;
+                    var deviation = data.prod > 0
+                        ? ((data.prod - parseFloat(budget_prod)) / data.prod) * 100
+                        : 0;
                     
                     document.getElementById("deviation").innerHTML = deviation.toFixed(2) + " %";
                     
@@ -329,14 +336,11 @@ var page = document.getElementById("plant_report_block");
                             legend: {
                                 position: 'bottom',
                                 display: true,
-                            },
-                            zoom: plantChartZoom
+                            }
                         },
                         maintainAspectRatio:false,
                         responsive: true,
-                        interaction: {
-                            mode: 'index'
-                        },
+                        interaction: plantChartInteraction,
                       },
                       plugins: [plugin],
                     };
@@ -471,14 +475,11 @@ var page = document.getElementById("plant_report_block");
                         legend: {
                             position: 'bottom',
                             display: true,
-                        },
-                        zoom: plantChartZoom
+                        }
                     },
                     responsive: true, 
                     maintainAspectRatio: false,
-                     interaction: {
-                        mode: 'index'
-                    },
+                    interaction: plantChartInteraction,
                   },
                   plugins: [plugin2],
                 };
@@ -688,29 +689,12 @@ function generatePdf() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const selectMenu = document.getElementById('site_opt');
-    const outputText = document.getElementById('output');
+    if (!selectMenu) return;
 
-    // Initialize with the first option's text
-    outputText.textContent = `${selectMenu.options[0].text}`;
-    
-    // Change the text based on the selected option
-    selectMenu.addEventListener('change', () => {
-        const selectedValue = selectMenu.value;
-        if (selectedValue === '7777') {
-            outputText.textContent = 'Phoenix Mall';
-        } else if (selectedValue === '7778') {
-            outputText.textContent = 'Home and Leisure';
-        } else if (selectedValue === '7779') {
-            outputText.textContent = 'Riche Terre Mall';
-        } else if (selectedValue === '7780') {
-            outputText.textContent =  "Bo'Valon Mall";
-        } else if (selectedValue === '7781') {
-            outputText.textContent = 'Plaisance Catering';
-        } else if (selectedValue === '7782') {
-            outputText.textContent = 'Moka City';
-        }
-    });
-});    
+    updatePlantReportTitle();
+
+    selectMenu.addEventListener('change', updatePlantReportTitle);
+});
 
 
 // --- next block ---

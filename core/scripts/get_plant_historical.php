@@ -17,7 +17,7 @@ if (!$site_id) {
 }
 
 $adm  = getDB('admin');
-$stmt = $adm->prepare("SELECT db_name FROM tbl_site WHERE id = :id");
+$stmt = $adm->prepare("SELECT db_name, main_meter FROM tbl_site WHERE id = :id");
 $stmt->execute([':id' => $site_id]);
 $site = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$site) {
@@ -39,54 +39,91 @@ if (!$pdo) {
     exit;
 }
 
+$history      = [];
+$current_year = (int)date('Y', strtotime($end_date));
+
 try {
     $hist_stmt = $pdo->prepare(
         "SELECT YEAR(date) as year, production, insolation
          FROM tbl_historical WHERE MONTH(date) = :month"
     );
     $hist_stmt->execute([':month' => $month]);
-    $raw     = $hist_stmt->fetchAll();
-    $history = array_map(function($r) {
+    $raw = $hist_stmt->fetchAll();
+    $history = array_map(function ($r) {
         return [
             'year'       => (string)$r['year'],
             'production' => (float)$r['production'],
             'insolation' => (float)$r['insolation'],
         ];
     }, $raw);
+} catch (PDOException $e) {
+    error_log('get_plant_historical tbl_historical: ' . $e->getMessage());
+}
 
-    $current_year = (int)date('Y');
+$current_production = 0.0;
+$main_meter         = (int)($site['main_meter'] ?? 0);
 
-    // Literal year in SELECT (int) — avoids driver issues with bound params in the SELECT list
-    $curr_stmt = $pdo->prepare(
-        'SELECT ' . $current_year . ' AS year,
-                MAX(total_active_energy) - MIN(total_active_energy) AS production
-         FROM tbl_main_meter
-         WHERE YEAR(date) = :yr_filter AND MONTH(date) = :month'
-    );
-    $curr_stmt->execute([':yr_filter' => $current_year, ':month' => $month]);
+try {
+    if ($main_meter > 0) {
+        $curr_stmt = $pdo->prepare(
+            'SELECT MAX(total_active_energy) - MIN(total_active_energy) AS production
+             FROM tbl_main_meter
+             WHERE YEAR(date) = :yr_filter AND MONTH(date) = :month AND meter_id = :meter'
+        );
+        $curr_stmt->execute([
+            ':yr_filter' => $current_year,
+            ':month'     => $month,
+            ':meter'     => $main_meter,
+        ]);
+    } else {
+        $curr_stmt = $pdo->prepare(
+            'SELECT MAX(total_active_energy) - MIN(total_active_energy) AS production
+             FROM tbl_main_meter
+             WHERE YEAR(date) = :yr_filter AND MONTH(date) = :month'
+        );
+        $curr_stmt->execute([':yr_filter' => $current_year, ':month' => $month]);
+    }
     $current = $curr_stmt->fetch(PDO::FETCH_ASSOC);
+    $current_production = round((float)($current['production'] ?? 0), 2);
+} catch (PDOException $e) {
+    error_log('get_plant_historical tbl_main_meter: ' . $e->getMessage());
+    try {
+        $meter_floor = $main_meter > 0 ? $main_meter : 100;
+        $fallback = $pdo->prepare(
+            "SELECT ROUND(SUM(production), 2) AS production
+             FROM tbl_hourly_prod
+             WHERE YEAR(datetime) = :yr AND MONTH(datetime) = :month AND meter_id >= :meter"
+        );
+        $fallback->execute([
+            ':yr'     => $current_year,
+            ':month'  => $month,
+            ':meter'  => $meter_floor,
+        ]);
+        $row = $fallback->fetch(PDO::FETCH_ASSOC);
+        $current_production = round((float)($row['production'] ?? 0), 2);
+    } catch (PDOException $e2) {
+        error_log('get_plant_historical tbl_hourly_prod fallback: ' . $e2->getMessage());
+    }
+}
 
+$current_insolation = 0.0;
+try {
     $irr_stmt = $pdo->prepare(
         "SELECT SUM(insolation) as insolation FROM plant_irradiance
          WHERE YEAR(date) = :yr AND MONTH(date) = :month"
     );
     $irr_stmt->execute([':yr' => $current_year, ':month' => $month]);
     $curr_irr = $irr_stmt->fetch(PDO::FETCH_ASSOC);
-
-    $history[] = [
-        'year'       => (string)$current_year,
-        'production' => round((float)($current['production'] ?? 0), 2),
-        'insolation' => round((float)($curr_irr['insolation'] ?? 0), 2),
-    ];
-
-    ob_end_clean();
-    echo json_encode($history);
+    $current_insolation = round((float)($curr_irr['insolation'] ?? 0), 2);
 } catch (PDOException $e) {
-    error_log("get_plant_historical error: " . $e->getMessage());
-    ob_end_clean();
-    echo json_encode([
-        'status'  => 'Err',
-        'code'    => 'sql_error',
-        'message' => 'Data query failed. See server log for details.',
-    ]);
+    error_log('get_plant_historical plant_irradiance: ' . $e->getMessage());
 }
+
+$history[] = [
+    'year'       => (string)$current_year,
+    'production' => $current_production,
+    'insolation' => $current_insolation,
+];
+
+ob_end_clean();
+echo json_encode($history);
