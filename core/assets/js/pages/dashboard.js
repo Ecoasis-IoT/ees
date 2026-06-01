@@ -10,14 +10,6 @@
         if (el) el.textContent = val;
     }
 
-    function fmtNum(n) {
-        var num = parseFloat(n) || 0;
-        var v = num >= 1000
-            ? (num / 1000).toFixed(1) + 'k'
-            : num.toFixed(2);
-        return v + ' kWh total';
-    }
-
     // Map initialisation
     var map = new L.map('sites_map').setView([-20.2337508, 57.5510122], 10);
 
@@ -28,6 +20,18 @@
     }).addTo(map);
 
     map.addControl(new L.Control.Fullscreen());
+
+    function refreshMapSize() {
+        map.invalidateSize();
+    }
+
+    setTimeout(refreshMapSize, 0);
+    window.addEventListener('resize', refreshMapSize);
+
+    var mapContainer = document.getElementById('map_container');
+    if (mapContainer && typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(refreshMapSize).observe(mapContainer);
+    }
 
     // Sites production table + bar chart
     var chart_labels = [];
@@ -42,15 +46,7 @@
             success: function (data) {
 
                 // Populate KPI cards
-                var totalProd = 0;
-                for (var k = 0; k < data.length; k++) {
-                    totalProd += parseFloat(data[k].prod) || 0;
-                }
                 setKpi('kpi-total-sites', data.length);
-                var prodEl = document.getElementById('kpi-total-prod');
-                if (prodEl) {
-                    prodEl.textContent = fmtNum(totalProd);
-                }
 
                 for (var i = 0; i < data.length; i++) {
                     var href = (data[i].dashboard_href || 'site-dashboard') + '?site=' + encodeURIComponent(data[i].id);
@@ -67,6 +63,8 @@
                         .addTo(map);
                     marker.bindPopup('<b>' + data[i].site_name + '</b><br>Production (kWh): ' + data[i].prod, { closeOnClick: false, autoClose: false });
                 }
+
+                refreshMapSize();
 
                 var chart_data = {
                     labels: chart_labels,

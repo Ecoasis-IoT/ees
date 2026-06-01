@@ -14,7 +14,8 @@
   --ees-sidebar-text:        #94A3B8;
   --ees-sidebar-text-active: #FFFFFF;
   --ees-sidebar-accent:      #70AD47;
-  --ees-sidebar-width:       auto;
+  --ees-sidebar-width:       240px;
+  --ees-content-offset:      0px;
 
   --ees-topbar-bg:           #FFFFFF;
   --ees-topbar-height:       60px;
@@ -76,6 +77,19 @@ hr { border-color: var(--ees-border) !important; opacity: 1 !important; margin: 
   overflow: visible !important;
 }
 
+#wrapper::before,
+#wrapper::after {
+  display: none !important;
+  content: none !important;
+}
+
+body::before,
+body::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
 /* Hide old sidebar (replaced by .ees-sidebar) */
 #left-sidebar.sidebar,
 #left-sidebar { display: none !important; }
@@ -87,18 +101,30 @@ nav.navbar,
 /* Hide page loader */
 .page-loader-wrapper { display: none !important; }
 
-/* Content area — with or without the #content wrapper */
+/* Content area — offset follows sidebar visibility */
+body.ees-sidenav-show:not(.ees-sidenav-hidden) {
+  --ees-content-offset: var(--ees-sidebar-width);
+}
+
 #content,
 #wrapper > #main-content {
-  margin-left: var(--ees-sidebar-width) !important;
+  margin-left: var(--ees-content-offset) !important;
+  width: calc(100% - var(--ees-content-offset)) !important;
+  float: none !important;
   /* No padding-top — topbar is sticky in flow, content naturally starts below it */
   min-height: calc(100vh - var(--ees-topbar-height)) !important;
   background-color: var(--ees-content-bg) !important;
-  transition: margin-left 0.25s ease;
+  transition: margin-left 0.32s ease-in-out, width 0.32s ease-in-out;
 }
 
 #main-content {
   padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  float: none !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  position: relative !important;
   background-color: var(--ees-content-bg) !important;
 }
 
@@ -113,7 +139,8 @@ nav.navbar,
      yet sticks to top of viewport while scrolling */
   position: sticky;
   top: 0;
-  margin-left: var(--ees-sidebar-width);
+  margin-left: var(--ees-content-offset);
+  width: calc(100% - var(--ees-content-offset));
   height: var(--ees-topbar-height);
   background: var(--ees-topbar-bg);
   border-bottom: 1px solid var(--ees-border);
@@ -123,7 +150,8 @@ nav.navbar,
   padding: 0 20px;
   z-index: 1030;
   gap: 8px;
-  transition: margin-left 0.25s ease;
+  transition: margin-left 0.32s ease-in-out, width 0.32s ease-in-out;
+  box-sizing: border-box;
 }
 
 .ees-topbar-toggle {
@@ -144,6 +172,30 @@ nav.navbar,
 .ees-topbar-toggle:hover {
   background: var(--ees-content-bg);
   color: var(--ees-text-primary);
+}
+
+.ees-sidenav-toggler-inner {
+  width: 18px;
+  display: block;
+}
+
+.ees-sidenav-toggler-line {
+  transition: all 0.15s ease;
+  background: var(--ees-text-secondary);
+  border-radius: 2px;
+  position: relative;
+  display: block;
+  height: 2px;
+}
+
+.ees-sidenav-toggler-line:not(:last-child) {
+  margin-bottom: 3px;
+}
+
+body.ees-sidenav-show.ees-sidenav-pinned:not(.ees-sidenav-hidden) .ees-sidenav-toggler-line:first-child,
+body.ees-sidenav-show.ees-sidenav-pinned:not(.ees-sidenav-hidden) .ees-sidenav-toggler-line:last-child {
+  width: 13px;
+  transform: translateX(5px);
 }
 
 .ees-topbar-spacer { flex: 1; }
@@ -483,6 +535,26 @@ nav.navbar,
 }
 
 .ees-sidebar-overlay.show { display: block; }
+
+/* Sidebar hide/show — full slide off-screen (omnipv-style) */
+body.ees-sidenav-show .ees-sidebar {
+  transition: transform 0.32s ease-in-out;
+}
+
+body.ees-sidenav-show #content,
+body.ees-sidenav-show #wrapper > #main-content,
+body.ees-sidenav-show .ees-topbar {
+  transition: margin-left 0.32s ease-in-out;
+}
+
+body.ees-sidenav-show.ees-sidenav-pinned:not(.ees-sidenav-hidden) .ees-sidebar,
+body.ees-sidenav-show:not(.ees-sidenav-hidden):not(.ees-sidenav-pinned) .ees-sidebar {
+  transform: translateX(0);
+}
+
+body.ees-sidenav-show.ees-sidenav-hidden .ees-sidebar {
+  transform: translateX(calc(-1 * var(--ees-sidebar-width)));
+}
 
 /* ── 6. Page Header (block-header) ─────────────────────────── */
 .block-header {
@@ -1053,6 +1125,10 @@ footer {
   transform: translateY(-1px);
 }
 
+.ees-stat-card--wide {
+  width: 100%;
+}
+
 .ees-stat-icon {
   width: 40px;
   height: 40px;
@@ -1302,23 +1378,26 @@ footer {
 }
 
 @media (max-width: 991px) {
-  .ees-sidebar {
+  body.ees-sidenav-show {
+    --ees-content-offset: 0px;
+  }
+
+  body.ees-sidenav-show:not(.ees-sidenav-pinned) .ees-sidebar,
+  body.ees-sidenav-show.ees-sidenav-hidden .ees-sidebar {
     transform: translateX(calc(-1 * var(--ees-sidebar-width)));
     box-shadow: none;
   }
 
-  .ees-sidebar.open {
+  body.ees-sidenav-show.ees-sidenav-pinned:not(.ees-sidenav-hidden) .ees-sidebar {
     transform: translateX(0);
     box-shadow: 0 0 40px rgba(0,0,0,.3);
   }
 
   #content,
-  #wrapper > #main-content {
-    margin-left: 0 !important;
-  }
-
+  #wrapper > #main-content,
   .ees-topbar {
-    margin-left: 0 !important;
+    margin-left: var(--ees-content-offset) !important;
+    width: calc(100% - var(--ees-content-offset)) !important;
   }
 
   .ees-auth-panel-left {

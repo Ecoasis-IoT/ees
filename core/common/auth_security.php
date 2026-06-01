@@ -153,3 +153,70 @@ if (!function_exists('getClientIP')) {
         return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     }
 }
+
+/**
+ * Complete an authenticated session after password (and optional 2FA) verification.
+ */
+function ees_establish_user_session(array $user): void {
+    session_regenerate_id(true);
+    $_SESSION['id']            = $user['id'];
+    $_SESSION['firstname']     = $user['firstname'] ?? '';
+    $_SESSION['lastname']      = $user['lastname'] ?? '';
+    $_SESSION['name']          = $user['firstname'] ?? '';
+    $_SESSION['last_name']     = $user['lastname'] ?? '';
+    $_SESSION['email']         = $user['email'] ?? '';
+    $_SESSION['username']      = $user['username'] ?? '';
+    $_SESSION['group_id']      = $user['group_id'] ?? 0;
+    $_SESSION['created']       = time();
+    $_SESSION['last_activity'] = time();
+}
+
+/**
+ * Store pending 2FA state after a successful password check.
+ */
+function ees_begin_pending_2fa(array $user, string $login_identifier): void {
+    session_regenerate_id(true);
+    $_SESSION['2fa_pending']      = true;
+    $_SESSION['2fa_user_id']      = (int)$user['id'];
+    $_SESSION['2fa_login_id']   = $login_identifier;
+    $_SESSION['2fa_firstname']  = $user['firstname'] ?? '';
+    $_SESSION['2fa_lastname']   = $user['lastname'] ?? '';
+    $_SESSION['2fa_email']      = $user['email'] ?? '';
+    $_SESSION['2fa_username']   = $user['username'] ?? '';
+    $_SESSION['2fa_group_id']   = $user['group_id'] ?? 0;
+    $_SESSION['2fa_created']    = time();
+}
+
+/**
+ * Clear pending 2FA session variables.
+ */
+function ees_clear_pending_2fa(): void {
+    unset(
+        $_SESSION['2fa_pending'],
+        $_SESSION['2fa_user_id'],
+        $_SESSION['2fa_login_id'],
+        $_SESSION['2fa_firstname'],
+        $_SESSION['2fa_lastname'],
+        $_SESSION['2fa_email'],
+        $_SESSION['2fa_username'],
+        $_SESSION['2fa_group_id'],
+        $_SESSION['2fa_created']
+    );
+}
+
+/**
+ * Build user row array from pending 2FA session for ees_establish_user_session().
+ */
+function ees_pending_2fa_user_from_session(): ?array {
+    if (empty($_SESSION['2fa_pending']) || empty($_SESSION['2fa_user_id'])) {
+        return null;
+    }
+    return [
+        'id'        => $_SESSION['2fa_user_id'],
+        'firstname' => $_SESSION['2fa_firstname'] ?? '',
+        'lastname'  => $_SESSION['2fa_lastname'] ?? '',
+        'email'     => $_SESSION['2fa_email'] ?? '',
+        'username'  => $_SESSION['2fa_username'] ?? '',
+        'group_id'  => $_SESSION['2fa_group_id'] ?? 0,
+    ];
+}

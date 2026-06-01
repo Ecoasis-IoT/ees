@@ -73,8 +73,8 @@ $csrf_token = generateCSRFToken();
 
                 <!-- KPI Stat Cards -->
                 <div class="row g-2 mb-2">
-                    <div class="col-lg-6 col-md-6 col-sm-12">
-                        <div class="ees-stat-card">
+                    <div class="col-12">
+                        <div class="ees-stat-card ees-stat-card--wide">
                             <div class="ees-stat-icon green">
                                 <i class="fa fa-sitemap"></i>
                             </div>
@@ -84,23 +84,12 @@ $csrf_token = generateCSRFToken();
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-6 col-md-6 col-sm-12">
-                        <div class="ees-stat-card">
-                            <div class="ees-stat-icon blue">
-                                <i class="fa fa-bolt"></i>
-                            </div>
-                            <div>
-                                <div class="ees-stat-label">Today's Production</div>
-                                <div class="ees-stat-value ees-stat-value--prod-line" id="kpi-total-prod">—</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Sites table + chart (left) | Map (right) -->
-                <div class="row clearfix g-2 mb-2">
+                <div class="row clearfix g-2 mb-2 ees-dashboard-split-row">
                     <div class="col-lg-6 col-md-12 col-sm-12">
-                        <div class="card shadow-sm">
+                        <div class="card shadow-sm h-100">
                             <div class="header">
                                 <h2>All Sites</h2>
                             </div>
@@ -131,12 +120,12 @@ $csrf_token = generateCSRFToken();
                     </div>
 
                     <div class="col-lg-6 col-md-12 col-sm-12">
-                        <div class="card shadow-sm" style="min-height:560px;">
+                        <div class="card shadow-sm h-100 ees-dashboard-map-card">
                             <div class="header">
                                 <h2>Site Map</h2>
                             </div>
-                            <div id="map_container" style="padding:0;">
-                                <div id="sites_map" style="height:500px;border-radius:0 0 12px 12px;"></div>
+                            <div id="map_container" class="ees-dashboard-map-body">
+                                <div id="sites_map"></div>
                             </div>
                         </div>
                     </div>

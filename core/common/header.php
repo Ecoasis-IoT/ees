@@ -6,9 +6,13 @@ $_current_user_name = htmlspecialchars(
 ?>
 <header class="ees-topbar" id="ees-topbar">
 
-    <!-- Hamburger toggle (mobile + desktop collapse) -->
-    <button class="ees-topbar-toggle" id="ees-sidebar-toggle" aria-label="Toggle sidebar">
-        <i class="fa fa-bars"></i>
+    <!-- Sidebar hide/show toggle (same pattern as omnipv) -->
+    <button class="ees-topbar-toggle" id="ees-sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="true">
+        <span class="ees-sidenav-toggler-inner" aria-hidden="true">
+            <i class="ees-sidenav-toggler-line"></i>
+            <i class="ees-sidenav-toggler-line"></i>
+            <i class="ees-sidenav-toggler-line"></i>
+        </span>
     </button>
 
     <div class="ees-topbar-spacer"></div>

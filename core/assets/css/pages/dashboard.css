@@ -1,14 +1,38 @@
-/* Dashboard page styles */
+/* Dashboard page — equal-height split row (table/chart | map) */
 
-#map_container {
-    height: 75vh;
-    width: 100%;
-    overflow: hidden;
+.ees-dashboard-split-row > [class*="col-"] {
+  display: flex;
+  flex-direction: column;
+}
+
+.ees-dashboard-split-row .card {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.ees-dashboard-map-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ees-dashboard-map-body {
+  flex: 1 1 auto;
+  min-height: 280px;
+  padding: 0;
+  overflow: hidden;
 }
 
 #sites_map {
-    height: 100%;
-    width: 110%;
-    z-index: 0;
-    border-radius: 0.35rem;
+  height: 100%;
+  width: 100%;
+  min-height: 280px;
+  border-radius: 0 0 var(--ees-card-radius, 12px) var(--ees-card-radius, 12px);
+}
+
+@media (max-width: 991px) {
+  .ees-dashboard-map-body,
+  #sites_map {
+    min-height: 360px;
+  }
 }

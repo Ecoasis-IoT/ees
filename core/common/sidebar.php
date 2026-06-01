@@ -156,23 +156,81 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
         });
     });
 
-    // Mobile sidebar toggle
-    var sidebar  = document.getElementById('ees-sidebar');
-    var overlay  = document.getElementById('ees-sidebar-overlay');
+    // Sidebar hide/show (omnipv-style: body.ees-sidenav-hidden / ees-sidenav-pinned)
+    var body      = document.body;
+    var sidebar   = document.getElementById('ees-sidebar');
+    var overlay   = document.getElementById('ees-sidebar-overlay');
     var toggleBtn = document.getElementById('ees-sidebar-toggle');
 
+    function isMobileSidebar() {
+        return window.matchMedia('(max-width: 991px)').matches;
+    }
+
+    if (sidebar) {
+        body.classList.add('ees-sidenav-show');
+        if (isMobileSidebar()) {
+            body.classList.add('ees-sidenav-hidden');
+        }
+    }
+
+    function isSidebarVisible() {
+        if (body.classList.contains('ees-sidenav-hidden')) {
+            return false;
+        }
+        if (isMobileSidebar() && !body.classList.contains('ees-sidenav-pinned')) {
+            return false;
+        }
+        return true;
+    }
+
+    function syncSidebarUi() {
+        if (toggleBtn) {
+            toggleBtn.setAttribute('aria-expanded', isSidebarVisible() ? 'true' : 'false');
+        }
+        if (overlay) {
+            var showOverlay = isMobileSidebar() && isSidebarVisible();
+            overlay.classList.toggle('show', showOverlay);
+        }
+    }
+
+    function toggleSidebarNav(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        var hidden = body.classList.contains('ees-sidenav-hidden');
+        if (hidden) {
+            body.classList.remove('ees-sidenav-hidden');
+            body.classList.add('ees-sidenav-pinned');
+        } else {
+            body.classList.remove('ees-sidenav-pinned');
+            body.classList.add('ees-sidenav-hidden');
+        }
+        syncSidebarUi();
+    }
+
     if (toggleBtn && sidebar) {
-        toggleBtn.addEventListener('click', function () {
-            sidebar.classList.toggle('open');
-            if (overlay) overlay.classList.toggle('show');
+        toggleBtn.addEventListener('click', toggleSidebarNav);
+    }
+
+    if (overlay) {
+        overlay.addEventListener('click', function () {
+            body.classList.add('ees-sidenav-hidden');
+            body.classList.remove('ees-sidenav-pinned');
+            syncSidebarUi();
         });
     }
 
-    if (overlay && sidebar) {
-        overlay.addEventListener('click', function () {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('show');
-        });
-    }
+    window.addEventListener('resize', function () {
+        if (isMobileSidebar()) {
+            if (!body.classList.contains('ees-sidenav-pinned')) {
+                body.classList.add('ees-sidenav-hidden');
+            }
+        } else {
+            body.classList.remove('ees-sidenav-pinned');
+        }
+        syncSidebarUi();
+    });
+    syncSidebarUi();
 }());
 </script>

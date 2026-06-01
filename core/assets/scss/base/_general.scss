@@ -12,7 +12,6 @@ body {
         position: fixed;
         content: '';
         z-index: 999;
-		background:var(--primary-color);
     }
     &:before{
         top: 0;
@@ -120,13 +119,6 @@ footer {
 
 #left-sidebar .nav-tabs .nav-link.active{
 	color:var(--primary-color);
-}
-
-#wrapper{
-	&:before,
-	&:after{
-		background:var(--primary-color);
-	}
 }
 
 .sidebar-nav .metismenu>li.active>a{

@@ -12,6 +12,8 @@ if (isset($_SESSION['id']) && (time() - ($_SESSION['created'] ?? 0)) < $session_
     exit;
 }
 
+$twofa_pending = !empty($_SESSION['2fa_pending']) && !empty($_SESSION['2fa_user_id']);
+
 require_once __DIR__ . '/common/csrf.php';
 $csrf_token = generateCSRFToken();
 ?>
@@ -28,7 +30,7 @@ $csrf_token = generateCSRFToken();
     <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="assets/css/ees-theme.css">
 </head>
-<body>
+<body data-2fa-pending="<?= $twofa_pending ? '1' : '0' ?>">
 
 <div class="ees-auth-body">
 
@@ -64,10 +66,11 @@ $csrf_token = generateCSRFToken();
         <div class="ees-auth-card">
 
             <div class="ees-auth-card-header">
-                <h2>Welcome back</h2>
-                <p>Sign in to your account to continue</p>
+                <h2 id="login-title">Welcome back</h2>
+                <p id="login-subtitle">Sign in to your account to continue</p>
             </div>
 
+            <div id="login-step-credentials">
             <form onsubmit="return false;">
                 <div class="form-group">
                     <label class="form-label" for="signin-user">Username</label>
@@ -89,7 +92,7 @@ $csrf_token = generateCSRFToken();
                 <div id="login-error" class="alert alert-danger" role="alert" style="display:none;"></div>
 
                 <div style="margin-top:24px;">
-                    <input type="submit" class="btn btn-primary btn-lg btn-block"
+                    <input type="submit" class="btn btn-primary btn-lg btn-block" id="login-submit-btn"
                            onclick="auth(); return false;" value="Sign In">
                 </div>
 
@@ -98,6 +101,34 @@ $csrf_token = generateCSRFToken();
                     <a href="forgot-password">Forgot your password?</a>
                 </div>
             </form>
+            </div>
+
+            <div id="login-step-2fa" style="display:none;">
+                <form onsubmit="return false;">
+                    <p class="text-muted" style="margin-bottom:16px;">
+                        Enter the 6-digit code from your authenticator app, or use a backup code.
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label" for="signin-2fa-code">Verification code</label>
+                        <input type="text" class="form-control" id="signin-2fa-code"
+                               placeholder="000000" maxlength="8" inputmode="numeric" autocomplete="one-time-code">
+                    </div>
+                    <div class="form-check" style="margin-bottom:16px;">
+                        <input type="checkbox" class="form-check-input" id="signin-2fa-backup">
+                        <label class="form-check-label" for="signin-2fa-backup">Use a backup code instead</label>
+                    </div>
+
+                    <div id="login-2fa-error" class="alert alert-danger" role="alert" style="display:none;"></div>
+
+                    <div style="margin-top:24px;">
+                        <input type="submit" class="btn btn-primary btn-lg btn-block" id="login-2fa-submit-btn"
+                               onclick="verify2FA(); return false;" value="Verify">
+                    </div>
+                    <div class="ees-auth-footer-link" style="margin-top:16px;">
+                        <a href="#" id="login-2fa-back-link"><i class="fa fa-arrow-left"></i> Back to sign in</a>
+                    </div>
+                </form>
+            </div>
 
         </div>
     </div>

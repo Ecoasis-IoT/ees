@@ -13,6 +13,11 @@ require_once __DIR__ . '/../common/security_logging.php';
 require_once __DIR__ . '/../common/auth_security.php';
 require_once __DIR__ . '/../common/session_cookie_config.php';
 
+$has_2fa_helper = file_exists(__DIR__ . '/../common/two_factor_auth.php');
+if ($has_2fa_helper) {
+    require_once __DIR__ . '/../common/two_factor_auth.php';
+}
+
 /**
  * Verify password (bcrypt via password_verify, or legacy unsalted MD5) and whether to rehash in DB.
  *
@@ -139,20 +144,26 @@ if ($user && $password_ok) {
             error_log('userlogin password rehash error: ' . $e->getMessage());
         }
     }
-    // Successful login
-    session_regenerate_id(true);
-    $_SESSION['id']            = $user['id'];
-    $_SESSION['firstname']     = $user['firstname'];
-    $_SESSION['lastname']      = $user['lastname'];
-    $_SESSION['name']          = $user['firstname'];
-    $_SESSION['last_name']     = $user['lastname'];
-    $_SESSION['email']         = $user['email'];
-    $_SESSION['username']      = $user['username'];
-    $_SESSION['group_id']      = $user['group_id'] ?? 0;
-    $_SESSION['created']       = time();
-    $_SESSION['last_activity'] = time();
 
     resetLoginAttempts($username);
+
+    if ($has_2fa_helper && userHas2FAEnabled($pdo, (int)$user['id'])) {
+        ees_begin_pending_2fa($user, $username);
+        logSecurityEvent('login_2fa_required', [
+            'username' => $username,
+            'user_id'    => $user['id'],
+            'ip'         => $ip_address,
+        ], 'INFO');
+
+        ob_end_clean();
+        echo json_encode([
+            'statusCode' => '2fa_required',
+            'message'    => 'Enter the code from your authenticator app.',
+        ]);
+        exit;
+    }
+
+    ees_establish_user_session($user);
     logSecurityEvent('login_success', ['username' => $username, 'ip' => $ip_address], 'INFO');
 
     ob_end_clean();
