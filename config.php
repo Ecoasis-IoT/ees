@@ -68,6 +68,49 @@ function ees_url_path(string $path): string {
     return $base . $suffix;
 }
 
+/**
+ * Web path prefix when the app is served under /core/ (e.g. test host without root rewrite).
+ * Set EES_URL_PREFIX=/core in .env to override; otherwise inferred from SCRIPT_NAME.
+ */
+function ees_url_prefix(): string {
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    $env = trim((string)($_ENV['EES_URL_PREFIX'] ?? ''));
+    if ($env !== '') {
+        $cached = '/' . trim($env, '/');
+        return $cached;
+    }
+
+    $script = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
+    if (strpos($script, '/core/') !== false) {
+        $cached = '/core';
+        return $cached;
+    }
+
+    $cached = '';
+    return $cached;
+}
+
+/**
+ * Absolute public URL for emails and external links (respects BASE_URL + /core/ when needed).
+ */
+function ees_public_url(string $path): string {
+    $base = rtrim((string)(defined('BASE_URL') ? BASE_URL : ''), '/');
+    if ($base === '') {
+        $base = 'https://ees.ecoasisenergy.com';
+    }
+
+    $prefix = ees_url_prefix();
+    if ($prefix !== '' && substr($base, -strlen($prefix)) === $prefix) {
+        $prefix = '';
+    }
+
+    return $base . $prefix . '/' . ltrim(ees_url_path($path), '/');
+}
+
 // HTTPS / Security headers
 define('HTTPS_ENABLED',  filter_var($_ENV['HTTPS_ENABLED']  ?? 'false', FILTER_VALIDATE_BOOLEAN));
 define('CSP_ENABLED',    filter_var($_ENV['CSP_ENABLED']    ?? 'true',  FILTER_VALIDATE_BOOLEAN));

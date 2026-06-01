@@ -46,7 +46,6 @@ if (empty($new_user_email) || !filter_var($new_user_email, FILTER_VALIDATE_EMAIL
     exit;
 }
 
-$base_url   = defined('BASE_URL') ? BASE_URL : 'https://ees.ecoasisenergy.com';
 $from_email = defined('SMTP_FROM_EMAIL') ? SMTP_FROM_EMAIL : 'no-reply@ecoasisenergy.com';
 $from_name  = defined('SMTP_FROM_NAME')  ? SMTP_FROM_NAME  : 'Ecoasis';
 
@@ -78,7 +77,7 @@ try {
         '<p>' . htmlspecialchars($invited_by, ENT_QUOTES, 'UTF-8') . ' wants to add you as a new user.</p>' .
         '<p>If you received this message by mistake, please ignore this email.</p>' .
         '<p>If you are the intended recipient, please register here: ' .
-        '<a href="' . $base_url . '/core/register">Click Here to Register</a></p>';
+        '<a href="' . htmlspecialchars(ees_public_url('register.php'), ENT_QUOTES, 'UTF-8') . '">Click Here to Register</a></p>';
 
     if ($mail->send()) {
         ob_end_clean();
