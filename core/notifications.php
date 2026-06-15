@@ -8,8 +8,10 @@ $csrf_token = generateCSRFToken();
 $user_id    = (int)$_SESSION['id'];
 
 require_once __DIR__ . '/scripts/create_notification.php';
+require_once __DIR__ . '/common/user_notifications.php';
 $pdo = getDB('admin');
 ees_ensure_notifications_table($pdo);
+ees_sync_password_expiry_notification($user_id, $pdo);
 
 $filter  = $_GET['filter'] ?? 'all';
 $page    = max(1, intval($_GET['page'] ?? 1));

@@ -87,6 +87,9 @@ try {
         ':email'    => $email,
     ]);
 
+    require_once __DIR__ . '/../common/user_notifications.php';
+    ees_set_password_changed_at((int)$pdo->lastInsertId(), $pdo);
+
     logSecurityEvent('user_registered', ['username' => $username, 'email' => $email], 'INFO');
 
     ob_end_clean();

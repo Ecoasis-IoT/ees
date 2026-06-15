@@ -67,3 +67,16 @@ function verifyWebhookRequest(string $rawBody = ''): void
         exit;
     }
 }
+
+/** Log incoming ChirpStack / device webhook to audit trail. */
+function ees_audit_log_webhook(string $siteKey, array $payload): void
+{
+    if (!function_exists('logAuditEvent')) {
+        require_once __DIR__ . '/../../core/common/audit_logging.php';
+    }
+    logAuditEvent('system', 'webhook_received', [
+        'site'   => $siteKey,
+        'fPort'  => $payload['fPort'] ?? null,
+        'devEui' => $payload['deviceInfo']['devEui'] ?? null,
+    ], 'INFO', $siteKey, 'ChirpStack webhook received');
+}

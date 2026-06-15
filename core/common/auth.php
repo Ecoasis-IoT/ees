@@ -42,3 +42,15 @@ if (!isset($_SESSION['id']) || (time() - ($_SESSION['last_activity'] ?? 0)) >= $
 }
 
 $_SESSION['last_activity'] = time();
+
+require_once __DIR__ . '/audit_logging.php';
+ees_audit_log_page_view();
+
+require_once __DIR__ . '/user_notifications.php';
+if (!empty($_SESSION['id'])) {
+    $pw_sync_key = 'notif_password_sync';
+    if (empty($_SESSION[$pw_sync_key]) || (time() - (int)$_SESSION[$pw_sync_key]) > 3600) {
+        ees_sync_password_expiry_notification((int)$_SESSION['id']);
+        $_SESSION[$pw_sync_key] = time();
+    }
+}

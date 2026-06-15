@@ -29,6 +29,8 @@ $_current_user_name = htmlspecialchars(
                 <div class="ees-notif-panel-header">Notifications</div>
                 <div id="notif-list" style="padding:6px 0;"></div>
                 <div class="ees-notif-panel-footer">
+                    <a href="notifications">View all notifications</a>
+                    <span style="color:#CBD5E1;"> · </span>
                     <a href="#" onclick="clearAllNotifications();return false;">Clear all</a>
                 </div>
             </div>
@@ -77,12 +79,22 @@ $_current_user_name = htmlspecialchars(
                 $count.style.display = 'block';
                 var html = '';
                 items.forEach(function (n) {
-                    var icon  = n.type === 'warning' ? 'fa-exclamation-triangle' : n.type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
-                    var color = n.type === 'warning' ? '#F59E0B' : n.type === 'error' ? '#EF4444' : '#70AD47';
+                    var icon  = n.type === 'warning' ? 'fa-exclamation-triangle'
+                        : n.type === 'error' || n.type === 'danger' ? 'fa-times-circle'
+                        : n.type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+                    var color = n.type === 'warning' ? '#F59E0B'
+                        : n.type === 'error' || n.type === 'danger' ? '#EF4444'
+                        : n.type === 'success' ? '#70AD47' : '#3B82F6';
+                    var actionHtml = '';
+                    if (n.actionUrl && n.actionLabel) {
+                        actionHtml = '<a href="' + esc(n.actionUrl) + '" style="font-size:12px;color:#26a69a;display:inline-block;margin-top:4px;">'
+                            + esc(n.actionLabel) + '</a>';
+                    }
                     html += '<div style="padding:10px 16px;border-bottom:1px solid #F1F5F9;display:flex;align-items:flex-start;gap:10px;" data-id="' + esc(n.id) + '">' +
                             '<i class="fa ' + esc(icon) + '" style="color:' + esc(color) + ';margin-top:2px;font-size:14px;flex-shrink:0;"></i>' +
                             '<div style="flex:1;font-size:13px;color:#0F172A;">' + esc(n.message) +
-                            '<div style="font-size:11px;color:#94A3B8;margin-top:3px;">' + esc(n.timestamp || '') + '</div></div>' +
+                            '<div style="font-size:11px;color:#94A3B8;margin-top:3px;">' + esc(n.timestamp || '') + '</div>' +
+                            actionHtml + '</div>' +
                             '<span onclick="ackNotif(' + parseInt(n.id, 10) + ',this)" style="cursor:pointer;color:#CBD5E1;font-size:18px;line-height:1;" title="Dismiss">&times;</span>' +
                             '</div>';
                 });
@@ -143,5 +155,7 @@ $_current_user_name = htmlspecialchars(
         loadNotifications();
         setInterval(loadNotifications, 60000);
     });
+
+    window.EES_loadNotifications = loadNotifications;
 }());
 </script>

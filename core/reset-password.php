@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/audit_logging.php';
 
 $token = trim($_GET['token'] ?? '');
 
@@ -25,9 +26,17 @@ if (!empty($token)) {
 }
 
 if (!$token_valid) {
+    ees_audit_log_password_reset('password_reset_token_invalid', [
+        'token'  => $token,
+        'reason' => empty($token) ? 'missing_token' : 'invalid_or_expired',
+    ], 'WARNING');
     header('Location: ' . ees_url_path('forgot-password.php?expired=1'));
     exit;
 }
+
+ees_audit_log_public_page_view('reset-password', [
+    'token_hint' => ees_audit_token_hint($token),
+]);
 
 $csrf_token = generateCSRFToken();
 ?>

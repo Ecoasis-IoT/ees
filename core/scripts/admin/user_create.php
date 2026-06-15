@@ -76,6 +76,8 @@ try {
     ]);
 
     $new_id = $pdo->lastInsertId();
+    require_once __DIR__ . '/../../common/user_notifications.php';
+    ees_set_password_changed_at((int)$new_id, $pdo);
     logSecurityEvent('user_created', ['new_user_id' => $new_id, 'by' => $_SESSION['id']], 'INFO');
 
     ob_end_clean();

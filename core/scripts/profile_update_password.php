@@ -65,6 +65,10 @@ try {
     $upd = $pdo->prepare("UPDATE tbl_user SET password = :pass WHERE id = :id");
     $upd->execute([':pass' => $hashed, ':id' => $user_id]);
 
+    require_once __DIR__ . '/../common/user_notifications.php';
+    ees_set_password_changed_at($user_id, $pdo);
+    ees_clear_password_expiry_notifications($user_id, $pdo);
+
     logSecurityEvent('password_changed', ['user_id' => $user_id], 'INFO');
 
     ob_clean();

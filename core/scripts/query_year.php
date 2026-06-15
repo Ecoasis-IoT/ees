@@ -46,6 +46,8 @@ try {
     $irradiance = $irr->fetchAll();
 
     ob_end_clean();
+    require_once __DIR__ . '/../common/audit_logging.php';
+    ees_audit_log_report('query_year', ['site_id' => $site_id, 'meter' => $meter, 'year' => $year]);
     echo json_encode([
         'site_name'     => $site['site_name'],
         'site_capacity' => $site['capacity'],

@@ -64,6 +64,12 @@ try {
     $co2        = round(($total_prod * 0.001) * 966, 2);
 
     ob_end_clean();
+    require_once __DIR__ . '/../common/audit_logging.php';
+    ees_audit_log_report('plant_total_prod', [
+        'site_id'    => $site_id,
+        'start_date' => $start_date,
+        'end_date'   => $end_date,
+    ]);
     echo json_encode(['prod' => $total_prod, 'insolation' => $insolation, 'pr' => $pr, 'co2' => $co2]);
 } catch (PDOException $e) {
     error_log("get_plant_total_prod error: " . $e->getMessage());

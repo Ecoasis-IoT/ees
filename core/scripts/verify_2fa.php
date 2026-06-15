@@ -102,6 +102,9 @@ try {
         'backup_code_used' => $is_backup,
     ], 'INFO');
 
+    require_once __DIR__ . '/../common/user_notifications.php';
+    ees_sync_password_expiry_notification($user_id, $pdo);
+
     ob_end_clean();
     echo json_encode([
         'statusCode'       => 'auth',

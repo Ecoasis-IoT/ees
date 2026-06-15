@@ -332,3 +332,13 @@ $pdo        = $GLOBALS['_ees_pdo_pool']['admin'];
 $admin_link = $pdo;   // legacy alias used by existing core/ pages
 $link       = $pdo;   // legacy alias
 $conn       = $pdo;   // legacy alias
+
+require_once __DIR__ . '/core/common/audit_logging.php';
+ees_register_audit_error_handlers();
+
+if (PHP_SAPI === 'cli') {
+    $cli_script = basename($_SERVER['SCRIPT_FILENAME'] ?? 'cli');
+    if (stripos((string)($_SERVER['SCRIPT_FILENAME'] ?? ''), DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR) !== false) {
+        logAuditEvent('system', 'cron_run', ['script' => $cli_script], 'INFO', $cli_script, 'Cron job executed');
+    }
+}

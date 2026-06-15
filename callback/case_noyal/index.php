@@ -9,6 +9,8 @@ $data    = json_decode($json, true);
 
 if (!is_array($data) || !array_key_exists('data', $data)) { exit; }
 
+ees_audit_log_webhook('case_noyal', $data);
+
 $fPort = $data['fPort'];
 
 if ($fPort == 85) {

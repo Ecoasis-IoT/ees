@@ -11,6 +11,7 @@ ob_start();
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../common/csrf.php';
 require_once __DIR__ . '/../common/security_logging.php';
+require_once __DIR__ . '/../common/audit_logging.php';
 require_once __DIR__ . '/../common/session_cookie_config.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -41,10 +42,15 @@ if (!validateCSRFToken($csrf_token)) {
 $email = strtolower(trim($_POST['email'] ?? ''));
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    ees_audit_log_password_reset('password_reset_request_invalid', [
+        'reason' => empty($email) ? 'empty_email' : 'invalid_format',
+    ], 'WARNING');
     ob_end_clean();
     echo json_encode(['statusCode' => 'ok']); // Always respond OK to prevent email enumeration
     exit;
 }
+
+ees_audit_log_password_reset('password_reset_requested', ['email' => $email]);
 
 $pdo = getDB('admin');
 
@@ -123,11 +129,19 @@ try {
         echo json_encode(['statusCode' => 'ok']);
     } else {
         error_log("PHPMailer error: " . $mail->ErrorInfo);
+        ees_audit_log_password_reset('password_reset_email_failed', [
+            'email'  => $email,
+            'reason' => 'mail_send_failed',
+        ], 'ERROR');
         ob_end_clean();
         echo json_encode(['statusCode' => 'Err']);
     }
 } catch (\Exception $e) {
     error_log("password_reset_email error: " . $e->getMessage());
+    ees_audit_log_password_reset('password_reset_email_failed', [
+        'email'  => $email,
+        'reason' => 'exception',
+    ], 'ERROR');
     ob_end_clean();
     echo json_encode(['statusCode' => 'Err']);
 }

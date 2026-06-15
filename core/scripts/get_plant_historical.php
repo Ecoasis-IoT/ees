@@ -126,4 +126,6 @@ $history[] = [
 ];
 
 ob_end_clean();
+require_once __DIR__ . '/../common/audit_logging.php';
+ees_audit_log_report('plant_historical', ['site_id' => $site_id]);
 echo json_encode($history);

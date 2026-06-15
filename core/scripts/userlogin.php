@@ -166,6 +166,9 @@ if ($user && $password_ok) {
     ees_establish_user_session($user);
     logSecurityEvent('login_success', ['username' => $username, 'ip' => $ip_address], 'INFO');
 
+    require_once __DIR__ . '/../common/user_notifications.php';
+    ees_sync_password_expiry_notification((int)$user['id'], $pdo);
+
     ob_end_clean();
     echo json_encode(['statusCode' => 'auth']);
 } else {

@@ -393,6 +393,20 @@ body.ees-sidenav-show.ees-sidenav-pinned:not(.ees-sidenav-hidden) .ees-sidenav-t
 
 .ees-nav-item .nav-label { flex: 1; }
 
+.ees-nav-badge {
+  margin-left: auto;
+  background: var(--ees-danger);
+  color: #fff;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
 .ees-nav-item:hover,
 .ees-nav-item:visited:hover {
   background: var(--ees-sidebar-hover);

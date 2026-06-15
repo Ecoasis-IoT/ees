@@ -133,6 +133,13 @@ var page = document.getElementById("plant_report_block");
             
             var start_date = document.getElementById("startDate").value;
             var end_date = document.getElementById("endDate").value;
+
+            window._plantReportContext = {
+                site_id: site_id,
+                site_name: siteOpt.options[siteOpt.selectedIndex].textContent.trim(),
+                start_date: start_date,
+                end_date: end_date
+            };
             
             $.ajax({
                 type: "POST",
@@ -669,6 +676,7 @@ function generatePdf() {
 
                     jsPdf.save('Report.pdf');
                     window.open(jsPdf.output('bloburl'));
+                    logPlantPdfNotification();
                 })
                 .catch(function (err) {
                     console.error('generatePdf', err);
@@ -678,6 +686,29 @@ function generatePdf() {
                     if (typeof EES !== 'undefined' && EES.btnReset && pdfBtn) EES.btnReset(pdfBtn);
                 });
         });
+    });
+}
+
+
+
+function logPlantPdfNotification() {
+    var ctx = window._plantReportContext;
+    if (!ctx || !ctx.site_id) return;
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    var csrf = meta ? meta.getAttribute('content') : '';
+    if (!csrf || typeof jQuery === 'undefined') return;
+
+    jQuery.post('scripts/log_plant_pdf', {
+        csrf_token: csrf,
+        site_id: ctx.site_id,
+        site_name: ctx.site_name || '',
+        start_date: ctx.start_date || '',
+        end_date: ctx.end_date || ''
+    }, function (r) {
+        var d = typeof r === 'string' ? JSON.parse(r) : r;
+        if (d && d.success && typeof window.EES_loadNotifications === 'function') {
+            window.EES_loadNotifications();
+        }
     });
 }
 

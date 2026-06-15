@@ -10,6 +10,12 @@ $_username  = htmlspecialchars(
 $_reports_open  = in_array($_cur, ['plant.php', 'query.php']);
 $_sites_open    = in_array($_cur, ['site.php', 'devices.php', 'add-site.php', 'edit-site.php', 'add-energy-meter.php', 'edit-energy-meter.php']);
 $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 'add-user.php', 'edit-user.php']);
+
+$_notif_unread = 0;
+if (!empty($_SESSION['id'])) {
+    require_once __DIR__ . '/user_notifications.php';
+    $_notif_unread = ees_get_unread_notification_count((int)$_SESSION['id']);
+}
 ?>
 
 <!-- Mobile sidebar overlay -->
@@ -116,6 +122,9 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
            class="ees-nav-item<?= $_cur === 'notifications.php' ? ' active' : '' ?>">
             <i class="fa fa-bell nav-icon"></i>
             <span class="nav-label">Notifications</span>
+            <?php if ($_notif_unread > 0): ?>
+            <span class="ees-nav-badge"><?= $_notif_unread > 99 ? '99+' : $_notif_unread ?></span>
+            <?php endif; ?>
         </a>
 
         <!-- Profile -->
@@ -131,6 +140,11 @@ $_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 
            class="ees-nav-item<?= $_cur === 'security_dashboard.php' ? ' active' : '' ?>">
             <i class="fa fa-shield nav-icon"></i>
             <span class="nav-label">Security</span>
+        </a>
+        <a href="audit_logs"
+           class="ees-nav-item<?= $_cur === 'audit_logs.php' ? ' active' : '' ?>">
+            <i class="fa fa-list-alt nav-icon"></i>
+            <span class="nav-label">Audit Logs</span>
         </a>
         <?php endif; ?>
 

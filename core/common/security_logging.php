@@ -103,6 +103,14 @@ function logSecurityEvent(string $event_type, array $details = [], string $sever
         error_log("Security [{$severity}] {$event_type}: " . json_encode($details));
     }
 
+    if (!function_exists('logAuditEvent')) {
+        require_once __DIR__ . '/audit_logging.php';
+    }
+    $audit_category = (strpos($event_type, 'system_') === 0 || strpos($event_type, 'webhook_') === 0)
+        ? 'system'
+        : 'user';
+    logAuditEvent($audit_category, $event_type, $details, $severity, null, null);
+
     // Rotate log if > 10 MB
     if (file_exists($log_file) && filesize($log_file) > 10 * 1024 * 1024) {
         _rotateSecurityLog($log_file);

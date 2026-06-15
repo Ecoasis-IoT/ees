@@ -6,8 +6,14 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/audit_logging.php';
+
 $csrf_token = generateCSRFToken();
 $expired    = isset($_GET['expired']) && $_GET['expired'] === '1';
+
+ees_audit_log_public_page_view('forgot-password', [
+    'expired_redirect' => $expired,
+]);
 ?>
 <!DOCTYPE html>
 <html lang="en">

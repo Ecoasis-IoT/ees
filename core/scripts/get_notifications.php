@@ -18,8 +18,11 @@ if (!$user_id) {
 
 try {
     require_once __DIR__ . '/create_notification.php';
+    require_once __DIR__ . '/../common/user_notifications.php';
     $pdo = getDB('admin');
     ees_ensure_notifications_table($pdo);
+
+    ees_sync_password_expiry_notification($user_id, $pdo);
 
     $stmt = $pdo->prepare(
         "SELECT id, type, message, action_url, action_label, created_at

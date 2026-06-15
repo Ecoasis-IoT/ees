@@ -15,11 +15,31 @@ if (!function_exists('ees_ensure_notifications_table')) {
                 message TEXT NOT NULL,
                 action_url VARCHAR(500) NULL,
                 action_label VARCHAR(100) NULL,
+                reference_key VARCHAR(64) NULL,
                 is_read TINYINT(1) NOT NULL DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 INDEX idx_user_unread (user_id, is_read),
-                INDEX idx_created (created_at)
+                INDEX idx_created (created_at),
+                INDEX idx_user_ref (user_id, reference_key)
             )");
+        ees_ensure_notification_reference_key($pdo);
+    }
+
+    function ees_ensure_notification_reference_key(?PDO $pdo = null): void {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $pdo = $pdo ?? getDB('admin');
+        $chk = $pdo->query("SHOW COLUMNS FROM tbl_notifications LIKE 'reference_key'");
+        if ($chk && $chk->rowCount() === 0) {
+            $pdo->exec(
+                "ALTER TABLE tbl_notifications
+                 ADD COLUMN reference_key VARCHAR(64) NULL DEFAULT NULL AFTER action_label,
+                 ADD INDEX idx_user_ref (user_id, reference_key)"
+            );
+        }
+        $done = true;
     }
 }
 

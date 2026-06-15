@@ -52,6 +52,9 @@ try {
             "UPDATE tbl_user SET firstname=:fname, lastname=:lname, email=:email, group_id=:gid, password=:pwd WHERE id=:id"
         );
         $stmt->execute([':fname' => $fname, ':lname' => $lname, ':email' => $email, ':gid' => $group_id, ':pwd' => $hashed, ':id' => $id]);
+        require_once __DIR__ . '/../../common/user_notifications.php';
+        ees_set_password_changed_at($id, $pdo);
+        ees_clear_password_expiry_notifications($id, $pdo);
     } else {
         $stmt = $pdo->prepare(
             "UPDATE tbl_user SET firstname=:fname, lastname=:lname, email=:email, group_id=:gid WHERE id=:id"
