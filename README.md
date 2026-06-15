@@ -84,7 +84,9 @@ EES/
 │   ├── rtm/                    # Riche Terre Mall callbacks
 │   ├── the_pod/                # The Pod callbacks
 │   ├── Home_and_Leisure/       # Home & Leisure callbacks
-│   └── phoenix/                # Phoenix Mall callbacks
+│   ├── phoenix/                # Phoenix Mall callbacks
+│   ├── moka_city/              # Moka City callbacks (+ Fire Alarm Panel)
+│   └── case_noyal/             # Case Noyal callbacks
 │
 └── cron/                       # Scheduled CLI scripts
     ├── gateway_status.php      # Polls gateway connectivity
@@ -106,7 +108,7 @@ EES/
 | `bovalon` | Bovalon | `u889201362_bovalon_mall` |
 | `phoenix` | Phoenix Mall | `u889201362_phoenix_mall` |
 | `p_catering` | Phoenix Catering | `u889201362_p_catering` |
-| `helvetia` | Helvetia | `u889201362_helvetia` |
+| `moka_city` | Moka City | `u889201362_moka_city` |
 | `home_leisure` | Home & Leisure | `u889201362_home_leisure` |
 
 ---
@@ -291,6 +293,8 @@ POST /EES/callback/rtm/
 POST /EES/callback/the_pod/
 POST /EES/callback/Home_and_Leisure/
 POST /EES/callback/phoenix/
+POST /EES/callback/moka_city/
+POST /EES/callback/case_noyal/
 ```
 
 Each callback:

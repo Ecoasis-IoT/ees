@@ -28,6 +28,8 @@ foreach ($sites as &$site) {
         $site['dashboard_href'] = 'site-dashboardv3';
     } elseif ($dk === 'bovalon') {
         $site['dashboard_href'] = 'site-dashboardv2';
+    } elseif ($dk === 'moka_city') {
+        $site['dashboard_href'] = 'site-dashboardv4';
     } else {
         $site['dashboard_href'] = 'site-dashboard';
     }

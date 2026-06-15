@@ -20,8 +20,10 @@ if (!function_exists('ees_db_key')) {
                 'u889201362_bovalon_mall' => 'bovalon',
                 'u889201362_phoenix_mall' => 'phoenix',
                 'u889201362_p_catering'   => 'p_catering',
-                'u889201362_helvetia'     => 'helvetia',
+                'u889201362_moka_city'    => 'moka_city',
+                'u889201362_helvetia'     => 'moka_city',
                 'u889201362_home_leisure' => 'home_leisure',
+                'u889201362_case_noyal'   => 'case_noyal',
                 // Config file basenames (as stored in tbl_site.db_name)
                 'factory'          => 'factory',
                 'gob_config'       => 'gob',
@@ -36,9 +38,14 @@ if (!function_exists('ees_db_key')) {
                 'phoenix_mall'     => 'phoenix',
                 'phoenix'          => 'phoenix',
                 'p_catering'       => 'p_catering',
-                'helvetia'         => 'helvetia',
+                'moka_city'        => 'moka_city',
+                'moka_city.php'    => 'moka_city',
+                'helvetia'         => 'moka_city',
+                'helvetia.php'     => 'moka_city',
                 'home_leisure'     => 'home_leisure',
                 'home_and_leisure' => 'home_leisure',
+                'case_noyal'       => 'case_noyal',
+                'case_noyal.php'   => 'case_noyal',
             ];
         }
 

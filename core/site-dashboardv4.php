@@ -70,6 +70,18 @@ $csrf_token = generateCSRFToken();
     background-color: #f8f9fa !important;
 }
 
+.bg-on {
+    background-color: #70AD47 !important;
+}
+
+.bg-alarm {
+    background-color: #CA5952 !important;
+}
+
+.bg-gray-500 {
+    background-color: #adb5bd !important;
+}
+
 .br-25 {
     border-radius: 0.5rem;
 }
@@ -381,6 +393,32 @@ var kpi_active_power = [];
             }
         });
     });
+
+function updateFapStatus() {
+    $.ajax({
+        type: "POST",
+        url: "scripts/get_site_fap_status",
+        data: { site_db: '<?php echo $site_db; ?>' },
+        success: function (data) {
+            if (!data || data.status !== 'OK') return;
+
+            var normalBtn = document.getElementById('main_fap_normal');
+            var alarmBtn  = document.getElementById('main_fap_alarm');
+            if (!normalBtn || !alarmBtn) return;
+
+            var alarm = !!data.alarm_active;
+            normalBtn.classList.toggle('bg-on', !alarm);
+            normalBtn.classList.toggle('bg-gray-500', alarm);
+            alarmBtn.classList.toggle('bg-alarm', alarm);
+            alarmBtn.classList.toggle('bg-gray-500', !alarm);
+        }
+    });
+}
+
+$(document).ready(function () {
+    updateFapStatus();
+    setInterval(updateFapStatus, 60000);
+});
 
 
 
