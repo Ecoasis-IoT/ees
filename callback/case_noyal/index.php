@@ -4,8 +4,9 @@ require_once __DIR__ . '/../shared/bootstrap.php';
 verifyWebhookRequest($json);
 $pdo = getDB('case_noyal');
 
-$timenow = date('y-m-d H:i');
-$data    = json_decode($json, true);
+$timenow  = date('y-m-d H:i');     // legacy minute precision (used by the fPort 123 path)
+$timereal = date('Y-m-d H:i:s');   // actual reading time (with seconds) for stored data
+$data     = json_decode($json, true);
 
 if (!is_array($data) || !array_key_exists('data', $data)) { exit; }
 

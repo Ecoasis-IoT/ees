@@ -33,10 +33,12 @@ $last = $pdo->prepare(
 $last->execute([$dev_eui]);
 $prev = $last->fetch();
 
-$insertRow = static function () use ($pdo, $timenow, $dev_eui, $status) {
+$stamp = $timereal ?? date('Y-m-d H:i:s');
+
+$insertRow = static function () use ($pdo, $stamp, $dev_eui, $status) {
     $pdo->prepare(
         'INSERT INTO `tbl_main_FAP` (`date`, `dev_eui`, `status`) VALUES (?, ?, ?)'
-    )->execute([$timenow, $dev_eui, $status]);
+    )->execute([$stamp, $dev_eui, $status]);
 };
 
 // First ever reading, or a state change -> new row
@@ -47,11 +49,11 @@ if (!$prev || (int)$prev['status'] !== $status) {
 
 // Same state: one row per hour. New hour -> new row, same hour -> refresh time.
 $prevHour = date('Y-m-d H', strtotime($prev['date']));
-$nowHour  = date('Y-m-d H', strtotime($timenow));
+$nowHour  = date('Y-m-d H', strtotime($stamp));
 
 if ($prevHour !== $nowHour) {
     $insertRow();
 } else {
     $pdo->prepare('UPDATE `tbl_main_FAP` SET `date` = ? WHERE `id` = ?')
-        ->execute([$timenow, $prev['id']]);
+        ->execute([$stamp, $prev['id']]);
 }
