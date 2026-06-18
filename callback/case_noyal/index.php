@@ -11,6 +11,16 @@ if (!is_array($data) || !array_key_exists('data', $data)) { exit; }
 
 ees_audit_log_webhook('case_noyal', $data);
 
+// Lightweight receipt log so we can confirm data is arriving from prod (ees -> testees).
+// Self-rotates at ~2MB. Safe to delete the file anytime.
+$ees_fap_log = __DIR__ . '/log.txt';
+if (@filesize($ees_fap_log) > 2 * 1024 * 1024) { @rename($ees_fap_log, $ees_fap_log . '.old'); }
+@file_put_contents(
+    $ees_fap_log,
+    sprintf("[%s] RECEIVED | fPort=%s | %s\n", date('Y-m-d H:i:s'), $data['fPort'] ?? 'n/a', $json),
+    FILE_APPEND | LOCK_EX
+);
+
 $fPort  = $data['fPort'] ?? null;
 $object = is_array($data['object'] ?? null) ? $data['object'] : [];
 
