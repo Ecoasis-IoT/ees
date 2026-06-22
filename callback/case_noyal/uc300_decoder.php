@@ -62,56 +62,62 @@ if (isset($object['modbus_chn_2'])) {
             return ($aDiff < $bDiff) ? $a : $b;
         };
 
-        $meterStmt = $pdo->prepare('SELECT `id`, `meter_name` FROM tbl_meters WHERE address = 100');
-        $meterStmt->execute();
-        $meter = $meterStmt->fetch();
+        // The whole app keys production off the meter ADDRESS (dashboards filter
+        // tbl_hourly_prod.meter_id >= 100, get_query_meters exposes address AS meter_id).
+        // So the main meter is always 100 here, regardless of tbl_meters.id.
+        $meterId   = 100;
+        $meterName = 'MAIN METER';
 
-        if ($meter) {
-            // Find the next top-of-hour boundary that still needs closing
-            $lastProd = $pdo->query(
-                'SELECT `datetime` FROM `tbl_hourly_prod` ORDER BY `id` DESC LIMIT 1'
+        // Find the next top-of-hour boundary that still needs closing
+        $lastProd = $pdo->query(
+            'SELECT `datetime` FROM `tbl_hourly_prod` ORDER BY `id` DESC LIMIT 1'
+        )->fetch();
+
+        if ($lastProd && !empty($lastProd['datetime'])) {
+            $startReading = $closestReading($pdo, $lastProd['datetime']);
+            $nextBoundary = strtotime($lastProd['datetime']) + 3600;
+        } else {
+            // First bucket ever: anchor on the first reading, end at the next top-of-hour
+            $first = $pdo->query(
+                'SELECT `date`,`total_active_energy` FROM `tbl_main_meter` ORDER BY `date` ASC, `id` ASC LIMIT 1'
             )->fetch();
+            $startReading = $first ?: null;
+            $nextBoundary = $first
+                ? strtotime(date('Y-m-d H:00:00', strtotime($first['date']))) + 3600
+                : PHP_INT_MAX;
+        }
 
-            if ($lastProd && !empty($lastProd['datetime'])) {
-                $startReading = $closestReading($pdo, $lastProd['datetime']);
-                $nextBoundary = strtotime($lastProd['datetime']) + 3600;
-            } else {
-                // First bucket ever: anchor on the first reading, end at the next top-of-hour
-                $first = $pdo->query(
-                    'SELECT `date`,`total_active_energy` FROM `tbl_main_meter` ORDER BY `date` ASC, `id` ASC LIMIT 1'
-                )->fetch();
-                $startReading = $first ?: null;
-                $nextBoundary = $first
-                    ? strtotime(date('Y-m-d H:00:00', strtotime($first['date']))) + 3600
-                    : PHP_INT_MAX;
+        $nowTs = strtotime($timereal);
+        $guard = 0; // safety cap so a large gap can never run away in one request
+
+        while ($startReading && $nowTs >= $nextBoundary && $guard < 50) {
+            $guard++;
+            $boundaryStr = date('Y-m-d H:i:s', $nextBoundary);
+            $endReading  = $closestReading($pdo, $boundaryStr);
+            if (!$endReading) break;
+
+            $production = bcsub(
+                (string)$endReading['total_active_energy'],
+                (string)$startReading['total_active_energy'],
+                2
+            );
+
+            // Production is solar generation: never store a negative value
+            // (overnight the net meter dips slightly, which is not generation).
+            if ((float)$production < 0) {
+                $production = '0';
             }
 
-            $nowTs = strtotime($timereal);
-            $guard = 0; // safety cap so a large gap can never run away in one request
+            $pdo->prepare(
+                'INSERT INTO `tbl_hourly_prod`(`meter_id`,`datetime`,`meter_name`,`starting_datetime`,`ending_datetime`,`production`)
+                 VALUES (?,?,?,?,?,?)'
+            )->execute([
+                $meterId, $boundaryStr, $meterName,
+                $startReading['date'], $endReading['date'], $production,
+            ]);
 
-            while ($startReading && $nowTs >= $nextBoundary && $guard < 50) {
-                $guard++;
-                $boundaryStr = date('Y-m-d H:i:s', $nextBoundary);
-                $endReading  = $closestReading($pdo, $boundaryStr);
-                if (!$endReading) break;
-
-                $production = bcsub(
-                    (string)$endReading['total_active_energy'],
-                    (string)$startReading['total_active_energy'],
-                    2
-                );
-
-                $pdo->prepare(
-                    'INSERT INTO `tbl_hourly_prod`(`meter_id`,`datetime`,`meter_name`,`starting_datetime`,`ending_datetime`,`production`)
-                     VALUES (?,?,?,?,?,?)'
-                )->execute([
-                    $meter['id'], $boundaryStr, $meter['meter_name'],
-                    $startReading['date'], $endReading['date'], $production,
-                ]);
-
-                $startReading  = $endReading;   // next bucket continues from here
-                $nextBoundary += 3600;
-            }
+            $startReading  = $endReading;   // next bucket continues from here
+            $nextBoundary += 3600;
         }
     }
 }
