@@ -32,19 +32,30 @@ $ts  -= $mins;
 if ($mins > 1800) $ts += 3600;
 $round_date = date('Y-m-d H:i:s', $ts);
 
-// Fire Alarm Panel (gpio_in_1) — record 24/7, independent of the solar window
-if (array_key_exists('gpio_in_1', $object)) {
+// Two UC300 devices share fPort 85:
+//   - Switchgear controller: modbus_chn_1 = active power, modbus_chn_2 = energy, gpio_in_1 = fire panel
+//   - Weather sensor:         modbus_chn_1 = irradiance, modbus_chn_2 = ambient temp, modbus_chn_3 = panel temp
+// The weather sensor is the only one that reports a 3rd modbus channel, so use that to tell them apart.
+$isWeatherSensor = array_key_exists('modbus_chn_3', $object);
+
+// Fire Alarm Panel (gpio_in_1) — switchgear only, record 24/7 independent of the solar window
+if (!$isWeatherSensor && array_key_exists('gpio_in_1', $object)) {
     include 'fap_decoder.php';
 }
 
 if ($fPort == 85) {
-    // Switchgear Controller UC300: active power + energy in the decoded object
     $time  = date('H:i:s');
     $start = '04:55:00';
     $end   = '20:15:00';
 
     if ($time >= $start && $time <= $end) {
-        include 'uc300_decoder.php';
+        if ($isWeatherSensor) {
+            // Weather sensor: irradiance / ambient / panel temp -> plant_irradiance
+            include 'weather_sensor.php';
+        } else {
+            // Switchgear Controller UC300: active power + energy in the decoded object
+            include 'uc300_decoder.php';
+        }
     }
 
 } elseif ($fPort == 123) {
