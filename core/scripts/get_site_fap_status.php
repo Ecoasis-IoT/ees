@@ -22,16 +22,28 @@ if ($site_db === '') {
 $pdo = getDB(ees_db_key($site_db));
 
 try {
+    // A plant can have more than one panel device (e.g. a combined weather+switchgear
+    // UC300, or separate units). Take the latest reading PER dev_eui and raise the
+    // alarm if any of them is active, so a newer "normal" reading from one device can
+    // never mask a real alarm reported by another.
     $stmt = $pdo->query(
-        "SELECT status FROM tbl_main_FAP ORDER BY date DESC, id DESC LIMIT 1"
+        "SELECT t.status
+           FROM tbl_main_FAP t
+           JOIN (SELECT dev_eui, MAX(id) AS max_id FROM tbl_main_FAP GROUP BY dev_eui) m
+             ON m.dev_eui = t.dev_eui AND m.max_id = t.id"
     );
-    $row = $stmt->fetch();
+    $rows = $stmt->fetchAll();
+
+    $panel_status = 0;
+    foreach ($rows as $r) {
+        if ((int)$r['status'] === 1) { $panel_status = 1; break; }
+    }
 
     ob_end_clean();
     echo json_encode([
         'status'       => 'OK',
-        'alarm_active' => ((int)($row['status'] ?? 0)) === 1,
-        'panel_status' => (int)($row['status'] ?? 0),
+        'alarm_active' => $panel_status === 1,
+        'panel_status' => $panel_status,
     ]);
 } catch (PDOException $e) {
     error_log('get_site_fap_status error: ' . $e->getMessage());

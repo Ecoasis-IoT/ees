@@ -38,8 +38,11 @@ $round_date = date('Y-m-d H:i:s', $ts);
 // The weather sensor is the only one that reports a 3rd modbus channel, so use that to tell them apart.
 $isWeatherSensor = array_key_exists('modbus_chn_3', $object);
 
-// Fire Alarm Panel (gpio_in_1) — switchgear only, record 24/7 independent of the solar window
-if (!$isWeatherSensor && array_key_exists('gpio_in_1', $object)) {
+// Fire Alarm Panel (gpio_in_1) — record 24/7, independent of the solar window AND
+// of the weather/switchgear split. Combined UC300 units (e.g. Moka) report the panel
+// on the same uplink that carries modbus_chn_3, so gating this on !$isWeatherSensor
+// would silently drop almost every panel reading. Record whenever gpio_in_1 is present.
+if (array_key_exists('gpio_in_1', $object)) {
     include 'fap_decoder.php';
 }
 
