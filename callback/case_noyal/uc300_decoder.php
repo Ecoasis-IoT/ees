@@ -68,10 +68,16 @@ if (isset($object['modbus_chn_2'])) {
         $meterId   = 100;
         $meterName = 'MAIN METER';
 
-        // Find the next top-of-hour boundary that still needs closing
-        $lastProd = $pdo->query(
-            'SELECT `datetime` FROM `tbl_hourly_prod` ORDER BY `id` DESC LIMIT 1'
-        )->fetch();
+        // Find the next top-of-hour boundary that still needs closing.
+        // MUST be scoped to this meter: the LV gateway webhook also writes
+        // tbl_hourly_prod (meter_id 1..8), and an unscoped query would pick up
+        // those rows and make the main meter think it had already caught up,
+        // silently dropping its own hourly production rows.
+        $lastProdStmt = $pdo->prepare(
+            'SELECT `datetime` FROM `tbl_hourly_prod` WHERE `meter_id` = ? ORDER BY `id` DESC LIMIT 1'
+        );
+        $lastProdStmt->execute([$meterId]);
+        $lastProd = $lastProdStmt->fetch();
 
         if ($lastProd && !empty($lastProd['datetime'])) {
             $startReading = $closestReading($pdo, $lastProd['datetime']);
