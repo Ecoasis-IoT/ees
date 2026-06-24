@@ -260,7 +260,7 @@ $csrf_token = generateCSRFToken();
                         <div class="datepicker">
                             <label>Choose date:</label>
                             <button class="dateBtn" id="prevDate" type="button"><i class="fa fa-angle-left"></i></button>
-                            <input type="date" id="calendar" style="padding:6px;" onchange="render();" max="<?php echo date("Y-m-d"); ?>">                            
+                            <input type="date" id="calendar" onchange="render();" max="<?php echo date("Y-m-d"); ?>">                            
                             <button class="dateBtn" id="nextDate" type="button"><i class="fa fa-angle-right"></i></button>
                         </div>
                     </div>
@@ -933,33 +933,62 @@ nextDate.addEventListener('click', () => { // add a click event listener
     }
 });
 
+// Full-page overlay loader shown while a new date is loading/rendering.
+function eesDashLoader(show) {
+    var id = 'ees-dash-loader';
+    var el = document.getElementById(id);
+    if (show) {
+        if (!el) {
+            el = document.createElement('div');
+            el.id = id;
+            el.style.cssText = 'position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.55);';
+            el.innerHTML = '<div style="background:#fff;padding:18px 24px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;">' +
+                '<i class="fa fa-spinner fa-spin" style="font-size:22px;color:#70ad47;"></i>' +
+                '<span style="font-weight:600;color:#444;">Loading\u2026</span></div>';
+            document.body.appendChild(el);
+        }
+        el.style.display = 'flex';
+    } else if (el) {
+        el.style.display = 'none';
+    }
+}
+
 function render(){
     
-    let val = new Date(document.getElementById('calendar').value);
-    let db_date = val.toISOString().split('T')[0];
+    // The data fetches below are synchronous (async:false), so they block the UI
+    // thread. Show the loader first, then defer the work one tick so the browser
+    // can actually paint the overlay before the thread is blocked.
+    eesDashLoader(true);
     
-    
-    barchart_labels = [];
-    barchart_data = [];
-    line_labels = [];
-    line_irradiance = [];
-    line_ambtemp = [];
-    line_pantemp = [];
-    active_power = [];
-    
-    kpi_irradiance = [];
-    kpi_prod = [];
-    kpi_active_power = [];
-    
-    get_barchart_data(db_date);
-    get_linechart_data(db_date);
-    getActivePower(db_date);
-    
-    // console.log(kpi_irradiance);
-    
-    renderKpiChart();
-    renderBarchart();
-    renderLineChart();
+    setTimeout(function() {
+        try {
+            let val = new Date(document.getElementById('calendar').value);
+            let db_date = val.toISOString().split('T')[0];
+            
+            
+            barchart_labels = [];
+            barchart_data = [];
+            line_labels = [];
+            line_irradiance = [];
+            line_ambtemp = [];
+            line_pantemp = [];
+            active_power = [];
+            
+            kpi_irradiance = [];
+            kpi_prod = [];
+            kpi_active_power = [];
+            
+            get_barchart_data(db_date);
+            get_linechart_data(db_date);
+            getActivePower(db_date);
+            
+            renderKpiChart();
+            renderBarchart();
+            renderLineChart();
+        } finally {
+            eesDashLoader(false);
+        }
+    }, 50);
     
 }
 
