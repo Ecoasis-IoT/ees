@@ -422,8 +422,15 @@ function get_day(){
             "date": document.getElementById("date_day").value
         },
         success: function(data) {
+            // Backend returns {status:'Err', message:...} on failure — surface it
+            // instead of crashing on undefined arrays below.
+            if (!data || data.status === 'Err') {
+                EES.alert((data && data.message) ? data.message : 'Could not load data for this selection.', 'error');
+                return;
+            }
+
             //production
-            let prod = data.prod;
+            let prod = Array.isArray(data.prod) ? data.prod : [];
             
             let total_prod_day = 0;
             
@@ -450,7 +457,7 @@ function get_day(){
             }
             
             //Irradiance
-            let irradiance = data.irradiance;
+            let irradiance = Array.isArray(data.irradiance) ? data.irradiance : [];
             let total_day_insolation = 0;
             
             tbl_ir_day.rows().remove().draw();
@@ -484,7 +491,7 @@ function get_day(){
             
             //Active Power
             
-            let active_power = data.active_power;
+            let active_power = Array.isArray(data.active_power) ? data.active_power : [];
             
             tbl_power_day.rows().remove().draw();
             
