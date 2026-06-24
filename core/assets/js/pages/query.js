@@ -1,3 +1,23 @@
+// Full-page overlay loader shown while a query is fetching/rendering.
+function eesQueryLoader(show) {
+    var id = 'ees-query-loader';
+    var el = document.getElementById(id);
+    if (show) {
+        if (!el) {
+            el = document.createElement('div');
+            el.id = id;
+            el.style.cssText = 'position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.55);';
+            el.innerHTML = '<div style="background:#fff;padding:18px 24px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;">' +
+                '<i class="fa fa-spinner fa-spin" style="font-size:22px;color:#17a2b8;"></i>' +
+                '<span style="font-weight:600;color:#444;">Loading\u2026</span></div>';
+            document.body.appendChild(el);
+        }
+        el.style.display = 'flex';
+    } else if (el) {
+        el.style.display = 'none';
+    }
+}
+
 $("#chart_type").hide();
 
 $(".meter_param").change(function () {
@@ -401,6 +421,7 @@ function get_day(){
     }
 
     EES.btnLoad(_btn, 'Loading…');
+    eesQueryLoader(true);
 
     let chart_labels = [];
     let kpi_irradiance = [];
@@ -421,7 +442,7 @@ function get_day(){
     $.ajax({
         type: "POST",
         url: url,
-        async : false,
+        async : true,
         data: {
             "site": document.getElementById("sites_opt_day").value,
             "meter": document.getElementById("meters_opt_day").value,
@@ -666,7 +687,7 @@ function get_day(){
             $("#Day .custom_hide_card").css('display','block');
             
         },
-        complete: function() { EES.btnReset(_btn); }
+        complete: function() { EES.btnReset(_btn); eesQueryLoader(false); }
     });
     
 }
@@ -682,6 +703,7 @@ function get_month(){
     }
 
     EES.btnLoad(_btn, 'Loading…');
+    eesQueryLoader(true);
 
     let chart_labels = [];
     let kpi_insolation = [];
@@ -937,7 +959,7 @@ function get_month(){
             $("#Month .custom_hide_card").css('display','block');
             
         },
-        complete: function() { EES.btnReset(_btn); }
+        complete: function() { EES.btnReset(_btn); eesQueryLoader(false); }
     });
     
 }
@@ -953,6 +975,7 @@ function get_year(){
     }
 
     EES.btnLoad(_btn, 'Loading…');
+    eesQueryLoader(true);
 
     let chart_labels = [];
     let kpi_insolation = [];
@@ -1209,7 +1232,7 @@ function get_year(){
             $("#Year .custom_hide_card").css('display','block');
             
         },
-        complete: function() { EES.btnReset(_btn); }
+        complete: function() { EES.btnReset(_btn); eesQueryLoader(false); }
     });
     
 }
@@ -1372,7 +1395,6 @@ var color_count = 0;
 
 function get_custom(){
     var _btn = document.querySelector('#Custom .btn-add-custom-chart');
-    EES.btnLoad(_btn, 'Loading…');
 
     let chart_colors = ['#3366cc','#dc3912','#ff9900','#109618','#990099','#0099c6','#dd4477','#66aa00','#b82e2e','#316395','#994499','#22aa99','#aaaa11','#6633cc','#e67300','#8b0707','#651067','#329262','#5574a6','#3b3eac','#b77322','#16d620','#b91383','#f4359e','#9c5935','#a9c413','#2a778d','#668d1c','#bea413','#0c5922','#743411'];
     
@@ -1456,6 +1478,8 @@ function get_custom(){
     }
     else{
         
+        EES.btnLoad(_btn, 'Loading…');
+        eesQueryLoader(true);
         
         let start_date = new Date(input_start).toISOString().split('T')[0];
         let end_date = new Date(input_end).toISOString().split('T')[0];
@@ -1718,7 +1742,7 @@ function get_custom(){
                 $("#chart_type").hide();
                 $("#con_meter_parameters").show();
             },
-            complete: function() { EES.btnReset(_btn); }
+            complete: function() { EES.btnReset(_btn); eesQueryLoader(false); }
         });
     
     }
