@@ -394,6 +394,12 @@ function filter_meters(tab){
 
 function get_day(){
     var _btn = document.querySelector('#Day .submit');
+
+    if (!document.getElementById("date_day").value) {
+        EES.alert('No date selected!', 'warning');
+        return;
+    }
+
     EES.btnLoad(_btn, 'Loading…');
 
     let chart_labels = [];
@@ -669,6 +675,12 @@ function get_day(){
 
 function get_month(){
     var _btn = document.querySelector('#Month .submit');
+
+    if (!document.getElementById("month_opt").value || !document.getElementById("m_year_opt").value) {
+        EES.alert('No month/year selected!', 'warning');
+        return;
+    }
+
     EES.btnLoad(_btn, 'Loading…');
 
     let chart_labels = [];
@@ -687,8 +699,13 @@ function get_month(){
             "year": document.getElementById("m_year_opt").value
         },
         success: function(data) {
+            if (!data || data.status === 'Err') {
+                EES.alert((data && data.message) ? data.message : 'Could not load data for this selection.', 'error');
+                return;
+            }
+
             //production
-            let prod = data.prod;
+            let prod = Array.isArray(data.prod) ? data.prod : [];
             
             let total_prod_month = 0;
             
@@ -715,7 +732,7 @@ function get_month(){
             }
             
             // //Irradiance
-            let irradiance = data.irradiance;
+            let irradiance = Array.isArray(data.irradiance) ? data.irradiance : [];
             let total_month_insolation = 0;
             let pr;
 
@@ -929,6 +946,12 @@ function get_month(){
 
 function get_year(){
     var _btn = document.querySelector('#Year .submit');
+
+    if (!document.getElementById("year_opt").value) {
+        EES.alert('No year selected!', 'warning');
+        return;
+    }
+
     EES.btnLoad(_btn, 'Loading…');
 
     let chart_labels = [];
@@ -948,8 +971,13 @@ function get_year(){
             "year": document.getElementById("year_opt").value
         },
         success: function(data) {
+            if (!data || data.status === 'Err') {
+                EES.alert((data && data.message) ? data.message : 'Could not load data for this selection.', 'error');
+                return;
+            }
+
             //production
-            let prod = data.prod;
+            let prod = Array.isArray(data.prod) ? data.prod : [];
             
             let total_prod_year = 0;
             
@@ -976,7 +1004,7 @@ function get_year(){
             }
             
             // //Irradiance
-            let irradiance = data.irradiance;
+            let irradiance = Array.isArray(data.irradiance) ? data.irradiance : [];
             let total_year_insolation = 0;
             let pr;
 
