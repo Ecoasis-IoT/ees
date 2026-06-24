@@ -39,91 +39,89 @@ if (!$pdo) {
     exit;
 }
 
-$history      = [];
 $current_year = (int)date('Y', strtotime($end_date));
+$main_meter   = (int)($site['main_meter'] ?? 0);
+$floor        = $main_meter > 0 ? $main_meter : 100;
 
+// year => ['production' => float, 'insolation' => float]
+$byYear = [];
+$seeded = []; // years coming from tbl_historical (authoritative; not overwritten by live)
+
+// 1) Seeded historical years (data from before the system was collecting live,
+//    e.g. Phoenix 2018..2025). Only some plants have this table populated.
 try {
     $hist_stmt = $pdo->prepare(
-        "SELECT YEAR(date) as year, production, insolation
+        "SELECT YEAR(date) AS year, production, insolation
          FROM tbl_historical WHERE MONTH(date) = :month"
     );
     $hist_stmt->execute([':month' => $month]);
-    $raw = $hist_stmt->fetchAll();
-    $history = array_map(function ($r) {
-        return [
-            'year'       => (string)$r['year'],
+    foreach ($hist_stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $yr = (int)$r['year'];
+        $byYear[$yr] = [
             'production' => (float)$r['production'],
             'insolation' => (float)$r['insolation'],
         ];
-    }, $raw);
+        $seeded[$yr] = true;
+    }
 } catch (PDOException $e) {
     error_log('get_plant_historical tbl_historical: ' . $e->getMessage());
 }
 
-$current_production = 0.0;
-$main_meter         = (int)($site['main_meter'] ?? 0);
-
+// 2) Live production per year for this month — same source the dashboards use
+//    (tbl_hourly_prod, meter_id >= main meter). This is what surfaces 2025/2026
+//    for plants that have no seeded tbl_historical.
 try {
-    if ($main_meter > 0) {
-        $curr_stmt = $pdo->prepare(
-            'SELECT MAX(total_active_energy) - MIN(total_active_energy) AS production
-             FROM tbl_main_meter
-             WHERE YEAR(date) = :yr_filter AND MONTH(date) = :month AND meter_id = :meter'
-        );
-        $curr_stmt->execute([
-            ':yr_filter' => $current_year,
-            ':month'     => $month,
-            ':meter'     => $main_meter,
-        ]);
-    } else {
-        $curr_stmt = $pdo->prepare(
-            'SELECT MAX(total_active_energy) - MIN(total_active_energy) AS production
-             FROM tbl_main_meter
-             WHERE YEAR(date) = :yr_filter AND MONTH(date) = :month'
-        );
-        $curr_stmt->execute([':yr_filter' => $current_year, ':month' => $month]);
+    $prod_stmt = $pdo->prepare(
+        "SELECT YEAR(datetime) AS year, ROUND(SUM(production), 2) AS production
+         FROM tbl_hourly_prod
+         WHERE MONTH(datetime) = :month AND meter_id >= :floor
+         GROUP BY YEAR(datetime)"
+    );
+    $prod_stmt->execute([':month' => $month, ':floor' => $floor]);
+    foreach ($prod_stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $yr = (int)$r['year'];
+        if (isset($seeded[$yr])) continue; // keep the seeded value for overlapping years
+        if (!isset($byYear[$yr])) $byYear[$yr] = ['production' => 0.0, 'insolation' => 0.0];
+        $byYear[$yr]['production'] = (float)$r['production'];
     }
-    $current = $curr_stmt->fetch(PDO::FETCH_ASSOC);
-    $current_production = round((float)($current['production'] ?? 0), 2);
 } catch (PDOException $e) {
-    error_log('get_plant_historical tbl_main_meter: ' . $e->getMessage());
-    try {
-        $meter_floor = $main_meter > 0 ? $main_meter : 100;
-        $fallback = $pdo->prepare(
-            "SELECT ROUND(SUM(production), 2) AS production
-             FROM tbl_hourly_prod
-             WHERE YEAR(datetime) = :yr AND MONTH(datetime) = :month AND meter_id >= :meter"
-        );
-        $fallback->execute([
-            ':yr'     => $current_year,
-            ':month'  => $month,
-            ':meter'  => $meter_floor,
-        ]);
-        $row = $fallback->fetch(PDO::FETCH_ASSOC);
-        $current_production = round((float)($row['production'] ?? 0), 2);
-    } catch (PDOException $e2) {
-        error_log('get_plant_historical tbl_hourly_prod fallback: ' . $e2->getMessage());
-    }
+    error_log('get_plant_historical tbl_hourly_prod: ' . $e->getMessage());
 }
 
-$current_insolation = 0.0;
+// 3) Live insolation per year for this month (non-seeded years only)
 try {
     $irr_stmt = $pdo->prepare(
-        "SELECT SUM(insolation) as insolation FROM plant_irradiance
-         WHERE YEAR(date) = :yr AND MONTH(date) = :month"
+        "SELECT YEAR(date) AS year, ROUND(SUM(insolation), 2) AS insolation
+         FROM plant_irradiance
+         WHERE MONTH(date) = :month
+         GROUP BY YEAR(date)"
     );
-    $irr_stmt->execute([':yr' => $current_year, ':month' => $month]);
-    $curr_irr = $irr_stmt->fetch(PDO::FETCH_ASSOC);
-    $current_insolation = round((float)($curr_irr['insolation'] ?? 0), 2);
+    $irr_stmt->execute([':month' => $month]);
+    foreach ($irr_stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $yr = (int)$r['year'];
+        if (isset($seeded[$yr])) continue;
+        if (!isset($byYear[$yr])) $byYear[$yr] = ['production' => 0.0, 'insolation' => 0.0];
+        $byYear[$yr]['insolation'] = (float)$r['insolation'];
+    }
 } catch (PDOException $e) {
     error_log('get_plant_historical plant_irradiance: ' . $e->getMessage());
 }
 
-$history[] = [
-    'year'       => (string)$current_year,
-    'production' => $current_production,
-    'insolation' => $current_insolation,
-];
+// Always show the current year, even if it has no data yet
+if (!isset($byYear[$current_year])) {
+    $byYear[$current_year] = ['production' => 0.0, 'insolation' => 0.0];
+}
+
+ksort($byYear);
+
+$history = [];
+foreach ($byYear as $yr => $vals) {
+    $history[] = [
+        'year'       => (string)$yr,
+        'production' => round($vals['production'], 2),
+        'insolation' => round($vals['insolation'], 2),
+    ];
+}
 
 ob_end_clean();
 require_once __DIR__ . '/../common/audit_logging.php';
