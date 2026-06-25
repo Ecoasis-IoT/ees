@@ -645,13 +645,6 @@ function generatePdf() {
                 }
             })
                 .then(function (canvas) {
-                    var jsPdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'letter' });
-                    var pageW = jsPdf.internal.pageSize.getWidth();
-                    var pageH = jsPdf.internal.pageSize.getHeight();
-                    var margin = 24;
-                    var contentW = pageW - 2 * margin;
-                    var contentH = pageH - 2 * margin;
-
                     var cw = canvas.width;
                     var ch = canvas.height;
                     if (cw < 1 || ch < 1) {
@@ -660,19 +653,20 @@ function generatePdf() {
                         return;
                     }
 
-                    /* Single page: scale entire capture to fit inside printable area (preserve aspect) */
+                    /* Build a single page sized to the captured report (letter width,
+                       height = whatever the content needs). This fills the width and
+                       removes the empty footer/border space that a fixed letter page
+                       left below the report when the content was shorter than the page. */
+                    var margin = 10;
+                    var pageW = 612;                       // letter width (pt)
+                    var contentW = pageW - 2 * margin;
                     var imgPdfW = contentW;
                     var imgPdfH = (ch / cw) * contentW;
-                    if (imgPdfH > contentH) {
-                        var s = contentH / imgPdfH;
-                        imgPdfW = imgPdfW * s;
-                        imgPdfH = contentH;
-                    }
-                    var x = margin + (contentW - imgPdfW) / 2;
-                    var y = margin + (contentH - imgPdfH) / 2;
+                    var pageH = Math.round(imgPdfH + 2 * margin);
 
+                    var jsPdf = new jsPDF({ orientation: 'p', unit: 'pt', format: [pageW, pageH] });
                     var imgData = canvas.toDataURL('image/jpeg', 0.92);
-                    jsPdf.addImage(imgData, 'JPEG', x, y, imgPdfW, imgPdfH);
+                    jsPdf.addImage(imgData, 'JPEG', margin, margin, imgPdfW, imgPdfH);
 
                     jsPdf.save('Report.pdf');
                     window.open(jsPdf.output('bloburl'));
