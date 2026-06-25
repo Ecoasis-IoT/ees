@@ -189,6 +189,9 @@ function mc_main_hourly_prod(PDO $pdo, string $timereal): void
 }
 
 // ── Inverters 1..6 (reports — below 100, never summed into dashboard production) ──
+$invPowerSum  = 0.0;   // running total of inverter active power (kW)
+$haveInverter = false; // did this push carry any inverter data?
+
 for ($i = 1; $i <= 6; $i++) {
     $eKey = "inv{$i}_energy";
     $wKey = "inv{$i}_active_power";
@@ -197,6 +200,9 @@ for ($i = 1; $i <= 6; $i++) {
     $power  = isset($p[$wKey]) ? (float)$p[$wKey] : 0.0;
     $energy = isset($p[$eKey]) ? (float)$p[$eKey] : 0.0;
     $name   = "INVERTER {$i}";
+
+    $invPowerSum += $power;
+    $haveInverter = true;
 
     $pdo->prepare(
         'INSERT INTO `tbl_sub_meters`(`date`,`meter_id`,`meter_name`,`active_power`,`power_factor`,`total_active_energy`)
@@ -209,27 +215,37 @@ for ($i = 1; $i <= 6; $i++) {
 }
 
 // ── Main meter (dashboards) — meter_id 100 ───────────────────────────────────
-// Not arriving yet; the gateway will start sending it later. Accepts either
-// mm_active_power or mm_power for the power field.
+// The real main meter (mm_*) is not arriving yet. As a TEMPORARY stopgap (test
+// only, confirmed acceptable for ACTIVE POWER): the dashboard main active power
+// is the SUM of the inverters' active power. When the real mm_active_power starts
+// arriving it takes precedence (so there is no double source / double count).
+//
+// PRODUCTION is intentionally NOT derived from the inverters here yet — pending
+// confirmation of the correct method. tbl_main_meter / hourly production (id 100)
+// stay driven only by the real mm_energy when it arrives.
 $mmPower  = $p['mm_active_power'] ?? ($p['mm_power'] ?? null);
 $mmEnergy = $p['mm_energy'] ?? null;
 
-if ($mmPower !== null || $mmEnergy !== null) {
-    $power  = $mmPower  !== null ? (float)$mmPower  : 0.0;
-    $energy = $mmEnergy !== null ? (float)$mmEnergy : 0.0;
+$mainPower = null;
+if ($mmPower !== null) {
+    $mainPower = (float)$mmPower;          // real main meter active power (preferred)
+} elseif ($haveInverter) {
+    $mainPower = round($invPowerSum, 3);   // stopgap: sum of inverter active power
+}
 
-    // Active power — every push, real time (feeds the dashboard active-power chart).
+// Active power — every push, real time (feeds the dashboard active-power chart).
+if ($mainPower !== null) {
     $pdo->prepare(
         'INSERT INTO `plant_active_power`(`date`,`meter_id`,`meter_name`,`active_power`) VALUES (?,?,?,?)'
-    )->execute([$timereal, 100, 'MAIN METER', $power]);
+    )->execute([$timereal, 100, 'MAIN METER', $mainPower]);
+}
 
-    // Energy — every push, real time + hourly production (feeds the production chart).
-    // A cumulative meter never legitimately reports 0; skip bad reads.
-    if ($energy > 0) {
-        $pdo->prepare(
-            'INSERT INTO `tbl_main_meter`(`date`,`total_active_energy`) VALUES (?,?)'
-        )->execute([$timereal, round($energy, 5)]);
+// Energy + hourly production — ONLY from the real main meter (mm_energy).
+// A cumulative meter never legitimately reports 0; skip bad reads.
+if ($mmEnergy !== null && (float)$mmEnergy > 0) {
+    $pdo->prepare(
+        'INSERT INTO `tbl_main_meter`(`date`,`total_active_energy`) VALUES (?,?)'
+    )->execute([$timereal, round((float)$mmEnergy, 5)]);
 
-        mc_main_hourly_prod($pdo, $timereal);
-    }
+    mc_main_hourly_prod($pdo, $timereal);
 }
