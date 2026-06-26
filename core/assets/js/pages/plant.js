@@ -638,22 +638,12 @@ function generatePdf() {
                 return;
             }
 
-            var er = el.getBoundingClientRect();
-            /* Force a desktop-width layout in the PDF clone (mobile/tablet viewports are too narrow) */
-            var captureW = Math.max(el.scrollWidth, el.offsetWidth, 1280);
-            el.querySelectorAll('canvas').forEach(function (cv) {
-                var cr = cv.getBoundingClientRect();
-                captureW = Math.max(captureW, Math.ceil(cr.right - er.left) + 16);
-            });
-            el.querySelectorAll('table').forEach(function (tb) {
-                var tr = tb.getBoundingClientRect();
-                captureW = Math.max(captureW, Math.ceil(tr.right - er.left) + 16);
-            });
-            var titleEl = el.querySelector('.reports-title');
-            if (titleEl) {
-                var t = titleEl.getBoundingClientRect();
-                captureW = Math.max(captureW, Math.ceil(t.right - er.left) + 16);
-            }
+            /* Capture at a FIXED desktop width that matches applyPdfDesktopLayout().
+               Using a constant (not the measured on-screen width) makes the PDF
+               byte-for-byte identical on a laptop and on a large monitor — the
+               measured width used to vary by screen and could push content wider
+               than the page. */
+            var captureW = 1280;
 
             html2canvas(el, {
                 scale: 2,
@@ -681,13 +671,6 @@ function generatePdf() {
                     });
                     clonedDoc.querySelectorAll('.row').forEach(function (row) {
                         row.style.maxWidth = 'none';
-                    });
-                    clonedDoc.querySelectorAll('canvas').forEach(function (cv) {
-                        var p = cv.parentElement;
-                        if (!p) return;
-                        var rw = cv.width || cv.getAttribute('width') || cv.clientWidth;
-                        rw = parseFloat(rw, 10) || 0;
-                        if (rw > 0) p.style.minWidth = Math.ceil(rw) + 'px';
                     });
                 }
             })
