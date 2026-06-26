@@ -48,7 +48,7 @@ $csrf_token = generateCSRFToken();
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> 
 
-<link rel="stylesheet" href="assets/css/pages/plant.css">
+<?= assetCssTag('assets/css/pages/plant.css') ?>
 
 </head>
 
@@ -316,7 +316,7 @@ $csrf_token = generateCSRFToken();
 <script src="assets/js/pages/ui/dialogs.js"></script>
 
 <!-- Page JavaScript -->
-<script src="assets/js/pages/plant.js"></script>
+<?= assetScriptTag('assets/js/pages/plant.js') ?>
 
 </body>
 </html>
