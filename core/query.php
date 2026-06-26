@@ -20,14 +20,14 @@ $csrf_token = generateCSRFToken();
 <!--<link rel="stylesheet" href="assets/css/dataTables.min.css">-->
 
 <!--CUSTOM CSS-->
-<link rel="stylesheet" href="assets/css/custom.css">
+<?= assetCssTag('assets/css/custom.css') ?>
 
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <!-- QUERY CSS-->
-<link rel="stylesheet" href="assets/css/query.css">
+<?= assetCssTag('assets/css/query.css') ?>
 
 
 <!--chartJS -->
@@ -813,7 +813,7 @@ $csrf_token = generateCSRFToken();
 <script src="https://cdn.datatables.net/buttons/2.3.2/js/buttons.print.min.js"></script>
 
 <!-- Page JavaScript -->
-<script src="assets/js/pages/query.js"></script>
+<?= assetScriptTag('assets/js/pages/query.js') ?>
 <!--<script src="assets/js/pages/tables/jquery-datatable.js"></script>-->
 <!--<script src="assets/bundles/datatablescripts.bundle.js"></script>-->
 

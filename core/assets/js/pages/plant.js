@@ -47,7 +47,15 @@ var page = document.getElementById("plant_report_block");
         if (typeof Chart !== 'undefined') {
             ["barChart", "barChart2"].forEach(function (id) {
                 var c = Chart.getChart(id);
-                if (c) c.resize();
+                if (!c) return;
+                /* Render the chart bitmap at 3x so the bars/lines/labels stay crisp
+                   in the PDF (otherwise html2canvas just upscales a low-res canvas
+                   and the graphs look blurry). Restored in removePdfDesktopLayout(). */
+                if (c._eesPrevDPR === undefined) {
+                    c._eesPrevDPR = (c.options && c.options.devicePixelRatio) || null;
+                }
+                if (c.options) c.options.devicePixelRatio = 3;
+                c.resize();
             });
         }
     }
@@ -57,7 +65,13 @@ var page = document.getElementById("plant_report_block");
         if (typeof Chart !== 'undefined') {
             ["barChart", "barChart2"].forEach(function (id) {
                 var c = Chart.getChart(id);
-                if (c) c.resize();
+                if (!c) return;
+                if (c.options) {
+                    /* null -> let Chart.js fall back to the screen's own ratio */
+                    c.options.devicePixelRatio = c._eesPrevDPR || undefined;
+                }
+                c._eesPrevDPR = undefined;
+                c.resize();
             });
         }
     }
@@ -695,8 +709,11 @@ function generatePdf() {
                     var pageH = Math.round(imgPdfH + 2 * margin);
 
                     var jsPdf = new jsPDF({ orientation: 'p', unit: 'pt', format: [pageW, pageH] });
-                    var imgData = canvas.toDataURL('image/jpeg', 0.92);
-                    jsPdf.addImage(imgData, 'JPEG', margin, margin, imgPdfW, imgPdfH);
+                    /* PNG (lossless) instead of JPEG: JPEG chroma-subsampling smears the
+                       coloured chart bars/lines (looked blurry, worst on the charts which
+                       sit on the right). 'FAST' compression keeps the file reasonable. */
+                    var imgData = canvas.toDataURL('image/png');
+                    jsPdf.addImage(imgData, 'PNG', margin, margin, imgPdfW, imgPdfH, undefined, 'FAST');
 
                     jsPdf.save('Report.pdf');
                     window.open(jsPdf.output('bloburl'));

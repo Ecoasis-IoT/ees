@@ -461,8 +461,9 @@ function get_day(){
             
             let total_prod_day = 0;
             
-            tbl_hourly.rows().remove().draw();
+            tbl_hourly.rows().remove();
             
+            var rows_hourly = [];
             for(var i = 0; i < prod.length; i++){
                 
                 total_prod_day += parseFloat(prod[i].production);
@@ -471,8 +472,9 @@ function get_day(){
                 
                 kpi_prod.push({"x": prod[i].datetime, "y": prod[i].production});
                 
-                tbl_hourly.row.add([prod[i].datetime, data.site_name, prod[i].meter_name, prod[i].production]).draw();
+                rows_hourly.push([prod[i].datetime, data.site_name, prod[i].meter_name, prod[i].production]);
             }
+            if (rows_hourly.length) tbl_hourly.rows.add(rows_hourly);
             
             tbl_hourly.columns.adjust().draw();
             
@@ -487,21 +489,19 @@ function get_day(){
             let irradiance = Array.isArray(data.irradiance) ? data.irradiance : [];
             let total_day_insolation = 0;
             
-            tbl_ir_day.rows().remove().draw();
+            tbl_ir_day.rows().remove();
             
+            var rows_ir_day = [];
             for(var i = 0; i < irradiance.length; i++){
                 
                 total_day_insolation += parseFloat(irradiance[i].insolation);
                 
                 kpi_irradiance.push({"x": irradiance[i].date, "y": irradiance[i].irradiance});
                 
-                tbl_ir_day.row.add([irradiance[i].date, data.site_name, irradiance[i].irradiance, irradiance[i].insolation, irradiance[i].ambient_temp, irradiance[i].panel_temp]).draw();
-                                
-                // var row = "<tr><td>"+ irradiance[i].date +"</td><td>" + data.site_name + "</td><td>" + irradiance[i].irradiance + "</td><td>" + irradiance[i].insolation + "</td><td>" + irradiance[i].ambient_temp + "</td><td>" + irradiance[i].panel_temp + "</td></tr>";
-                    
-                // $('#tbl_irradiance_day tbody').append(row);
+                rows_ir_day.push([irradiance[i].date, data.site_name, irradiance[i].irradiance, irradiance[i].insolation, irradiance[i].ambient_temp, irradiance[i].panel_temp]);
                 
             }
+            if (rows_ir_day.length) tbl_ir_day.rows.add(rows_ir_day);
             
             tbl_ir_day.columns.adjust().draw();
             
@@ -520,8 +520,9 @@ function get_day(){
             
             let active_power = Array.isArray(data.active_power) ? data.active_power : [];
             
-            tbl_power_day.rows().remove().draw();
+            tbl_power_day.rows().remove();
             
+            var rows_power_day = [];
             for(var i = 0; i < active_power.length; i++){
                 
                 if(active_power[i].active_power < 0){
@@ -531,13 +532,10 @@ function get_day(){
                     kpi_active_power.push({"x": active_power[i].date, "y": active_power[i].active_power});
                 }
                 
-                tbl_power_day.row.add([active_power[i].date, data.site_name, active_power[i].meter_name, active_power[i].active_power]).draw();
-                
-                // var row = "<tr><td>"+ active_power[i].date +"</td><td>" + data.site_name + "</td><td>" + active_power[i].meter_name + "</td><td>"  + active_power[i].active_power + "</td></tr>";
-                    
-                // $('#tbl_apower_day tbody').append(row);
+                rows_power_day.push([active_power[i].date, data.site_name, active_power[i].meter_name, active_power[i].active_power]);
                 
             }
+            if (rows_power_day.length) tbl_power_day.rows.add(rows_power_day);
             
             tbl_power_day.columns.adjust().draw();
             
@@ -731,8 +729,9 @@ function get_month(){
             
             let total_prod_month = 0;
             
-            tbl_daily.rows().remove().draw();
+            tbl_daily.rows().remove();
             
+            var rows_daily = [];
             for(var i = 0; i < prod.length; i++){
                 
                 total_prod_month += parseFloat(prod[i].production);
@@ -741,8 +740,9 @@ function get_month(){
                 
                 kpi_prod.push({"x": prod[i].datetime, "y": prod[i].production});
                 
-                tbl_daily.row.add([prod[i].datetime, data.site_name, prod[i].meter_name, prod[i].production]).draw();
+                rows_daily.push([prod[i].datetime, data.site_name, prod[i].meter_name, prod[i].production]);
             }
+            if (rows_daily.length) tbl_daily.rows.add(rows_daily);
             
             tbl_daily.columns.adjust().draw();
             
@@ -764,8 +764,9 @@ function get_month(){
                 prodByDate[prod[j].datetime] = parseFloat(prod[j].production) || 0;
             }
             
-            tbl_ir_month.rows().remove().draw();
+            tbl_ir_month.rows().remove();
             
+            var rows_ir_month = [];
             for(var i = 0; i < irradiance.length; i++){
                 
                 total_month_insolation += parseFloat(irradiance[i].insolation);
@@ -779,9 +780,10 @@ function get_month(){
                 
                 kpi_pr.push({"x": irradiance[i].date, "y": pr});
                 
-                tbl_ir_month.row.add([irradiance[i].date, data.site_name, irradiance[i].insolation]).draw();
+                rows_ir_month.push([irradiance[i].date, data.site_name, irradiance[i].insolation]);
                 
             }
+            if (rows_ir_month.length) tbl_ir_month.rows.add(rows_ir_month);
             
             tbl_ir_month.columns.adjust().draw();
             
@@ -800,18 +802,20 @@ function get_month(){
             
             let active_power = data.active_power;
             
-            tbl_power_day.rows().remove().draw();
+            tbl_power_month.rows().remove();
             
+            var rows_power_month = [];
             for(var i = 0; i < active_power.length; i++){
                 
                 
                 // kpi_active_power.push({"x": active_power[i].date, "y": active_power[i].active_power});
                 
-                tbl_power_month.row.add([active_power[i].date, data.site_name, active_power[i].meter_name, active_power[i].active_power]).draw();
+                rows_power_month.push([active_power[i].date, data.site_name, active_power[i].meter_name, active_power[i].active_power]);
                 
             }
+            if (rows_power_month.length) tbl_power_month.rows.add(rows_power_month);
             
-            tbl_power_day.columns.adjust().draw();
+            tbl_power_month.columns.adjust().draw();
             
             // console.log(chart_labels);
             // console.log(kpi_active_power);
@@ -1004,8 +1008,9 @@ function get_year(){
             
             let total_prod_year = 0;
             
-            tbl_monthly.rows().remove().draw();
+            tbl_monthly.rows().remove();
             
+            var rows_monthly = [];
             for(var i = 0; i < prod.length; i++){
                 
                 total_prod_year += parseFloat(prod[i].production);
@@ -1014,8 +1019,9 @@ function get_year(){
                 
                 kpi_prod.push({"x": all_months[prod[i].datetime - 1], "y": prod[i].production});
                 
-                tbl_monthly.row.add([all_months[prod[i].datetime-1], data.site_name, prod[i].meter_name, prod[i].production]).draw();
+                rows_monthly.push([all_months[prod[i].datetime-1], data.site_name, prod[i].meter_name, prod[i].production]);
             }
+            if (rows_monthly.length) tbl_monthly.rows.add(rows_monthly);
             
             tbl_monthly.columns.adjust().draw();
             
@@ -1037,8 +1043,9 @@ function get_year(){
                 prodByMonth[prod[j].datetime] = parseFloat(prod[j].production) || 0;
             }
             
-            tbl_ir_year.rows().remove().draw();
+            tbl_ir_year.rows().remove();
             
+            var rows_ir_year = [];
             for(var i = 0; i < irradiance.length; i++){
                 
                 total_year_insolation += parseFloat(irradiance[i].insolation);
@@ -1052,9 +1059,10 @@ function get_year(){
                 
                 kpi_pr.push({"x": all_months[irradiance[i].date - 1], "y": pr});
                 
-                tbl_ir_year.row.add([all_months[irradiance[i].date - 1], data.site_name, irradiance[i].insolation]).draw();
+                rows_ir_year.push([all_months[irradiance[i].date - 1], data.site_name, irradiance[i].insolation]);
                 
             }
+            if (rows_ir_year.length) tbl_ir_year.rows.add(rows_ir_year);
             
             tbl_ir_year.columns.adjust().draw();
             
@@ -1514,6 +1522,7 @@ function get_custom(){
                 
                 if(parameter == "prod"){
                     let chartType = document.getElementById("chart_type").value;
+                    var rows_custom_prod = [];
                     
                     for(let count = 0; count < arr_meters.length; count++){
                         
@@ -1534,7 +1543,7 @@ function get_custom(){
                                 meter_name = data[i].meter_name;
                                 chart_labels.push(data[i].datetime);
                                 kpi_prod.push({"x": data[i].datetime, "y": data[i].production});
-                                tbl_custom_prod.row.add([data[i].datetime, json.site_name, data[i].meter_name, data[i].production]).draw();
+                                rows_custom_prod.push([data[i].datetime, json.site_name, data[i].meter_name, data[i].production]);
                             }
                             
                         }
@@ -1558,9 +1567,11 @@ function get_custom(){
                         color_count += 1;
                         
                     }
+                    if (rows_custom_prod.length) tbl_custom_prod.rows.add(rows_custom_prod).draw();
         
                 }
                 else if(parameter == "a_power"){
+                    var rows_custom_active = [];
                     
                     for(let count = 0; count < arr_meters.length; count++){
                         
@@ -1582,7 +1593,7 @@ function get_custom(){
                                 meter_name = data[i].meter_name;
                                 chart_labels.push(data[i].datetime);
                                 kpi_active.push({"x": data[i].datetime, "y": data[i].active_power});
-                                tbl_custom_active.row.add([data[i].datetime, json.site_name, data[i].meter_name, data[i].active_power]).draw();
+                                rows_custom_active.push([data[i].datetime, json.site_name, data[i].meter_name, data[i].active_power]);
                             }
                             
                         }
@@ -1601,6 +1612,7 @@ function get_custom(){
                         color_count += 1;
                         
                     }
+                    if (rows_custom_active.length) tbl_custom_active.rows.add(rows_custom_active).draw();
                     
                 }
                 
@@ -1617,16 +1629,18 @@ function get_custom(){
                     
                     kpi_irradiance = [];
                     
+                    var rows_custom_irr = [];
                     for(let i = 0; i < data.length; i++){
                         
                         if(parseInt(data[i].meter_id) == 99 && ("irradiance" in data[i])){
                             
                             chart_labels.push(data[i].datetime);
                             kpi_irradiance.push({"x": data[i].datetime, "y": data[i].irradiance});
-                            tbl_custom_irradiance.row.add([data[i].datetime, json.site_name, data[i].irradiance]).draw();
+                            rows_custom_irr.push([data[i].datetime, json.site_name, data[i].irradiance]);
                         }
                         
                     }
+                    if (rows_custom_irr.length) tbl_custom_irradiance.rows.add(rows_custom_irr).draw();
                     
                     // console.log(kpi_prod);
                     
