@@ -24,6 +24,44 @@ var page = document.getElementById("plant_report_block");
         });
     }
 
+    /* The report uses Bootstrap col-lg-* columns + @media(min-width:992px) rules, so on
+       a phone/tablet it collapses to a single stacked column and the chart canvases are
+       rendered narrow. For the PDF we temporarily force the desktop grid off-screen and
+       re-render the charts at desktop size, so the exported graphs look the same on every
+       device instead of being stretched. */
+    var PDF_DESKTOP_STYLE_ID = 'ees-pdf-desktop-style';
+    function applyPdfDesktopLayout() {
+        if (!document.getElementById(PDF_DESKTOP_STYLE_ID)) {
+            var st = document.createElement('style');
+            st.id = PDF_DESKTOP_STYLE_ID;
+            st.textContent =
+                '#plant_report_block{position:fixed !important;left:-10000px !important;top:0 !important;z-index:-1 !important;background:#fff !important;width:1280px !important;min-width:1280px !important;max-width:none !important;}' +
+                '#plant_report_block .row{display:flex !important;flex-wrap:wrap !important;}' +
+                '#plant_report_block .col-lg-12{flex:0 0 100% !important;max-width:100% !important;}' +
+                '#plant_report_block .col-lg-3{flex:0 0 25% !important;max-width:25% !important;}' +
+                '#plant_report_block .col-lg-9{flex:0 0 75% !important;max-width:75% !important;}' +
+                '#plant_report_block .col-lg-5{flex:0 0 41.6667% !important;max-width:41.6667% !important;}' +
+                '#plant_report_block .col-lg-7{flex:0 0 58.3333% !important;max-width:58.3333% !important;}';
+            document.head.appendChild(st);
+        }
+        if (typeof Chart !== 'undefined') {
+            ["barChart", "barChart2"].forEach(function (id) {
+                var c = Chart.getChart(id);
+                if (c) c.resize();
+            });
+        }
+    }
+    function removePdfDesktopLayout() {
+        var st = document.getElementById(PDF_DESKTOP_STYLE_ID);
+        if (st && st.parentNode) st.parentNode.removeChild(st);
+        if (typeof Chart !== 'undefined') {
+            ["barChart", "barChart2"].forEach(function (id) {
+                var c = Chart.getChart(id);
+                if (c) c.resize();
+            });
+        }
+    }
+
     function updatePlantReportTitle() {
         var select = document.getElementById('site_opt');
         var output = document.getElementById('output');
@@ -588,6 +626,10 @@ function generatePdf() {
     var pdfBtn = document.getElementById('cmd');
     if (typeof EES !== 'undefined' && EES.btnLoad && pdfBtn) EES.btnLoad(pdfBtn, 'Building PDF…');
 
+    /* Force the desktop grid + desktop-sized charts off-screen so the PDF is identical
+       on phones/tablets/desktops. Restored in the final .then() below. */
+    applyPdfDesktopLayout();
+
     requestAnimationFrame(function () {
         requestAnimationFrame(function () {
             if (typeof html2canvas === 'undefined') {
@@ -620,6 +662,11 @@ function generatePdf() {
                 logging: false,
                 scrollX: 0,
                 scrollY: 0,
+                /* Lay the clone out at a desktop viewport width so the responsive
+                   (@media min-width:992px / col-lg-*) rules fire the same way on a
+                   phone or tablet as on a computer -> identical PDF on every device. */
+                windowWidth: captureW,
+                width: captureW,
                 backgroundColor: '#ffffff',
                 onclone: function (clonedDoc) {
                     var root = clonedDoc.getElementById('plant_report_block');
@@ -677,6 +724,7 @@ function generatePdf() {
                     if (typeof EES !== 'undefined' && EES.alert) EES.alert('PDF generation failed. See console for details.', 'error');
                 })
                 .then(function () {
+                    removePdfDesktopLayout();
                     if (typeof EES !== 'undefined' && EES.btnReset && pdfBtn) EES.btnReset(pdfBtn);
                 });
         });
