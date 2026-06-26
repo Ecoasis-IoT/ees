@@ -16,16 +16,22 @@
  *   The 6 inverters live BELOW 100 (ids 1..6) so they show up in reports but never
  *   inflate the dashboard production total (which would double-count the main meter).
  *
- * NOTE: the main meter (mm_*) is not arriving yet — the gateway will start sending it
- *       later. The handler below is already wired so it "just works" the moment those
- *       fields appear in the payload; nothing else needs to change.
+ * NOTE: the real main meter (mm_*) is not arriving yet. As a TEMPORARY stopgap the
+ *       MAIN METER (id 100) is derived from the inverters:
+ *         - active power = SUM of inverter active power.
+ *         - hourly production = SUM of the inverter hourly_prod rows.
+ *       tbl_main_meter is intentionally left empty (we can't build a trustworthy
+ *       cumulative register from the LV pushes because packets get missed).
+ *       The moment the gateway starts sending mm_*, those take precedence and the
+ *       stopgap stops filling (no double source / double count).
  *
  * Storage rules (mirror the rest of the system):
  *   tbl_sub_meters     : every push, real time, meter_id = inverter number (1..6).
  *   plant_active_power : main meter, every push, real time (meter_id 100).
- *   tbl_main_meter     : main meter cumulative energy, every push, real time.
+ *   tbl_main_meter     : main meter cumulative energy (only once real mm_energy arrives).
  *   tbl_hourly_prod    : one row per clock hour per meter (closest reading to each
- *                        top-of-hour boundary; negatives clamped to 0).
+ *                        top-of-hour boundary; negatives clamped to 0). Meter 100 is
+ *                        the sum of the inverter hours until the real main meter exists.
  */
 
 $json = file_get_contents('php://input');
@@ -188,6 +194,60 @@ function mc_main_hourly_prod(PDO $pdo, string $timereal): void
     }
 }
 
+/**
+ * MAIN METER (id 100) hourly production = SUM of the 6 inverter hourly rows.
+ *
+ * Why: Moka has no reliable cumulative main-meter register (tbl_main_meter is
+ * empty and summing the raw LV pushes is unsafe because packets get missed).
+ * The inverter hourly production is already computed accurately (difference of
+ * each inverter's cumulative energy register), so the plant production for an
+ * hour is just the sum of those rows.
+ *
+ * Only fills hours that do NOT already have a meter-100 row, so if the real
+ * main meter (mm_energy -> mc_main_hourly_prod) ever starts arriving it keeps
+ * precedence and this never double-inserts.
+ */
+function mc_main_hourly_from_inverters(PDO $pdo): void
+{
+    $meterId   = 100;
+    $meterName = 'MAIN METER';
+
+    $stmt = $pdo->prepare(
+        'SELECT s.`datetime`,
+                SUM(s.`production`)        AS production,
+                MIN(s.`starting_datetime`) AS starting_datetime,
+                MAX(s.`ending_datetime`)   AS ending_datetime
+           FROM `tbl_hourly_prod` s
+           LEFT JOIN `tbl_hourly_prod` m
+                  ON m.`datetime` = s.`datetime` AND m.`meter_id` = ?
+          WHERE s.`meter_id` BETWEEN 1 AND 6
+            AND m.`id` IS NULL
+          GROUP BY s.`datetime`
+          ORDER BY s.`datetime` ASC'
+    );
+    $stmt->execute([$meterId]);
+    $rows = $stmt->fetchAll();
+
+    if (!$rows) { return; }
+
+    $ins = $pdo->prepare(
+        'INSERT INTO `tbl_hourly_prod`(`meter_id`,`datetime`,`meter_name`,`starting_datetime`,`ending_datetime`,`production`)
+         VALUES (?,?,?,?,?,?)'
+    );
+    foreach ($rows as $r) {
+        $production = (float)$r['production'];
+        if ($production < 0) { $production = 0.0; }
+        $ins->execute([
+            $meterId,
+            $r['datetime'],
+            $meterName,
+            $r['starting_datetime'],
+            $r['ending_datetime'],
+            round($production, 2),
+        ]);
+    }
+}
+
 // ── Inverters 1..6 (reports — below 100, never summed into dashboard production) ──
 $invPowerSum  = 0.0;   // running total of inverter active power (kW)
 $haveInverter = false; // did this push carry any inverter data?
@@ -216,13 +276,15 @@ for ($i = 1; $i <= 6; $i++) {
 
 // ── Main meter (dashboards) — meter_id 100 ───────────────────────────────────
 // The real main meter (mm_*) is not arriving yet. As a TEMPORARY stopgap (test
-// only, confirmed acceptable for ACTIVE POWER): the dashboard main active power
-// is the SUM of the inverters' active power. When the real mm_active_power starts
-// arriving it takes precedence (so there is no double source / double count).
-//
-// PRODUCTION is intentionally NOT derived from the inverters here yet — pending
-// confirmation of the correct method. tbl_main_meter / hourly production (id 100)
-// stay driven only by the real mm_energy when it arrives.
+// only, confirmed acceptable):
+//   ACTIVE POWER : dashboard main active power = SUM of the inverters' active power.
+//   PRODUCTION   : main-meter hourly production = SUM of the inverter hourly rows
+//                  (see mc_main_hourly_from_inverters below). tbl_main_meter is left
+//                  empty on purpose — we cannot build a reliable cumulative register
+//                  from the LV pushes (missed packets), so we aggregate the already
+//                  computed inverter hourly production instead.
+// When the real mm_* fields start arriving they take precedence (active power below,
+// and mc_main_hourly_prod for production), so there is no double source / double count.
 $mmPower  = $p['mm_active_power'] ?? ($p['mm_power'] ?? null);
 $mmEnergy = $p['mm_energy'] ?? null;
 
@@ -240,7 +302,7 @@ if ($mainPower !== null) {
     )->execute([$timereal, 100, 'MAIN METER', $mainPower]);
 }
 
-// Energy + hourly production — ONLY from the real main meter (mm_energy).
+// Energy + hourly production — from the real main meter (mm_energy) when present.
 // A cumulative meter never legitimately reports 0; skip bad reads.
 if ($mmEnergy !== null && (float)$mmEnergy > 0) {
     $pdo->prepare(
@@ -249,3 +311,7 @@ if ($mmEnergy !== null && (float)$mmEnergy > 0) {
 
     mc_main_hourly_prod($pdo, $timereal);
 }
+
+// Stopgap: fill any completed hour that still has no meter-100 row with the sum
+// of that hour's inverter production (only runs while the real main meter is absent).
+mc_main_hourly_from_inverters($pdo);
