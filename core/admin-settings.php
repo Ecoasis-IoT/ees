@@ -53,11 +53,17 @@ $csrf_token = generateCSRFToken();
 
             <!-- Alert Banner -->
             <div id="admin-alert" class="alert" role="alert" style="display:none;"></div>
+            <div id="gateway-migration-alert" class="alert alert-warning" role="alert" style="display:none;"></div>
 
             <!-- Tab Navigation -->
             <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
                 <li class="nav-item">
-                    <a class="nav-link active" id="tab-users-link" data-bs-toggle="tab" href="#tab-users" role="tab">
+                    <a class="nav-link active" id="tab-general-link" data-bs-toggle="tab" href="#tab-general" role="tab">
+                        <i class="fa fa-sliders"></i> General
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="tab-users-link" data-bs-toggle="tab" href="#tab-users" role="tab">
                         <i class="fa fa-users"></i> Users
                     </a>
                 </li>
@@ -75,8 +81,59 @@ $csrf_token = generateCSRFToken();
 
             <div class="tab-content" id="adminTabContent">
 
+                <!-- ===================== GENERAL TAB ===================== -->
+                <div class="tab-pane fade show active" id="tab-general" role="tabpanel">
+                    <div class="row clearfix g-3 mb-3">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="header"><h2>ChirpStack API</h2></div>
+                                <div class="body">
+                                    <p class="text-muted">
+                                        Global gateway polling settings. Per-site gateway EUIs are configured on the <strong>Sites</strong> tab.
+                                        Status on <a href="site">All Sites</a> updates from cron or <strong>Poll All Now</strong>.
+                                    </p>
+                                    <form id="global-gateway-form" class="row g-3">
+                                        <input type="hidden" name="setting_group" value="gateway">
+                                        <div class="col-md-5">
+                                            <label class="form-label" for="api_url">API URL</label>
+                                            <input type="url" class="form-control" id="api_url" name="api_url"
+                                                   placeholder="http://195.35.48.27:8090" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label" for="tenant_id">Tenant ID <small class="text-muted">(optional)</small></label>
+                                            <input type="text" class="form-control" id="tenant_id" name="tenant_id"
+                                                   placeholder="e801c4e7-dd19-4128-a4c3-543bbca0088c">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label" for="offline_threshold_seconds">Offline after (seconds)</label>
+                                            <input type="number" class="form-control" id="offline_threshold_seconds"
+                                                   name="offline_threshold_seconds" min="60" step="60" value="900">
+                                        </div>
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-primary" id="btn-save-gateway">
+                                                <i class="fa fa-save"></i> Save
+                                            </button>
+                                            <button type="button" class="btn btn-success ms-2" id="btn-poll-all">
+                                                <i class="fa fa-refresh"></i> Poll All Now
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="header"><h2>Other Settings</h2></div>
+                        <div class="body">
+                            <p class="text-muted mb-0">
+                                Additional global settings will be added here. Values are stored in <code>tbl_settings</code>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ===================== USERS TAB ===================== -->
-                <div class="tab-pane fade show active" id="tab-users" role="tabpanel">
+                <div class="tab-pane fade" id="tab-users" role="tabpanel">
                     <div class="row clearfix g-3 mb-3">
                         <div class="col-lg-12">
                             <div class="card">
@@ -124,7 +181,11 @@ $csrf_token = generateCSRFToken();
                                                     <th>Site Name</th>
                                                     <th>Database</th>
                                                     <th>Capacity</th>
-                                                    <th>Gateway</th>
+                                                    <th>Gateway EUI</th>
+                                                    <th>Token</th>
+                                                    <th>Poll</th>
+                                                    <th>Last Seen</th>
+                                                    <th>Status</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>

@@ -9,7 +9,7 @@ $_username  = htmlspecialchars(
 // Determine which groups should be open by default
 $_reports_open  = in_array($_cur, ['plant.php', 'query.php']);
 $_sites_open    = in_array($_cur, ['site.php', 'devices.php', 'add-site.php', 'edit-site.php', 'add-energy-meter.php', 'edit-energy-meter.php']);
-$_users_open    = in_array($_cur, ['user-management.php', 'admin-settings.php', 'add-user.php', 'edit-user.php']);
+$_users_open    = in_array($_cur, ['user-management.php', 'add-user.php', 'edit-user.php']);
 
 $_notif_unread = 0;
 if (!empty($_SESSION['id'])) {
@@ -86,7 +86,7 @@ if (!empty($_SESSION['id'])) {
         </div>
 
         <?php if ($_is_admin): ?>
-        <!-- User Management (admin only; API scripts require admin) -->
+        <!-- Users (admin only) -->
         <div class="ees-nav-group<?= $_users_open ? ' open' : '' ?>">
             <button class="ees-nav-item">
                 <i class="fa fa-users nav-icon"></i>
@@ -99,13 +99,15 @@ if (!empty($_SESSION['id'])) {
                    <i class="fa fa-user ees-nav-subicon" aria-hidden="true"></i>
                    <span>All Users</span>
                 </a>
-                <a href="admin-settings"
-                   class="ees-nav-subitem<?= $_cur === 'admin-settings.php' ? ' active' : '' ?>">
-                   <i class="fa fa-cog ees-nav-subicon" aria-hidden="true"></i>
-                   <span>Admin Settings</span>
-                </a>
             </div>
         </div>
+
+        <!-- Admin Settings -->
+        <a href="admin-settings"
+           class="ees-nav-item<?= $_cur === 'admin-settings.php' ? ' active' : '' ?>">
+            <i class="fa fa-cog nav-icon"></i>
+            <span class="nav-label">Admin Settings</span>
+        </a>
         <?php endif; ?>
 
         <div class="ees-nav-section-label">Other</div>

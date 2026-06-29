@@ -10,6 +10,7 @@
 
 .action-btn-group {
     display: flex;
+    flex-wrap: wrap;
     gap: 5px;
 }
 
@@ -81,4 +82,8 @@
 .status-offline {
     color: red;
     font-weight: 600;
+}
+
+code {
+    font-size: 0.85em;
 }
