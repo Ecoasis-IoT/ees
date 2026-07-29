@@ -1279,12 +1279,12 @@ const white_back = {
     
     const configKPI = {
       options: {
-        // responsive: false,
         enabled: true,
         scales: {       
             A: {
                 type: 'linear',
                 position: 'left',
+                display: false,
                 title: {
                     display: true,
                     text: 'Active Power (kW)',
@@ -1300,6 +1300,7 @@ const white_back = {
             B: {
                 type: 'linear',
                 position: 'right',
+                display: false,
                 title: {
                     display: true,
                     text: 'Irradiance (W/m2)',
@@ -1315,6 +1316,7 @@ const white_back = {
             C: {
                 type: 'linear',
                 position: 'left',
+                display: false,
                 title: {
                     display: true,
                     text: 'Production (kWh)',
@@ -1322,14 +1324,18 @@ const white_back = {
                         size: 17,
                         weight: 'bold'
                     }
-                }            
+                },
+                grid:{
+                    display:false
+                }
             },
             D: {
                 type: 'linear',
                 position: 'right',
+                display: false,
                 title: {
                     display: true,
-                    text: 'Temperature (Â°C)',
+                    text: 'Temperature (\u00B0C)',
                     font: {
                         size: 17,
                         weight: 'bold'
@@ -1365,8 +1371,7 @@ const white_back = {
             plugins: {
                 zoom: zoomOptions,
                 legend: {
-                    position: 'bottom',
-                    display: true
+                    display: false
                 },
                 tooltip: {
                     enabled: true,
@@ -1375,12 +1380,8 @@ const white_back = {
             animation: false,            
         },
         plugins: [white_back],
-        maintainAspectRatio:true,
+        maintainAspectRatio: false,
         responsive: true,
-        // interaction: {
-        //     mode: 'index'
-        // },
-      
     };
     
     // render init block
@@ -1388,6 +1389,7 @@ const white_back = {
       document.getElementById('custom_chart'),
       configKPI
     );
+    renderCustomChartLegend();
 
 
 function start_date_validate(){
@@ -1401,10 +1403,81 @@ function start_date_validate(){
 var custom_kpi;
 var color_count = 0;
 
+function customChartColor(index) {
+    // Distinct hues that cycle cleanly past 31 series (Riche Terre has 55+ meters)
+    var hue = (index * 47) % 360;
+    var sat = 62 + (index % 3) * 8;
+    var light = 42 + (index % 4) * 6;
+    return 'hsl(' + hue + ', ' + sat + '%, ' + light + '%)';
+}
+
+function meterNameFromCheckbox(meterId) {
+    var inputs = document.getElementsByName('custom_meters');
+    for (var i = 0; i < inputs.length; i++) {
+        if (String(inputs[i].value) === String(meterId)) {
+            var text = (inputs[i].parentNode && inputs[i].parentNode.textContent)
+                ? inputs[i].parentNode.textContent.trim()
+                : '';
+            return text || ('Meter ' + meterId);
+        }
+    }
+    return 'Meter ' + meterId;
+}
+
+function syncCustomChartAxes() {
+    if (!custom_kpi) return;
+    var used = { A: false, B: false, C: false, D: false };
+    custom_kpi.data.datasets.forEach(function(ds) {
+        if (ds.yAxisID && used.hasOwnProperty(ds.yAxisID)) {
+            used[ds.yAxisID] = true;
+        }
+    });
+    ['A', 'B', 'C', 'D'].forEach(function(axisId) {
+        if (custom_kpi.options.scales[axisId]) {
+            custom_kpi.options.scales[axisId].display = used[axisId];
+        }
+    });
+}
+
+function renderCustomChartLegend() {
+    var el = document.getElementById('custom_chart_legend');
+    if (!el || !custom_kpi) return;
+
+    el.innerHTML = '';
+    var datasets = custom_kpi.data.datasets || [];
+    if (!datasets.length) {
+        el.innerHTML = '<div class="legend-empty">No series on chart yet.</div>';
+        return;
+    }
+
+    datasets.forEach(function(ds, index) {
+        var item = document.createElement('div');
+        item.className = 'legend-item' + (ds.hidden ? ' legend-hidden' : '');
+        item.setAttribute('data-dataset-index', String(index));
+        item.title = 'Click to show/hide';
+
+        var swatch = document.createElement('span');
+        swatch.className = 'legend-swatch';
+        swatch.style.backgroundColor = ds.borderColor || ds.backgroundColor || '#888';
+
+        var label = document.createElement('span');
+        label.textContent = ds.label || ('Series ' + (index + 1));
+
+        item.appendChild(swatch);
+        item.appendChild(label);
+        item.addEventListener('click', function() {
+            var meta = custom_kpi.getDatasetMeta(index);
+            meta.hidden = meta.hidden === null ? true : !meta.hidden;
+            ds.hidden = meta.hidden;
+            custom_kpi.update();
+            renderCustomChartLegend();
+        });
+        el.appendChild(item);
+    });
+}
+
 function get_custom(){
     var _btn = document.querySelector('#Custom .btn-add-custom-chart');
-
-    let chart_colors = ['#3366cc','#dc3912','#ff9900','#109618','#990099','#0099c6','#dd4477','#66aa00','#b82e2e','#316395','#994499','#22aa99','#aaaa11','#6633cc','#e67300','#8b0707','#651067','#329262','#5574a6','#3b3eac','#b77322','#16d620','#b91383','#f4359e','#9c5935','#a9c413','#2a778d','#668d1c','#bea413','#0c5922','#743411'];
     
     let chart_labels = [];
     let kpi_irradiance = [];
@@ -1548,22 +1621,18 @@ function get_custom(){
                             
                         }
                         
-                        // console.log(kpi_prod);
-                        
-                        let color_id = color_count % 31;
+                        let seriesColor = customChartColor(color_count);
                         if(chartType == "bar"){
-                            // fill: true,
                             prod_dataset['fill'] = true;
-                            
                         }
-                        prod_dataset['backgroundColor'] = chart_colors[color_id];
-                        prod_dataset['borderColor'] = chart_colors[color_id];
-                        prod_dataset['label'] = meter_name + " - Production";
+                        prod_dataset['backgroundColor'] = seriesColor;
+                        prod_dataset['borderColor'] = seriesColor;
+                        prod_dataset['label'] = (meter_name || meterNameFromCheckbox(arr_meters[count])) + " - Production";
                         prod_dataset['order'] = 3;
                         prod_dataset['data'] = kpi_prod;
                         
                         
-                        addData(chart_labels, prod_dataset);
+                        addData(chart_labels, prod_dataset, true);
                         color_count += 1;
                         
                     }
@@ -1598,17 +1667,15 @@ function get_custom(){
                             
                         }
                         
-                        // console.log(kpi_prod);
+                        let seriesColor = customChartColor(color_count);
                         
-                        let color_id = color_count % 31;
-                        
-                        active_dataset['backgroundColor'] = chart_colors[color_id];
-                        active_dataset['borderColor'] = chart_colors[color_id];
-                        active_dataset['label'] = meter_name + " - Active Power";
+                        active_dataset['backgroundColor'] = seriesColor;
+                        active_dataset['borderColor'] = seriesColor;
+                        active_dataset['label'] = (meter_name || meterNameFromCheckbox(arr_meters[count])) + " - Active Power";
                         active_dataset['order'] = 2;
                         active_dataset['data'] = kpi_active;
                         
-                        addData(chart_labels, active_dataset);
+                        addData(chart_labels, active_dataset, true);
                         color_count += 1;
                         
                     }
@@ -1642,17 +1709,15 @@ function get_custom(){
                     }
                     if (rows_custom_irr.length) tbl_custom_irradiance.rows.add(rows_custom_irr).draw();
                     
-                    // console.log(kpi_prod);
+                    let seriesColor = customChartColor(color_count);
                     
-                    let color_id = color_count % 31;
-                    
-                    irr_dataset['backgroundColor'] = chart_colors[color_id];
-                    irr_dataset['borderColor'] = chart_colors[color_id];
+                    irr_dataset['backgroundColor'] = seriesColor;
+                    irr_dataset['borderColor'] = seriesColor;
                     irr_dataset['label'] = "Irradiance";
                     irr_dataset['order'] = 1;
                     irr_dataset['data'] = kpi_irradiance;
                     
-                    addData(chart_labels, irr_dataset);
+                    addData(chart_labels, irr_dataset, true);
                     color_count += 1;
                     
                 }
@@ -1676,22 +1741,19 @@ function get_custom(){
                             
                             chart_labels.push(data[i].datetime);
                             kpi_ambientTemp.push({"x": data[i].datetime, "y": data[i].ambient_temp});
-                            // tbl_custom_irradiance.row.add([data[i].datetime, json.site_name, data[i].ambient_temp]).draw();
                         }
                         
                     }
                     
-                    // console.log(kpi_prod);
+                    let seriesColor = customChartColor(color_count);
                     
-                    let color_id = color_count % 31;
-                    
-                    ambient_dataset['backgroundColor'] = chart_colors[color_id];
-                    ambient_dataset['borderColor'] = chart_colors[color_id];
+                    ambient_dataset['backgroundColor'] = seriesColor;
+                    ambient_dataset['borderColor'] = seriesColor;
                     ambient_dataset['label'] = "Ambient Temperature";
                     ambient_dataset['order'] = 1;
                     ambient_dataset['data'] = kpi_ambientTemp;
                     
-                    addData(chart_labels, ambient_dataset);
+                    addData(chart_labels, ambient_dataset, true);
                     color_count += 1;
                     
                 }
@@ -1716,29 +1778,24 @@ function get_custom(){
                             
                             chart_labels.push(data[i].datetime);
                             kpi_panelTemp.push({"x": data[i].datetime, "y": data[i].panel_temp});
-                            // tbl_custom_irradiance.row.add([data[i].datetime, json.site_name, data[i].ambient_temp]).draw();
                         }
                         
                     }
                     
-                    // console.log(kpi_prod);
+                    let seriesColor = customChartColor(color_count);
                     
-                    let color_id = color_count % 31;
-                    
-                    panel_dataset['backgroundColor'] = chart_colors[color_id];
-                    panel_dataset['borderColor'] = chart_colors[color_id];
+                    panel_dataset['backgroundColor'] = seriesColor;
+                    panel_dataset['borderColor'] = seriesColor;
                     panel_dataset['label'] = "Panel Temperature";
                     panel_dataset['order'] = 1;
                     panel_dataset['data'] = kpi_panelTemp;
                     
-                    addData(chart_labels, panel_dataset);
+                    addData(chart_labels, panel_dataset, true);
                     color_count += 1;
                     
                 }
-                
-                
-                
-                
+
+                finishCustomChartUpdate();
                 
                show_zoom(); 
                
@@ -1767,25 +1824,32 @@ function resetZoomBtn(){
     custom_kpi.resetZoom();
 }
 
-function addData(label, newData) {
-    
-    // custom_kpi.data.labels.push(label);
-    // custom_kpi.data.datasets.forEach((dataset) => {
-    //     dataset.data.push(newData);
-    // });
-    
+function addData(label, newData, skipUpdate) {
     custom_kpi.data.labels = label;
     custom_kpi.data.datasets.push(newData);
+    if (!skipUpdate) {
+        syncCustomChartAxes();
+        custom_kpi.update();
+        renderCustomChartLegend();
+    }
+}
+
+function finishCustomChartUpdate() {
+    syncCustomChartAxes();
     custom_kpi.update();
+    renderCustomChartLegend();
 }
 
 function removeData() {
-    custom_kpi.data.labels.pop();
-    // custom_kpi.data.datasets.forEach((dataset) => {
-    //     dataset.data.pop();
-    // });
-    custom_kpi.data.datasets.pop();
+    custom_kpi.data.labels = [];
+    custom_kpi.data.datasets = [];
+    color_count = 0;
+    syncCustomChartAxes();
+    if (custom_kpi.resetZoom) {
+        try { custom_kpi.resetZoom(); } catch (e) { /* ignore */ }
+    }
     custom_kpi.update();
+    renderCustomChartLegend();
 }
  
 

@@ -54,8 +54,9 @@ try {
     if ($param === 'a_power' && !empty($safe_arr)) {
         $working_arr = $safe_arr;
 
+        // Riche Terre Mall (7780): three main meters in plant_active_power
         if ($site_id === 7780) {
-            foreach ([100, 101] as $mm) {
+            foreach ([100, 101, 102] as $mm) {
                 $key = array_search($mm, $working_arr);
                 if ($key !== false) {
                     $s = $pdo->prepare(

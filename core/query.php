@@ -692,11 +692,12 @@ $csrf_token = generateCSRFToken();
                                                         <button class="btn btn-primary clear-btn" onclick="removeData()">Remove Chart</button>
                                                         <i class="fa fa-download" onclick="downloadCustom()"  title="Download"></i>
                                                     </div>  
-                                                    <div class="card">
+                                                    <div class="card custom-chart-card">
                                                         <div class="body">
-                                                            <div class="chartBox">
-                                                                <canvas id="custom_chart"></canvas> 
+                                                            <div class="chartBox custom-chart-box">
+                                                                <canvas id="custom_chart"></canvas>
                                                             </div>
+                                                            <div id="custom_chart_legend" class="custom-chart-legend" aria-label="Chart legend"></div>
                                                         </div>
                                                     </div>
                                                 </div>

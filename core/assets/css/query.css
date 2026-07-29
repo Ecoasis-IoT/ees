@@ -5,6 +5,63 @@ body.page-query .chartBox {
     height: 100%;
 }
 
+/* Custom Query chart: fixed plot height + scrollable HTML legend for 50+ meters */
+body.page-query #Custom .custom-chart-card {
+    overflow: visible !important;
+    height: auto !important;
+}
+body.page-query #Custom .custom-chart-box {
+    height: 420px;
+    min-height: 360px;
+    position: relative;
+}
+body.page-query #Custom .custom-chart-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+body.page-query #Custom .custom-chart-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 4px 10px;
+    max-height: 280px;
+    overflow-y: auto;
+    margin-top: 12px;
+    padding: 8px 4px 4px;
+    border-top: 1px solid var(--ees-border, #cbd5e1);
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--ees-text-primary, #0f172a);
+}
+body.page-query #Custom .custom-chart-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    user-select: none;
+}
+body.page-query #Custom .custom-chart-legend .legend-item:hover {
+    background: rgba(15, 23, 42, 0.05);
+}
+body.page-query #Custom .custom-chart-legend .legend-item.legend-hidden {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+body.page-query #Custom .custom-chart-legend .legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+body.page-query #Custom .custom-chart-legend .legend-empty {
+    grid-column: 1 / -1;
+    color: var(--ees-text-secondary, #64748b);
+    font-style: italic;
+    padding: 4px;
+}
+
 /* Exclude checkboxes/radios — the broad rule was collapsing native checkboxes in Custom Query */
 body.page-query #main-content input:not([type="checkbox"]):not([type="radio"]) {
     padding: 5px;
