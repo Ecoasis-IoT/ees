@@ -12,7 +12,6 @@ body {
         position: fixed;
         content: '';
         z-index: 999;
-		background:var(--primary-color);
     }
     &:before{
         top: 0;
@@ -87,11 +86,8 @@ a {
 footer {
 	padding: 0 30px;
 	padding-bottom: 15px;
-	position: absolute;
-	right: 0;
 
 	@include max-screen($break-small) {
-		position: relative;
 		text-align: center;
 	}
 }
@@ -123,13 +119,6 @@ footer {
 
 #left-sidebar .nav-tabs .nav-link.active{
 	color:var(--primary-color);
-}
-
-#wrapper{
-	&:before,
-	&:after{
-		background:var(--primary-color);
-	}
 }
 
 .sidebar-nav .metismenu>li.active>a{

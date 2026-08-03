@@ -1,26 +1,25 @@
 <?php
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/asset_helper.php';
 
-include("scripts/auth.php");
+$site_id = intval($_GET['site'] ?? 0);
+if (!$site_id) { header('Location: ' . ees_url_path('dashboard.php')); exit; }
 
-$site_id = $_GET['site'];
-
-//get site name
-require("config/admin.php");
-
-$get_site_name = "SELECT site_name, db_name from tbl_site where id = $site_id";
-$results = mysqli_query($admin_link, $get_site_name);
-$site_details = mysqli_fetch_assoc($results);
-
-$site_name = $site_details["site_name"];
-$site_db = $site_details["db_name"];
-
-if(mysqli_num_rows($results) < 1){
-    
-    header('Location: dashboard.php');
+try {
+    $stmt = getDB('admin')->prepare("SELECT site_name, db_name FROM tbl_site WHERE id = :id LIMIT 1");
+    $stmt->execute([':id' => $site_id]);
+    $site_details = $stmt->fetch();
+} catch (PDOException $e) {
+    error_log("site-dashboardv2 PDO error: " . $e->getMessage());
+    header('Location: ' . ees_url_path('dashboard.php')); exit;
 }
+if (!$site_details) { header('Location: ' . ees_url_path('dashboard.php')); exit; }
 
-mysqli_close($admin_link);
-
+$site_name = $site_details['site_name'];
+$site_db   = $site_details['db_name'];
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -48,6 +47,7 @@ mysqli_close($admin_link);
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/custom.css">
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>-->
 
@@ -70,7 +70,7 @@ mysqli_close($admin_link);
 }    
 
 #grid_availability {
-    font-family:'Arial';
+    font-family:'Nunito Sans', sans-serif;
     font-weight: bold;
 }
 
@@ -140,102 +140,74 @@ mysqli_close($admin_link);
             <div class="container-fluid">
                 <div class="block-header">
                     <div class="row g-3">
-                        <div class="col-lg-5 col-md-8 col-sm-12">                        
-                            <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Dashboard<?php echo " - $site_name" ?></h2>
+                        <div class="col-lg-6 col-md-8 col-sm-12">
+                            <h2><?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?></h2>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
-                                <li class="breadcrumb-item active">Dashboard</li>
+                                <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active"><?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?></li>
                             </ul>
                         </div>            
                     </div>
                 </div>           
                 
-                <div class="row clearfix g-3 mb-3 justify-content-center">
-                    <div class="col-lg-4 col-md-4 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/solar.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Today's Production</div>
-                                    <h5 class="number" id="daily_prod"></h5>
-                                </div>
-                            </div>                        
-                        </div>
-                    </div>        	
-    
-                    <div class="col-lg-4 col-md-4 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/solar-panel.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Monthly Production</div>
-                                    <h5 class="number" id="monthly_prod"></h5>
-                                </div>
-                            </div>                        
+                <!-- KPI Stat Cards -->
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon green"><i class="fa fa-bolt"></i></div>
+                            <div>
+                                <div class="ees-stat-label">Today's Production</div>
+                                <div class="ees-stat-value" id="daily_prod">—</div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="col-lg-4 col-md-4 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/power.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Yearly Production</div>
-                                    <h5 class="number" id="yearly_prod"></h5>
-                                </div>
-                            </div>                        
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon blue"><i class="fa fa-calendar"></i></div>
+                            <div>
+                                <div class="ees-stat-label">Monthly Production</div>
+                                <div class="ees-stat-value" id="monthly_prod">—</div>
+                            </div>
                         </div>
-                    </div>                    
-                </div>
-                
-                <div class="row clearfix g-3 mb-3 justify-content-center">
-                    <div class="col-lg-4 col-md-6 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info"><i class="icon-energy"></i> </div>
-                                <div class="content">
-                                    <div class="text">Current Active Power</div>
-                                    <h6 class="number h6">PVDB 1: <span id = "active_power1" class="h6"></span></h6>
-                                    <h6 class="number h6">PVDB 2: <span id = "active_power2" class="h6"></span></h6>
-                                </div>
-                            </div>                        
-                        </div>                        
-                    </div>                     
-                    <div class="col-lg-4 col-md-6 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/sun.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Today's Average Irradiance</div>
-                                    <h5 class="number" id = "avg_irradiance"></h5>
-                                </div>
-                            </div>                        
-                        </div>                        
-                    </div>     
-                    
-                    <div class="col-lg-4 col-md-6 col-sm-6">
-                        <div class="card top_counter">
-                            <div class="body">
-                                <div class="icon text-info" style="line-height:45px;"><img src="assets/images/daytime.png" style="width:40px;height:auto;"> </div>
-                                <div class="content">
-                                    <div class="text">Today's Sun Hours</div>
-                                    <h5 class="number" id="sun_hours"></h5>
-                                </div>
-                            </div>                        
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon orange"><i class="fa fa-line-chart"></i></div>
+                            <div>
+                                <div class="ees-stat-label">Yearly Production</div>
+                                <div class="ees-stat-value" id="yearly_prod">—</div>
+                            </div>
                         </div>
-                    </div>        	
-    
-                    <!--<div class="col-lg-3 col-md-6 col-sm-6">-->
-                    <!--    <div class="card top_counter">-->
-                    <!--        <div class="body">-->
-                    <!--            <div class="icon text-info" style="line-height:45px;"><img src="assets/images/grid.png" style="width:40px;height:auto;"> </div>-->
-                    <!--            <div class="content">-->
-                    <!--                <div class="text">Today's Grid Availability</div>-->
-                    <!--                <h5 class="number" id="grid_availability"></h5>-->
-                    <!--            </div>-->
-                    <!--        </div>                        -->
-                    <!--    </div>-->
-                    <!--</div>-->
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon teal"><i class="fa fa-tachometer"></i></div>
+                            <div>
+                                <div class="ees-stat-label">Active Power</div>
+                                <div style="font-size:13px;margin-top:4px;">PVDB 1: <strong id="active_power1">—</strong></div>
+                                <div style="font-size:13px;">PVDB 2: <strong id="active_power2">—</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon orange"><i class="fa fa-sun-o"></i></div>
+                            <div>
+                                <div class="ees-stat-label">Avg Irradiance</div>
+                                <div class="ees-stat-value" id="avg_irradiance">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="ees-stat-card">
+                            <div class="ees-stat-icon blue"><i class="fa fa-clock-o"></i></div>
+                            <div>
+                                <div class="ees-stat-label">Sun Hours</div>
+                                <div class="ees-stat-value" id="sun_hours">—</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 
@@ -325,49 +297,49 @@ var kpi_active_power2 = [];
     
         $.ajax({
             type: "POST",
-            url: "scripts/get_site_card_datav2.php",
+            url: "scripts/get_site_card_datav2",
             async: false,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            dataType: 'json',
             data: {
                 "site_db": '<?php echo $site_db;?>'
             },
-            success: function(dataResult) {
-                var data = JSON.parse(dataResult);
-                
-                // console.log(data);
-                
-                document.getElementById('active_power1').innerHTML = data.active_power1.toFixed(2) + " kW";
-                document.getElementById('active_power2').innerHTML = data.active_power2.toFixed(2) + " kW";
-                
-                
-                if(data.daily_prod < 1000){
-                    document.getElementById('daily_prod').innerHTML = data.daily_prod.toFixed(2) + " kWh";    
+            success: function(data) {
+                function n(v) { var x = parseFloat(v); return isNaN(x) ? 0 : x; }
+                function nInt(v) { var x = parseInt(v, 10); return isNaN(x) ? 0 : x; }
+
+                if (!data || data.status === 'Err') {
+                    console.warn('get_site_card_datav2 failed or returned Err', data);
+                    return;
                 }
-                else{
-                    document.getElementById('daily_prod').innerHTML = (data.daily_prod/1000).toFixed(2) + " MWh";
-                }
-                
-                if(data.monthly_prod < 1000){
-                    document.getElementById('monthly_prod').innerHTML = data.monthly_prod.toFixed(2) + " kWh";    
-                }
-                else{
-                    document.getElementById('monthly_prod').innerHTML = (data.monthly_prod/1000).toFixed(2) + " MWh";
-                }
-                
-                if(data.yearly_prod < 1000){
-                    document.getElementById('yearly_prod').innerHTML = data.yearly_prod.toFixed(2) + " kWh";    
-                }
-                else{
-                    document.getElementById('yearly_prod').innerHTML = (data.yearly_prod/1000).toFixed(2) + " MWh";
-                }
-                
-                document.getElementById('avg_irradiance').innerHTML = data.avg_irr + " W/m<sup>2<sup>";
-                
-                
-                let sun_hours = Math.floor(parseInt(data.sun_hours) / 60);          
-                let sun_minutes = parseInt(data.sun_hours) % 60;
-                
+
+                document.getElementById('active_power1').innerHTML = n(data.active_power1).toFixed(2) + " kW";
+                document.getElementById('active_power2').innerHTML = n(data.active_power2).toFixed(2) + " kW";
+
+                var dp = n(data.daily_prod);
+                document.getElementById('daily_prod').innerHTML = dp < 1000
+                    ? dp.toFixed(2) + " kWh"
+                    : (dp / 1000).toFixed(2) + " MWh";
+
+                var mp = n(data.monthly_prod);
+                document.getElementById('monthly_prod').innerHTML = mp < 1000
+                    ? mp.toFixed(2) + " kWh"
+                    : (mp / 1000).toFixed(2) + " MWh";
+
+                var yp = n(data.yearly_prod);
+                document.getElementById('yearly_prod').innerHTML = yp < 1000
+                    ? yp.toFixed(2) + " kWh"
+                    : (yp / 1000).toFixed(2) + " MWh";
+
+                document.getElementById('avg_irradiance').innerHTML = n(data.avg_irr).toFixed(2) + " W/m<sup>2</sup>";
+
+                var sunM = nInt(data.sun_hours);
+                var sun_hours = Math.floor(sunM / 60);
+                var sun_minutes = sunM % 60;
                 document.getElementById('sun_hours').innerHTML = sun_hours + " hours " + sun_minutes + " minutes ";
-                
+            },
+            error: function(xhr, st, err) {
+                console.warn('get_site_card_datav2 request error', st, err);
             }
         });
     });
@@ -380,14 +352,14 @@ function get_barchart_data(date){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_barchart.php",
+        url: "scripts/get_site_barchart",
         async: false,
         data: {
             "site_db": '<?php echo $site_db;?>',
             "date": date
         },
         success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+            var data = dataResult;
             // console.log(data);
             for(var i = 0; i < data.length; i++){
                 
@@ -409,14 +381,14 @@ function get_linechart_data(date){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_irradiance.php",
+        url: "scripts/get_site_irradiance",
         async: false,
         data: {
             "site_db": '<?php echo $site_db;?>',
             "date": date
         },
         success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+            var data = dataResult;
             
             // console.log(dataResult);
             
@@ -440,14 +412,14 @@ function getActivePower(date){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_active_powerv2.php",
+        url: "scripts/get_site_active_powerv2",
         async: false,
         data: {
             "site_db": '<?php echo $site_db;?>',
             "date": date
         },
         success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+            var data = dataResult;
             console.log(data);
             for(var i = 0; i < data.length; i++){
                 

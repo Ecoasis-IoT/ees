@@ -1,7 +1,17 @@
 <?php
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/authorization.php';
+require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/asset_helper.php';
 
-include("scripts/auth.php");
+if (!isAdmin()) {
+    http_response_code(403);
+    include __DIR__ . '/error-404.php';
+    exit;
+}
 
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -19,6 +29,7 @@ include("scripts/auth.php");
 
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <style>
 
@@ -46,7 +57,7 @@ include("scripts/auth.php");
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Users</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">User Management</li>
                             <li class="breadcrumb-item active">Users</li>
                         </ul>
@@ -59,11 +70,11 @@ include("scripts/auth.php");
                     <div class="card">
                         <div class="header">
                             <h2 style="display:inline-block;">List of Users</h2> 
-                            <a href="add-user.php" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add User</a>                                               
+                            <a href="add-user" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add User</a>                                               
                         </div>
                         <div class="body">                           
                             <div class="table-responsive tbl_alerts">
-                                <table id="tbl_users" class="table table-bordered table-striped table-hover js-basic-example dataTable table-custom">
+                                <table id="tbl_users" class="table table-bordered table-striped table-hover w-100 table-custom">
                                     <thead>
                                         <tr>
                                             <th>Name</th>
@@ -88,37 +99,6 @@ include("scripts/auth.php");
     
 </div>
 
-<script>
-    
-    //get_all_sites
-    $(function users(){
-    
-        $.ajax({
-            type: "POST",
-            url: "scripts/get_all_users.php",
-            data: {
-                
-            },
-            success: function(dataResult) {
-                var data = JSON.parse(dataResult);
-                // console.log(data.statusCode);
-                
-                console.log(data);
-                
-                for(var i = 0; i < data.length; i++){
-                    
-                    var row = "<tr><td>" + data[i].fullname +"</td><td>"+ data[i].email +"</td><td>"+ data[i].date_added +"</td></tr>";
-                    
-                    $('#tbl_users tbody').append(row);
-                    
-                    
-                }
-                
-            }
-            });
-    });
-    
-</script>
 
 <!-- Javascript -->
 <script src="assets/bundles/libscripts.bundle.js"></script>    
@@ -127,6 +107,74 @@ include("scripts/auth.php");
 <script src="assets/bundles/datatablescripts.bundle.js"></script>
 
 <script src="assets/bundles/mainscripts.bundle.js"></script>
-<script src="assets/js/pages/tables/jquery-datatable.js"></script>
+
+<script>
+function _esc(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function initUserListDataTable() {
+    if ($('#tbl_users').length === 0 || typeof $.fn.DataTable !== 'function') return;
+    if ($.fn.DataTable.isDataTable('#tbl_users')) {
+        $('#tbl_users').DataTable().destroy();
+    }
+    $('#tbl_users').DataTable({
+        pageLength: 5,
+        lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'All']],
+        order: [[0, 'asc']],
+        autoWidth: false,
+        dom: 'lfrtip',
+        language: {
+            search: 'Search',
+            lengthMenu: 'Show _MENU_',
+            info: 'Showing _START_ to _END_ of _TOTAL_ users',
+            infoEmpty: 'No users',
+            infoFiltered: '(filtered from _MAX_ total)',
+            zeroRecords: 'No matching users found'
+        }
+    });
+}
+
+$(function users() {
+    $.ajax({
+        type: 'POST',
+        url: 'scripts/get_all_users',
+        dataType: 'json',
+        success: function (data) {
+            if (data && data.status === 'Err') {
+                var msg = data.message || 'You do not have permission to load this list.';
+                if (typeof EES !== 'undefined' && EES.alert) {
+                    EES.alert(msg, 'error');
+                }
+                return;
+            }
+            var rows = Array.isArray(data) ? data : [];
+            var $tb = $('#tbl_users tbody');
+            $tb.empty();
+            for (var i = 0; i < rows.length; i++) {
+                var row = '<tr><td>' + _esc(rows[i].fullname) + '</td><td>' + _esc(rows[i].email) + '</td><td>' + _esc(rows[i].date_added) + '</td></tr>';
+                $tb.append(row);
+            }
+        },
+        error: function (xhr) {
+            var msg = 'Could not load users.';
+            try {
+                var j = typeof xhr.responseJSON === 'object' ? xhr.responseJSON : JSON.parse(xhr.responseText || '{}');
+                if (j && j.message) {
+                    msg = j.message;
+                }
+            } catch (e) { /* ignore */ }
+            if (typeof EES !== 'undefined' && EES.alert) {
+                EES.alert(msg, 'error');
+            }
+        },
+        complete: function () {
+            initUserListDataTable();
+        }
+    });
+});
+</script>
 </body>
 </html>

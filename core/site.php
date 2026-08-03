@@ -1,7 +1,9 @@
 <?php
-
-include("scripts/auth.php");
-
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/asset_helper.php';
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -23,6 +25,7 @@ include("scripts/auth.php");
 
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <style>
 
@@ -92,7 +95,7 @@ include("scripts/auth.php");
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Site</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">Device Management</li>
                             <li class="breadcrumb-item active">Site</li>
                         </ul>
@@ -105,11 +108,11 @@ include("scripts/auth.php");
                     <div class="card">
                         <div class="header">
                             <h2 style="display:inline-block;">Site List</h2> 
-                            <!--<a href="add-site.php" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add Site</a>     -->
+                            <!--<a href="add-site" class="btn btn-primary mb-2" style="float: right;"><i class="fa fa-plus"></i> Add Site</a>     -->
                         </div>
                         <div class="body">                           
                             <div class="table-responsive tbl_alerts">
-                                <table id="tbl_site" class="table table-bordered table-striped table-hover dataTable">
+                                <table id="tbl_site" class="table table-bordered table-striped table-hover w-100">
                                     <thead>
                                         <tr>
                                             <th>Site</th>
@@ -124,14 +127,14 @@ include("scripts/auth.php");
                                         <!--    <td>Phoenix Mall</td> -->
                                         <!--    <td>720</td>-->
                                         <!--    <td><button class="disconnected"></button></td>-->
-                                        <!--    <td><a href="edit-site.php" class="btn btn-primary"><i class="icon-pencil" aria-hidden="true"></i> View Meters</a></td>  -->
+                                        <!--    <td><a href="edit-site" class="btn btn-primary"><i class="icon-pencil" aria-hidden="true"></i> View Meters</a></td>  -->
                                         <!--</tr>-->
                                         
                                         <!--<tr>-->
                                         <!--    <td>Phoenix Mall</td> -->
                                         <!--    <td>737</td>-->
                                         <!--    <td><button class="connected"></button></td>-->
-                                        <!--    <td><a href="edit-site.php" class="btn btn-primary"><i class="icon-pencil" aria-hidden="true"></i> View Meters</a></td>  -->
+                                        <!--    <td><a href="edit-site" class="btn btn-primary"><i class="icon-pencil" aria-hidden="true"></i> View Meters</a></td>  -->
                                         <!--</tr>                                        -->
                                         
                                     </tbody>
@@ -150,55 +153,6 @@ include("scripts/auth.php");
     
 </div>
 
-<script>
-
-
-    
-    //get_all_sites
-    $(function sites_name(){
-    
-        $.ajax({
-            type: "POST",
-            url: "scripts/get_all_sites.php",
-            data: {
-                
-            },
-            success: function(dataResult) {
-                var data = JSON.parse(dataResult);
-                // console.log(data.statusCode);
-                
-                // console.log(data.data);
-                
-                var sites = data.data;
-                
-                console.log(sites);
-                
-                let gateway;
-                
-                for(let i = 0; i < sites.length; i++){
-                    
-                    if(sites[i][5] == "1"){
-                        gateway = "<p class='connected'> ONLINE </p>";
-                    }
-                    else{
-                        gateway = "<p class='disconnected'> OFFLINE </p>";
-                    }
-                    
-                    let row = "<tr><td>" + sites[i][1] +"</td><td>"+ sites[i][3] +"</td><td class='justify-content-center d-flex'>"+ gateway +"</td><td><a href='devices.php?site="+ sites[i][0] +"' class='btn btn-primary'><i class='icon-energy' aria-hidden='true'></i> View Devices</a></td></tr>";
-                    
-                    $('#tbl_site tbody').append(row);
-                    
-                    
-                }
-                
-            }
-            });
-    });
-    
-</script>
-
-
-
 
 
 <!-- Javascript -->
@@ -208,7 +162,70 @@ include("scripts/auth.php");
 <script src="assets/bundles/datatablescripts.bundle.js"></script>
 
 <script src="assets/bundles/mainscripts.bundle.js"></script>
-<script src="assets/js/pages/tables/jquery-datatable.js"></script>
+
+<script>
+function _esc(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function initSiteListDataTable() {
+    if ($('#tbl_site').length === 0 || typeof $.fn.DataTable !== 'function') return;
+    if ($.fn.DataTable.isDataTable('#tbl_site')) {
+        $('#tbl_site').DataTable().destroy();
+    }
+    $('#tbl_site').DataTable({
+        pageLength: 5,
+        lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'All']],
+        order: [[0, 'asc']],
+        autoWidth: false,
+        dom: 'lfrtip',
+        language: {
+            search: 'Search',
+            lengthMenu: 'Show _MENU_',
+            info: 'Showing _START_ to _END_ of _TOTAL_ sites',
+            infoEmpty: 'No sites',
+            infoFiltered: '(filtered from _MAX_ total)',
+            zeroRecords: 'No matching sites found'
+        },
+        columnDefs: [
+            { targets: 3, orderable: false, searchable: false }
+        ]
+    });
+}
+
+$(function sites_name() {
+    $.ajax({
+        type: 'POST',
+        url: 'scripts/get_all_sites',
+        dataType: 'json',
+        success: function (data) {
+            var sites = data.data || [];
+            var $tb = $('#tbl_site tbody');
+            $tb.empty();
+            for (var i = 0; i < sites.length; i++) {
+                var s = sites[i];
+                var gateway = parseInt(s.gateway_status, 10) === 1
+                    ? "<p class='connected'>ONLINE</p>"
+                    : "<p class='disconnected'>OFFLINE</p>";
+                var cap = s.capacity ? _esc(s.capacity) + ' kWp' : '—';
+                var row = '<tr>' +
+                    '<td>' + _esc(s.site_name) + '</td>' +
+                    '<td>' + cap + '</td>' +
+                    "<td class='text-center'>" + gateway + '</td>' +
+                    "<td class='text-center'><a href='devices?site=" + encodeURIComponent(s.id) + "' class='btn btn-primary'>" +
+                    "<i class='icon-energy' aria-hidden='true'></i> View Devices</a></td>" +
+                    '</tr>';
+                $tb.append(row);
+            }
+        },
+        complete: function () {
+            initSiteListDataTable();
+        }
+    });
+});
+</script>
 <!--<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>-->
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>-->
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>-->

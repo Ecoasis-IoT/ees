@@ -1,27 +1,25 @@
-// <?php
+<?php
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
 
-// include("scripts/auth.php");
+$site_id = intval($_GET['site'] ?? 0);
+if (!$site_id) { header('Location: ' . ees_url_path('dashboard.php')); exit; }
 
-// $site_id = $_GET['site'];
+try {
+    $stmt = getDB('admin')->prepare("SELECT site_name, db_name FROM tbl_site WHERE id = :id LIMIT 1");
+    $stmt->execute([':id' => $site_id]);
+    $site_details = $stmt->fetch();
+} catch (PDOException $e) {
+    error_log("site-dashboardv4 PDO error: " . $e->getMessage());
+    header('Location: ' . ees_url_path('dashboard.php')); exit;
+}
+if (!$site_details) { header('Location: ' . ees_url_path('dashboard.php')); exit; }
 
-// //get site name
-// require("config/admin.php");
-
-// $get_site_name = "SELECT site_name, db_name from tbl_site where id = $site_id";
-// $results = mysqli_query($admin_link, $get_site_name);
-// $site_details = mysqli_fetch_assoc($results);
-
-// $site_name = $site_details["site_name"];
-// $site_db = $site_details["db_name"];
-
-// if(mysqli_num_rows($results) < 1){
-    
-//     header('Location: dashboard.php');
-// }
-
-// mysqli_close($admin_link);
-
-// ?>
+$site_name  = $site_details['site_name'];
+$site_db    = $site_details['db_name'];
+$csrf_token = generateCSRFToken();
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -50,6 +48,7 @@
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/custom.css">
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>-->
 
@@ -71,6 +70,18 @@
     background-color: #f8f9fa !important;
 }
 
+.bg-on {
+    background-color: #70AD47 !important;
+}
+
+.bg-alarm {
+    background-color: #CA5952 !important;
+}
+
+.bg-gray-500 {
+    background-color: #adb5bd !important;
+}
+
 .br-25 {
     border-radius: 0.5rem;
 }
@@ -81,7 +92,7 @@
 }    
 
 #grid_availability {
-    font-family:'Arial';
+    font-family:'Nunito Sans', sans-serif;
     font-weight: bold;
 }
 
@@ -151,99 +162,84 @@
             <div class="container-fluid">
                 <div class="block-header">
                     <div class="row g-3">
-                        <div class="col-lg-5 col-md-8 col-sm-12">                        
-                            <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Dashboard<?php echo " - $site_name" ?></h2>
+                        <div class="col-lg-6 col-md-8 col-sm-12">
+                            <h2><?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?></h2>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
-                                <li class="breadcrumb-item active">Dashboard</li>
+                                <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active"><?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?></li>
                             </ul>
                         </div>            
                     </div>
                 </div>           
                 
-                <div class="row clearfix g-3 mb-3 justify-content-center">
+                <!-- KPI Stat Cards -->
+                <div class="row g-3 mb-3">
                     <div class="col-lg-9">
-                        <div class="row mb-3">
-                            <div class="col-lg-4 col-md-4 col-sm-6">
-                                <div class="card top_counter">
-                                    <div class="body">
-                                        <div class="icon text-info" style="line-height:45px;"><img src="assets/images/solar.png" style="width:40px;height:auto;"> </div>
-                                        <div class="content">
-                                            <div class="text">Today's Production</div>
-                                            <h5 class="number" id="daily_prod"></h5>
-                                        </div>
-                                    </div>                        
-                                </div>
-                            </div>        	
-            
-                            <div class="col-lg-4 col-md-4 col-sm-6">
-                                <div class="card top_counter">
-                                    <div class="body">
-                                        <div class="icon text-info" style="line-height:45px;"><img src="assets/images/solar-panel.png" style="width:40px;height:auto;"> </div>
-                                        <div class="content">
-                                            <div class="text">Monthly Production</div>
-                                            <h5 class="number" id="monthly_prod"></h5>
-                                        </div>
-                                    </div>                        
+                        <div class="row g-3">
+                            <div class="col-lg-4 col-md-6 col-sm-12">
+                                <div class="ees-stat-card">
+                                    <div class="ees-stat-icon green"><i class="fa fa-bolt"></i></div>
+                                    <div>
+                                        <div class="ees-stat-label">Today's Production</div>
+                                        <div class="ees-stat-value" id="daily_prod">—</div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div class="col-lg-4 col-md-4 col-sm-6">
-                                <div class="card top_counter">
-                                    <div class="body">
-                                        <div class="icon text-info" style="line-height:45px;"><img src="assets/images/power.png" style="width:40px;height:auto;"> </div>
-                                        <div class="content">
-                                            <div class="text">Yearly Production</div>
-                                            <h5 class="number" id="yearly_prod"></h5>
-                                        </div>
-                                    </div>                        
+                            <div class="col-lg-4 col-md-6 col-sm-12">
+                                <div class="ees-stat-card">
+                                    <div class="ees-stat-icon blue"><i class="fa fa-calendar"></i></div>
+                                    <div>
+                                        <div class="ees-stat-label">Monthly Production</div>
+                                        <div class="ees-stat-value" id="monthly_prod">—</div>
+                                    </div>
                                 </div>
-                            </div> 
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-4 col-md-6 col-sm-6">
-                                <div class="card top_counter">
-                                    <div class="body">
-                                        <div class="icon text-info"><i class="icon-energy"></i> </div>
-                                        <div class="content">
-                                            <div class="text">Current Active Power</div>
-                                            <h5 class="number" id = "active_power"></h5>
-                                        </div>
-                                    </div>                        
-                                </div>                        
-                            </div>                     
-                            <div class="col-lg-4 col-md-6 col-sm-6">
-                                <div class="card top_counter">
-                                    <div class="body">
-                                        <div class="icon text-info" style="line-height:45px;"><img src="assets/images/sun.png" style="width:40px;height:auto;"> </div>
-                                        <div class="content">
-                                            <div class="text">Today's Average Irradiance</div>
-                                            <h5 class="number" id = "avg_irradiance"></h5>
-                                        </div>
-                                    </div>                        
-                                </div>                        
-                            </div>     
-                            
-                            <div class="col-lg-4 col-md-6 col-sm-6">
-                                <div class="card top_counter">
-                                    <div class="body">
-                                        <div class="icon text-info" style="line-height:45px;"><img src="assets/images/daytime.png" style="width:40px;height:auto;"> </div>
-                                        <div class="content">
-                                            <div class="text">Today's Sun Hours</div>
-                                            <h5 class="number" id="sun_hours"></h5>
-                                        </div>
-                                    </div>                        
+                            </div>
+                            <div class="col-lg-4 col-md-6 col-sm-12">
+                                <div class="ees-stat-card">
+                                    <div class="ees-stat-icon orange"><i class="fa fa-line-chart"></i></div>
+                                    <div>
+                                        <div class="ees-stat-label">Yearly Production</div>
+                                        <div class="ees-stat-value" id="yearly_prod">—</div>
+                                    </div>
                                 </div>
-                            </div>                            
+                            </div>
+                            <div class="col-lg-4 col-md-6 col-sm-12">
+                                <div class="ees-stat-card">
+                                    <div class="ees-stat-icon teal"><i class="fa fa-tachometer"></i></div>
+                                    <div>
+                                        <div class="ees-stat-label">Active Power</div>
+                                        <div class="ees-stat-value" id="active_power">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 col-sm-12">
+                                <div class="ees-stat-card">
+                                    <div class="ees-stat-icon orange"><i class="fa fa-sun-o"></i></div>
+                                    <div>
+                                        <div class="ees-stat-label">Avg Irradiance</div>
+                                        <div class="ees-stat-value" id="avg_irradiance">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 col-sm-12">
+                                <div class="ees-stat-card">
+                                    <div class="ees-stat-icon blue"><i class="fa fa-clock-o"></i></div>
+                                    <div>
+                                        <div class="ees-stat-label">Sun Hours</div>
+                                        <div class="ees-stat-value" id="sun_hours">—</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-lg-3">
-                        <div class="card top_counter">
-                            <div class="d-flex justify-content-center bg-gray-100 border-radius-md p-2 m-1 br-25">
-                                <div class="text fs-6">Fire Alarm Panel</div>
-                            </div>                            
-                            <div class="body mt-4">
+                        <div class="card h-100">
+                            <div class="header">
+                                <h2>Fire Alarm Panel</h2>
+                            </div>
+                            <div class="body">
                                 <div class="row text-center">
                                     <div class="col-6">
                                         <button class="mb-1 rounded-circle b p-3 border-0 bg-on" id="main_fap_normal"></button>
@@ -252,9 +248,9 @@
                                     <div class="col-6">
                                         <button class="mb-1 rounded-circle b p-3 bg-gray-500 border-0" id="main_fap_alarm"></button>
                                         <p class="text-dark mb-0 text-sm">General Alarm</p>
-                                    </div>                                                     
-                                </div>                                
-                            </div>                        
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -264,7 +260,7 @@
                         <div class="datepicker">
                             <label>Choose date:</label>
                             <button class="dateBtn" id="prevDate" type="button"><i class="fa fa-angle-left"></i></button>
-                            <input type="date" id="calendar" style="padding:6px;" onchange="render();" max="<?php echo date("Y-m-d"); ?>">                            
+                            <input type="date" id="calendar" onchange="render();" max="<?php echo date("Y-m-d"); ?>">                            
                             <button class="dateBtn" id="nextDate" type="button"><i class="fa fa-angle-right"></i></button>
                         </div>
                     </div>
@@ -353,13 +349,13 @@ var kpi_active_power = [];
     
         $.ajax({
             type: "POST",
-            url: "scripts/get_site_card_data.php",
+            url: "scripts/get_site_card_data",
             async: false,
             data: {
                 "site_db": '<?php echo $site_db;?>'
             },
             success: function(dataResult) {
-                var data = JSON.parse(dataResult);
+                var data = dataResult;
                 
                 // console.log(dataResult);
                 
@@ -398,6 +394,32 @@ var kpi_active_power = [];
         });
     });
 
+function updateFapStatus() {
+    $.ajax({
+        type: "POST",
+        url: "scripts/get_site_fap_status",
+        data: { site_db: '<?php echo $site_db; ?>' },
+        success: function (data) {
+            if (!data || data.status !== 'OK') return;
+
+            var normalBtn = document.getElementById('main_fap_normal');
+            var alarmBtn  = document.getElementById('main_fap_alarm');
+            if (!normalBtn || !alarmBtn) return;
+
+            var alarm = !!data.alarm_active;
+            normalBtn.classList.toggle('bg-on', !alarm);
+            normalBtn.classList.toggle('bg-gray-500', alarm);
+            alarmBtn.classList.toggle('bg-alarm', alarm);
+            alarmBtn.classList.toggle('bg-gray-500', !alarm);
+        }
+    });
+}
+
+$(document).ready(function () {
+    updateFapStatus();
+    setInterval(updateFapStatus, 60000);
+});
+
 
 
 
@@ -406,14 +428,14 @@ function get_barchart_data(date){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_barchart.php",
+        url: "scripts/get_site_barchart",
         async: false,
         data: {
             "site_db": '<?php echo $site_db;?>',
             "date": date
         },
         success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+            var data = dataResult;
             // console.log(data);
             for(var i = 0; i < data.length; i++){
                 
@@ -435,14 +457,14 @@ function get_linechart_data(date){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_irradiance.php",
+        url: "scripts/get_site_irradiance",
         async: false,
         data: {
             "site_db": '<?php echo $site_db;?>',
             "date": date
         },
         success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+            var data = dataResult;
             
             // console.log(dataResult);
             
@@ -466,14 +488,14 @@ function getActivePower(date){
     
     $.ajax({
         type: "POST",
-        url: "scripts/get_site_active_power.php",
+        url: "scripts/get_site_active_power",
         async: false,
         data: {
             "site_db": '<?php echo $site_db;?>',
             "date": date
         },
         success: function(dataResult) {
-            var data = JSON.parse(dataResult);
+            var data = dataResult;
             
             for(var i = 0; i < data.length; i++){
                 kpi_active_power.push({"x": data[i].time, "y": data[i].active_power});
@@ -911,33 +933,62 @@ nextDate.addEventListener('click', () => { // add a click event listener
     }
 });
 
+// Full-page overlay loader shown while a new date is loading/rendering.
+function eesDashLoader(show) {
+    var id = 'ees-dash-loader';
+    var el = document.getElementById(id);
+    if (show) {
+        if (!el) {
+            el = document.createElement('div');
+            el.id = id;
+            el.style.cssText = 'position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.55);';
+            el.innerHTML = '<div style="background:#fff;padding:18px 24px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;">' +
+                '<i class="fa fa-spinner fa-spin" style="font-size:22px;color:#70ad47;"></i>' +
+                '<span style="font-weight:600;color:#444;">Loading\u2026</span></div>';
+            document.body.appendChild(el);
+        }
+        el.style.display = 'flex';
+    } else if (el) {
+        el.style.display = 'none';
+    }
+}
+
 function render(){
     
-    let val = new Date(document.getElementById('calendar').value);
-    let db_date = val.toISOString().split('T')[0];
+    // The data fetches below are synchronous (async:false), so they block the UI
+    // thread. Show the loader first, then defer the work one tick so the browser
+    // can actually paint the overlay before the thread is blocked.
+    eesDashLoader(true);
     
-    
-    barchart_labels = [];
-    barchart_data = [];
-    line_labels = [];
-    line_irradiance = [];
-    line_ambtemp = [];
-    line_pantemp = [];
-    active_power = [];
-    
-    kpi_irradiance = [];
-    kpi_prod = [];
-    kpi_active_power = [];
-    
-    get_barchart_data(db_date);
-    get_linechart_data(db_date);
-    getActivePower(db_date);
-    
-    // console.log(kpi_irradiance);
-    
-    renderKpiChart();
-    renderBarchart();
-    renderLineChart();
+    setTimeout(function() {
+        try {
+            let val = new Date(document.getElementById('calendar').value);
+            let db_date = val.toISOString().split('T')[0];
+            
+            
+            barchart_labels = [];
+            barchart_data = [];
+            line_labels = [];
+            line_irradiance = [];
+            line_ambtemp = [];
+            line_pantemp = [];
+            active_power = [];
+            
+            kpi_irradiance = [];
+            kpi_prod = [];
+            kpi_active_power = [];
+            
+            get_barchart_data(db_date);
+            get_linechart_data(db_date);
+            getActivePower(db_date);
+            
+            renderKpiChart();
+            renderBarchart();
+            renderLineChart();
+        } finally {
+            eesDashLoader(false);
+        }
+    }, 50);
     
 }
 

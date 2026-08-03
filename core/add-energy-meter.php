@@ -1,7 +1,7 @@
 <?php
-
-include("scripts/auth.php");
-
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/csrf.php';
 ?>
 
 <!DOCTYPE html>
@@ -18,12 +18,9 @@ include("scripts/auth.php");
 
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
-<style>
-input, select {
-    padding:5px;
-}
-</style>
+<link rel="stylesheet" href="assets/css/pages/form-pages.css">
 
 </head>
 <body data-theme="theme-cyan">
@@ -48,7 +45,7 @@ input, select {
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Add Energy Meter</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">Energy Meters</li>
                             <li class="breadcrumb-item active">Add Energy Meter</li>
                         </ul>
@@ -103,7 +100,7 @@ input, select {
                                     </tbody>
                                 </table>
                                 
-                                <a class="btn btn-outline-dark" href="energy-meters.php">Discard</a>
+                                <a class="btn btn-outline-dark" href="energy-meters">Discard</a>
                                 <input class="btn btn-danger" type="button" value="Delete" onclick="">
                                 <input class="btn btn-primary" type="submit" value="Save Changes" onclick="">
 

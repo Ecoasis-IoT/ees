@@ -1,7 +1,17 @@
 <?php
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/common/auth.php';
+require_once __DIR__ . '/common/authorization.php';
+require_once __DIR__ . '/common/csrf.php';
+require_once __DIR__ . '/common/asset_helper.php';
 
-include("scripts/auth.php");
+if (!isAdmin()) {
+    http_response_code(403);
+    include __DIR__ . '/error-404.php';
+    exit;
+}
 
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -18,6 +28,7 @@ include("scripts/auth.php");
 
 <!-- MAIN CSS -->
 <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <style>
 input, select {
@@ -48,7 +59,7 @@ input, select {
                     <div class="col-lg-5 col-md-8 col-sm-12">                        
                         <h2><a class="btn btn-xs btn-link btn-toggle-fullwidth"><i class="fa fa-arrow-left"></i></a> Edit User</h2>
                         <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="icon-home"></i></a></li>                            
+                            <li class="breadcrumb-item"><a href="dashboard"><i class="icon-home"></i></a></li>                            
                             <li class="breadcrumb-item">Users</li>
                             <li class="breadcrumb-item active">Edit User</li>
                         </ul>
@@ -130,7 +141,7 @@ input, select {
                                     </tbody>
                                 </table>
                                 
-                                <a class="btn btn-outline-dark" href="users.php">Discard</a>
+                                <a class="btn btn-outline-dark" href="user-management">Discard</a>
                                 <input class="btn btn-danger" type="button" value="Delete" onclick="">
                                 <input class="btn btn-primary" type="submit" value="Save Changes" onclick="">
 
