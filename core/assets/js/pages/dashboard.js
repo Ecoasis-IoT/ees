@@ -48,20 +48,32 @@
                 // Populate KPI cards
                 setKpi('kpi-total-sites', data.length);
 
+                function formatKwh(n) {
+                    var v = parseFloat(n);
+                    if (!isFinite(v)) v = 0;
+                    return v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                }
+
                 for (var i = 0; i < data.length; i++) {
                     var href = (data[i].dashboard_href || 'site-dashboard') + '?site=' + encodeURIComponent(data[i].id);
-                    var row = "<tr><td><a href='" + href + "'>" + data[i].site_name + "</a></td><td>" + data[i].prod + "</td><td>" + data[i].active_power + "</td></tr>";
+                    var prod = parseFloat(data[i].prod);
+                    if (!isFinite(prod) || prod < 0) prod = 0;
+                    var power = parseFloat(data[i].active_power);
+                    if (!isFinite(power) || power < 0) power = 0;
+
+                    var row = "<tr><td><a href='" + href + "'>" + data[i].site_name + "</a></td><td>" +
+                        formatKwh(prod) + "</td><td>" + formatKwh(power) + "</td></tr>";
 
                     $('#tbl_site_prod tbody').append(row);
 
                     chart_labels.push(data[i].site_name);
-                    chart_prod.push(data[i].prod);
+                    chart_prod.push(prod);
 
                     var coordinates = data[i].location.split(',');
                     var marker = L.marker([coordinates[0], coordinates[1]])
                         .bindTooltip(data[i].site_name, { permanent: false, direction: 'right', offset: L.point(-14, -5) })
                         .addTo(map);
-                    marker.bindPopup('<b>' + data[i].site_name + '</b><br>Production (kWh): ' + data[i].prod, { closeOnClick: false, autoClose: false });
+                    marker.bindPopup('<b>' + data[i].site_name + '</b><br>Today\'s Production (kWh): ' + formatKwh(prod), { closeOnClick: false, autoClose: false });
                 }
 
                 refreshMapSize();

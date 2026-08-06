@@ -50,8 +50,17 @@ foreach ($sites as &$site) {
     }
 
     try {
+        // Today's production = sum of valid hourly kWh only.
+        // Ignore negatives (meter reset / baseline glitches) and absurd spikes
+        // (e.g. lifetime register dumped as one hourly delta). Cap is far above
+        // any real site hour (~50 MWh) so genuine generation is never dropped.
         $sql = "
-            (SELECT ROUND(COALESCE(SUM(production), 0), 2) AS data
+            (SELECT ROUND(COALESCE(SUM(
+                CASE
+                    WHEN production > 0 AND production < 50000 THEN production
+                    ELSE 0
+                END
+             ), 0), 2) AS data
              FROM tbl_hourly_prod
              WHERE meter_id >= 100 AND DATE(datetime) = :dt)
             UNION ALL

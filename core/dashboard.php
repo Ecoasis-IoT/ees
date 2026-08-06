@@ -109,7 +109,7 @@ $csrf_token = generateCSRFToken();
                             </div>
 
                             <div class="header" style="border-top:1px solid var(--ees-border);">
-                                <h2>Today's Production <small>All sites combined</small></h2>
+                                <h2>Today's Production <small>By site</small></h2>
                             </div>
                             <div class="body" id="chart-con">
                                 <div class="chartBox" style="height:340px;">
