@@ -25,10 +25,6 @@ $energy = ($total_active_energy == 0) ? $start_energy : $total_active_energy * 0
 
 if ($start_date !== '') {
     $production = bcsub((string)$energy, (string)$start_energy, 2);
-    // Solar generation: never store negatives; drop absurd spikes (bad baseline / register jump)
-    if ((float)$production < 0 || (float)$production >= 50000) {
-        $production = '0';
-    }
 
     $pdo->prepare(
         'INSERT INTO `tbl_hourly_prod`(`meter_id`,`datetime`,`meter_name`,`starting_datetime`,`ending_datetime`,`production`)
