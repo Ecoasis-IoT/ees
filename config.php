@@ -223,6 +223,7 @@ $GLOBALS['_ees_db_map'] = [
     'bovalon'     => 'BOVALON',
     'phoenix'     => 'PHOENIX',
     'p_catering'  => 'P_CATERING',
+    'helvetia'    => 'HELVETIA',
     'moka_city'   => 'MOKA_CITY',
     'home_leisure'=> 'HOME_LEISURE',
     'case_noyal'  => 'CASE_NOYAL',
@@ -233,7 +234,7 @@ $GLOBALS['_ees_db_map'] = [
  * Connections are cached per-request (singleton per key).
  *
  * @param  string $key  One of: admin, factory, gob, pod, rtm, bovalon, phoenix,
- *                              p_catering, moka_city, home_leisure, case_noyal
+ *                              p_catering, helvetia, moka_city, home_leisure, case_noyal
  * @return PDO
  */
 function getDB(string $key = 'admin'): PDO {
