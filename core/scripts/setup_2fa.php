@@ -135,11 +135,16 @@ try {
         $email_stmt = $pdo->prepare('SELECT email FROM tbl_user WHERE id = ?');
         $email_stmt->execute([$user_id]);
         $user = $email_stmt->fetch(PDO::FETCH_ASSOC);
+        $backup_codes = getSavedBackupCodes($pdo, $user_id);
+        if (empty($backup_codes)) {
+            $backup_codes = generateBackupCodes();
+            persistBackupCodes($pdo, $user_id, $backup_codes);
+        }
         ees_setup_2fa_json([
             'statusCode' => 'success',
             'secret' => hexToBase32($result['secret']),
             'qr_url' => generate2FAQRCodeData($user['email'] ?? '', $result['secret']),
-            'backup_codes' => getSavedBackupCodes($pdo, $user_id),
+            'backup_codes' => $backup_codes,
         ]);
     }
 
