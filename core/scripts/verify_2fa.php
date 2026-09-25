@@ -1,7 +1,7 @@
 <?php
 /**
- * Login 2FA verification — TOTP or backup code after successful password step.
- * POST: code, csrf_token, is_backup (optional "true")
+ * Login 2FA verification — TOTP, emailed code, then backup code.
+ * POST: code, csrf_token
  */
 
 ob_start();
@@ -26,80 +26,72 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$csrf_token = trim($_POST['csrf_token'] ?? '');
-if (!validateCSRFToken($csrf_token)) {
-    logSecurityEvent('csrf_failure', ['endpoint' => 'verify_2fa'], 'WARNING');
-    http_response_code(403);
-    echo json_encode(['statusCode' => 'Err', 'message' => 'Invalid request token']);
-    exit;
-}
-
-if (empty($_SESSION['2fa_pending']) || empty($_SESSION['2fa_user_id'])) {
+function ees_verify_2fa_json(string $status, string $message): void {
     ob_end_clean();
-    echo json_encode(['statusCode' => 'Err', 'message' => 'No verification in progress. Please sign in again.']);
+    echo json_encode(['statusCode' => $status, 'message' => $message]);
     exit;
 }
 
-if (!empty($_SESSION['2fa_created']) && (time() - (int)$_SESSION['2fa_created']) > 600) {
+if (empty($_SESSION['2fa_pending'])) {
+    $csrf_token = trim($_POST['csrf_token'] ?? '');
+    if ($csrf_token === '' || !validateCSRFToken($csrf_token)) {
+        logSecurityEvent('csrf_failure', ['endpoint' => 'verify_2fa'], 'WARNING');
+        ees_verify_2fa_json('Err', 'Your session has expired. Please sign in again.');
+    }
+    ees_verify_2fa_json('Err', 'No verification in progress. Please sign in again.');
+}
+
+$pending_limit = !empty($_SESSION['2fa_email_code_expires']) ? 900 : 300;
+if (!empty($_SESSION['2fa_created']) && (time() - (int)$_SESSION['2fa_created']) > $pending_limit) {
     ees_clear_pending_2fa();
-    ob_end_clean();
-    echo json_encode([
-        'statusCode' => 'timeout',
-        'message'    => 'Verification timed out. Please sign in again.',
-    ]);
-    exit;
+    ees_verify_2fa_json('timeout', 'Verification timed out. Please sign in again.');
 }
 
 $code = trim($_POST['code'] ?? '');
 if ($code === '') {
-    ob_end_clean();
-    echo json_encode(['statusCode' => 'Err', 'message' => 'Please enter your verification code.']);
-    exit;
+    ees_verify_2fa_json('Err', 'Please enter your verification code.');
 }
 
-$user_id   = (int)$_SESSION['2fa_user_id'];
-$username  = $_SESSION['2fa_login_id'] ?? $_SESSION['2fa_username'] ?? '';
+$user_id = (int)$_SESSION['2fa_user_id'];
+$username = $_SESSION['2fa_login_id'] ?? $_SESSION['2fa_username'] ?? '';
 $ip_address = getClientIP();
-$is_backup = isset($_POST['is_backup']) && $_POST['is_backup'] === 'true';
 
 try {
     $pdo = getDB('admin');
-    $verified = $is_backup
-        ? verifyUserBackupCode($pdo, $user_id, $code)
-        : verifyUserTOTPCode($pdo, $user_id, $code);
+    $totp_valid = verifyUserTOTPCode($pdo, $user_id, $code);
+    $email_valid = false;
+    $backup_valid = false;
 
-    if (!$verified) {
+    if (!$totp_valid && preg_match('/^\d{6}$/', $code)) {
+        $email_valid = verify2FAEmailCode($code);
+    }
+    if (!$totp_valid && !$email_valid) {
+        $backup_valid = verifyUserBackupCode($pdo, $user_id, $code);
+    }
+
+    if (!$totp_valid && !$email_valid && !$backup_valid) {
         logSecurityEvent('2fa_verification_failed', [
-            'username'            => $username,
-            'user_id'               => $user_id,
-            'ip'                    => $ip_address,
-            'backup_code_attempted' => $is_backup,
+            'username' => $username,
+            'user_id'  => $user_id,
+            'ip'       => $ip_address,
         ], 'WARNING');
-
-        ob_end_clean();
-        echo json_encode([
-            'statusCode' => 'Err',
-            'message'    => 'Invalid verification code. Please try again.',
-        ]);
-        exit;
+        ees_verify_2fa_json('Err', 'Invalid verification code. Please try again.');
     }
 
     $user = ees_pending_2fa_user_from_session();
     if (!$user) {
-        ob_end_clean();
-        echo json_encode(['statusCode' => 'Err', 'message' => 'Session expired. Please sign in again.']);
-        exit;
+        ees_verify_2fa_json('Err', 'Session expired. Please sign in again.');
     }
 
     ees_establish_user_session($user);
     ees_clear_pending_2fa();
 
     logSecurityEvent('login_success', [
-        'username'         => $username,
-        'user_id'          => $user_id,
-        'ip'               => $ip_address,
-        '2fa_enabled'      => true,
-        'backup_code_used' => $is_backup,
+        'username'    => $username,
+        'user_id'     => $user_id,
+        'ip'          => $ip_address,
+        '2fa_enabled' => true,
+        'method'      => $totp_valid ? 'totp' : ($email_valid ? 'email' : 'backup_code'),
     ], 'INFO');
 
     require_once __DIR__ . '/../common/user_notifications.php';
@@ -107,12 +99,11 @@ try {
 
     ob_end_clean();
     echo json_encode([
-        'statusCode'       => 'auth',
-        'message'          => 'Signed in successfully.',
-        'backup_code_used' => $is_backup,
+        'statusCode' => 'auth',
+        'message'    => 'Signed in successfully.',
+        'link'       => 'dashboard',
     ]);
 } catch (Exception $e) {
     error_log('verify_2fa error: ' . $e->getMessage());
-    ob_end_clean();
-    echo json_encode(['statusCode' => 'Err', 'message' => 'Server error. Please try again.']);
+    ees_verify_2fa_json('Err', 'Server error. Please try again.');
 }

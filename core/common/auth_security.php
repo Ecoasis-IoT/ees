@@ -175,9 +175,19 @@ function ees_establish_user_session(array $user): void {
  * Store pending 2FA state after a successful password check.
  */
 function ees_begin_pending_2fa(array $user, string $login_identifier): void {
-    session_regenerate_id(true);
-    $_SESSION['2fa_pending']      = true;
-    $_SESSION['2fa_user_id']      = (int)$user['id'];
+    unset(
+        $_SESSION['id'],
+        $_SESSION['name'],
+        $_SESSION['firstname'],
+        $_SESSION['lastname'],
+        $_SESSION['last_name'],
+        $_SESSION['email'],
+        $_SESSION['username'],
+        $_SESSION['group_id'],
+        $_SESSION['created']
+    );
+    $_SESSION['2fa_pending']    = true;
+    $_SESSION['2fa_user_id']    = (int)$user['id'];
     $_SESSION['2fa_login_id']   = $login_identifier;
     $_SESSION['2fa_firstname']  = $user['firstname'] ?? '';
     $_SESSION['2fa_lastname']   = $user['lastname'] ?? '';
@@ -200,7 +210,13 @@ function ees_clear_pending_2fa(): void {
         $_SESSION['2fa_email'],
         $_SESSION['2fa_username'],
         $_SESSION['2fa_group_id'],
-        $_SESSION['2fa_created']
+        $_SESSION['2fa_created'],
+        $_SESSION['2fa_email_code_hash'],
+        $_SESSION['2fa_email_code_salt'],
+        $_SESSION['2fa_email_code_expires'],
+        $_SESSION['2fa_email_code_attempts'],
+        $_SESSION['2fa_email_sent_at'],
+        $_SESSION['2fa_email_send_count']
     );
 }
 

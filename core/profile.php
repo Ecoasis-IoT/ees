@@ -12,20 +12,21 @@ $user_id = (int)$_SESSION['id'];
 $stmt = $pdo->prepare("SELECT firstname, lastname, username, email FROM tbl_user WHERE id = :id LIMIT 1");
 $stmt->execute([':id' => $user_id]);
 $user = $stmt->fetch();
-
-// 2FA status
-$has2fa     = false;
-$tfa_status = ['enabled' => false, 'has_secret' => false, 'backup_codes_count' => 0];
-if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
-    require_once __DIR__ . '/common/two_factor_auth.php';
-    $has2fa     = true;
-    $tfa_status = get2FAStatus($pdo, $user_id);
+if (!$user) {
+    $_SESSION = [];
+    session_destroy();
+    header('Location: ' . ees_url_path('login.php'));
+    exit;
 }
+
+require_once __DIR__ . '/common/two_factor_auth.php';
+$tfa_status = get2FAStatus($pdo, $user_id);
+$tfa_mandatory = userMustSetup2FA($pdo, $user_id) || is2FAMandatoryForUser($pdo, $user_id);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Profile | EES</title>
+    <title>Profile</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
@@ -36,6 +37,11 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
     <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="assets/css/ees-theme.css">
     <link rel="stylesheet" href="assets/css/pages/form-pages.css">
+    <link rel="stylesheet" href="assets/css/pages/profile.css">
+    <?php
+    require_once __DIR__ . '/common/cdn_resources.php';
+    echo getSweetAlert2JS();
+    ?>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
             integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
@@ -140,59 +146,50 @@ if (file_exists(__DIR__ . '/common/two_factor_auth.php')) {
                     </div>
                 </div>
 
-                <?php if ($has2fa): ?>
-                <!-- 2FA -->
                 <div class="col-lg-12">
-                    <div class="card profile-section">
+                    <div class="card profile-section<?= $tfa_mandatory && empty($tfa_status['enabled']) ? ' tfa-required' : '' ?>" id="2fa-section">
                         <div class="header">
-                            <h2>Two-Factor Authentication (2FA)
-                                <?php if ($tfa_status['enabled']): ?>
-                                    <span class="tfa-badge-on">ENABLED</span>
-                                <?php else: ?>
-                                    <span class="tfa-badge-off">DISABLED</span>
-                                <?php endif; ?>
-                            </h2>
+                            <h2>Two-Factor Authentication</h2>
                         </div>
                         <div class="body">
-                            <div class="alert alert-success" id="tfa-success"></div>
-                            <div class="alert alert-danger"  id="tfa-error"></div>
+                            <p id="2fa-status-text">Loading two-factor status…</p>
+                            <div id="2fa-status-section"></div>
 
-                            <?php if (!$tfa_status['enabled']): ?>
-                            <p>Two-factor authentication adds an extra layer of security to your account. Once enabled, you will need to enter a 6-digit code from your authenticator app when logging in.</p>
-                            <button class="btn btn-success" onclick="initiate2FA(this)"><i class="fa fa-shield"></i> Set Up 2FA</button>
-
-                            <div id="qr-setup-section" class="mt-4">
-                                <h5>1. Scan this QR code with your authenticator app</h5>
-                                <img id="qr-image" src="" alt="QR Code" style="border:1px solid #ddd; padding:8px; margin:10px 0;">
-                                <p><small>Or enter this secret manually: <code id="tfa-secret-text" style="font-size:14px;"></code></small></p>
-                                <h5>2. Save your backup codes (one-time use)</h5>
-                                <ul class="backup-codes-list" id="backup-codes-list"></ul>
-                                <h5>3. Enter the 6-digit code from your app to verify</h5>
-                                <div class="row">
-                                    <div class="col-lg-3 col-md-4">
-                                        <input type="text" class="form-control" id="tfa-verify-code" placeholder="000000" maxlength="6">
+                            <div id="2fa-setup-section">
+                                <button type="button" class="btn bg-custom" data-action="setup-2fa" onclick="setup2FA()">
+                                    <i class="fa fa-shield"></i> Setup 2FA
+                                </button>
+                                <div id="2fa-qr-section" style="display:none;">
+                                    <img id="2fa-qr-code" alt="Authenticator QR code" width="180" height="180">
+                                    <div class="tfa-secret-row">
+                                        <input type="text" id="2fa-secret-key" class="form-control" readonly>
+                                        <button type="button" class="btn bg-custom" onclick="copy2FASecret()">Copy</button>
                                     </div>
-                                    <div class="col-lg-2 col-md-3 mt-2 mt-md-0">
-                                        <button class="btn btn-primary" onclick="verify2FA(this)">Verify &amp; Enable</button>
+                                    <div id="2fa-backup-codes" class="tfa-code-grid"></div>
+                                    <button type="button" class="btn bg-custom" onclick="copySetupBackupCodes()">Copy codes</button>
+                                    <div class="tfa-verify-row">
+                                        <input type="text" id="2fa-verify-code" class="form-control tfa-code-input" maxlength="6" placeholder="000000" inputmode="numeric" autocomplete="one-time-code">
                                     </div>
+                                    <button type="button" class="btn bg-custom" onclick="verify2FASetup()">Enable 2FA</button>
+                                    <button type="button" class="btn btn-default" onclick="get2FAStatus()">Cancel</button>
                                 </div>
                             </div>
-                            <?php else: ?>
-                            <p>2FA is currently <strong>enabled</strong>. You have <strong><?= $tfa_status['backup_codes_count'] ?></strong> backup codes remaining.</p>
-                            <p>To disable 2FA, enter your current password:</p>
-                            <div class="row">
-                                <div class="col-lg-3 col-md-4">
-                                    <input type="password" class="form-control" id="tfa-disable-pass" placeholder="Current password">
-                                </div>
-                                <div class="col-lg-2 col-md-3 mt-2 mt-md-0">
-                                    <button class="btn btn-danger" onclick="disable2FA(this)">Disable 2FA</button>
-                                </div>
+
+                            <div id="2fa-saved-codes" style="display:none;">
+                                <div id="2fa-saved-codes-list" class="tfa-code-grid"></div>
+                                <p id="2fa-saved-codes-note" class="tfa-note"></p>
+                                <button type="button" class="btn bg-custom" onclick="copyBackupCodes()">Copy</button>
+                                <button type="button" class="btn bg-custom" onclick="regenerateBackupCodes()">Regenerate</button>
                             </div>
-                            <?php endif; ?>
+
+                            <div id="2fa-enabled-section" style="display:none;">
+                                <p>To turn 2FA off, enter your current password:</p>
+                                <input type="password" class="form-control" id="2fa-disable-password" placeholder="Current password">
+                                <button type="button" class="btn btn-danger" onclick="disable2FA()">Disable 2FA</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <?php endif; ?>
             </div>
 
             <?php include_once("common/footer.php") ?>
@@ -253,66 +250,7 @@ function changePassword(btn) {
     });
 }
 
-function initiate2FA(btn) {
-    EES.btnLoad(btn, 'Loading…');
-    $.ajax({
-        type: 'POST', url: 'scripts/profile_setup_2fa',
-        data: { csrf_token: CSRF_TOKEN },
-        success: function(r) {
-            var d = typeof r === 'string' ? JSON.parse(r) : r;
-            if (d.status === 'auth') {
-                $('#qr-image').attr('src', d.qr_url);
-                $('#tfa-secret-text').text(d.secret);
-                var html = '';
-                $.each(d.backup_codes, function(i,c){ html += '<li>' + c + '</li>'; });
-                $('#backup-codes-list').html(html);
-                $('#qr-setup-section').slideDown();
-            } else {
-                showMsg('tfa-success','tfa-error', false, d.message || 'Failed to initiate 2FA setup');
-            }
-        },
-        error: function() { showMsg('tfa-success','tfa-error', false, 'Request failed'); },
-        complete: function() { EES.btnReset(btn); }
-    });
-}
-
-function verify2FA(btn) {
-    EES.btnLoad(btn, 'Verifying…');
-    $.ajax({
-        type: 'POST', url: 'scripts/profile_verify_2fa',
-        data: { csrf_token: CSRF_TOKEN, code: $('#tfa-verify-code').val() },
-        success: function(r) {
-            var d = typeof r === 'string' ? JSON.parse(r) : r;
-            if (d.status === 'auth') {
-                showMsg('tfa-success','tfa-error', true, d.message || '2FA enabled');
-                setTimeout(function(){ location.reload(); }, 1500);
-            } else {
-                showMsg('tfa-success','tfa-error', false, d.message || 'Invalid code');
-            }
-        },
-        error: function() { showMsg('tfa-success','tfa-error', false, 'Request failed'); },
-        complete: function() { EES.btnReset(btn); }
-    });
-}
-
-function disable2FA(btn) {
-    EES.btnLoad(btn, 'Disabling…');
-    $.ajax({
-        type: 'POST', url: 'scripts/profile_disable_2fa',
-        data: { csrf_token: CSRF_TOKEN, password: $('#tfa-disable-pass').val() },
-        success: function(r) {
-            var d = typeof r === 'string' ? JSON.parse(r) : r;
-            if (d.status === 'auth') {
-                showMsg('tfa-success','tfa-error', true, d.message || '2FA disabled');
-                setTimeout(function(){ location.reload(); }, 1500);
-            } else {
-                showMsg('tfa-success','tfa-error', false, d.message || 'Failed');
-            }
-        },
-        error: function() { showMsg('tfa-success','tfa-error', false, 'Request failed'); },
-        complete: function() { EES.btnReset(btn); }
-    });
-}
 </script>
+<script src="assets/js/pages/profile.js"></script>
 </body>
 </html>

@@ -302,6 +302,11 @@ $csrf_token = generateCSRFToken();
                                                 </div>
                                             </div>
                                             <div class="col-md-4 form-group">
+                                                <div class="fancy-checkbox">
+                                                    <label><input type="checkbox" name="TWO_FACTOR_REQUIRED_FOR_ALL" value="1" <?= filter_var($_ENV['TWO_FACTOR_REQUIRED_FOR_ALL'] ?? 'false', FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' ?>><span>Require 2FA for everyone</span></label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 form-group">
                                                 <label>Issuer Name (shown in auth app)</label>
                                                 <input type="text" class="form-control" name="TWO_FACTOR_ISSUER" value="<?= htmlspecialchars($_ENV['TWO_FACTOR_ISSUER'] ?? 'EES System', ENT_QUOTES, 'UTF-8') ?>">
                                             </div>

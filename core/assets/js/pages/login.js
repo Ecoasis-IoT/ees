@@ -1,5 +1,5 @@
 /**
- * Login page — AJAX authentication with optional 2FA step
+ * Login page — password first, then a 2FA code dialog when needed.
  */
 (function () {
     'use strict';
@@ -14,8 +14,6 @@
         if (el) {
             el.textContent = message;
             el.style.display = 'block';
-        } else {
-            EES.alert(message, 'error');
         }
     }
 
@@ -24,31 +22,153 @@
         if (el) el.style.display = 'none';
     }
 
-    function show2FAStep() {
-        document.getElementById('login-step-credentials').style.display = 'none';
-        document.getElementById('login-step-2fa').style.display = 'block';
-        document.getElementById('login-title').textContent = 'Two-factor authentication';
-        document.getElementById('login-subtitle').textContent = 'Enter your verification code to continue';
-        hideError('login-error');
-        hideError('login-2fa-error');
-        var codeField = document.getElementById('signin-2fa-code');
-        if (codeField) codeField.focus();
-    }
-
-    function hide2FAStep() {
-        document.getElementById('login-step-2fa').style.display = 'none';
-        document.getElementById('login-step-credentials').style.display = 'block';
-        document.getElementById('login-title').textContent = 'Welcome back';
-        document.getElementById('login-subtitle').textContent = 'Sign in to your account to continue';
-        hideError('login-2fa-error');
-        var codeField = document.getElementById('signin-2fa-code');
-        if (codeField) codeField.value = '';
-    }
-
     function setBtnLoading(btn, loading, idleText) {
         if (!btn) return;
         btn.disabled = loading;
         btn.value = loading ? 'Please wait…' : idleText;
+    }
+
+    function send2FAEmailCode() {
+        var status = document.getElementById('swal2-2fa-email-status');
+        var btn = document.getElementById('swal2-2fa-email');
+        if (btn) btn.disabled = true;
+        if (status) status.textContent = 'Sending code...';
+
+        $.ajax({
+            type: 'POST',
+            url: 'scripts/send_2fa_email',
+            data: { csrf_token: getCSRFToken() },
+            success: function (dataResult) {
+                var data = typeof dataResult === 'string' ? JSON.parse(dataResult) : dataResult;
+                if (status) status.textContent = data.message || '';
+                if (data.statusCode !== 'success' && btn) btn.disabled = false;
+                if (data.statusCode === 'success' && btn) {
+                    setTimeout(function () { btn.disabled = false; }, 60000);
+                }
+            },
+            error: function () {
+                if (status) status.textContent = 'Could not send the email. Try again.';
+                if (btn) btn.disabled = false;
+            }
+        });
+    }
+
+    function show2FAModal() {
+        if (typeof Swal === 'undefined') {
+            showError('login-error', 'Enter your verification code to continue.');
+            return;
+        }
+
+        Swal.fire({
+            title: '<i class="fa fa-shield" style="font-size: 2.2rem; color: #3D8881;"></i><br><strong>Two-Factor Authentication</strong>',
+            width: '24rem',
+            html:
+                '<div style="text-align:center;">' +
+                '<p style="color:#6c757d;margin:0 0 14px;font-size:0.92rem;line-height:1.45;">' +
+                'Enter the 6-digit code from your authenticator app, an emailed code, or an 8-digit backup code.' +
+                '</p>' +
+                '<input type="text" id="swal2-2fa-code" class="swal2-input" placeholder="000000" maxlength="8" autocomplete="one-time-code" ' +
+                'style="display:block;width:11rem;max-width:100%;height:48px;margin:0 auto;text-align:center;font-size:1.25rem;letter-spacing:0.2rem;font-weight:600;">' +
+                '<button type="button" id="swal2-2fa-email" style="margin-top:12px;background:none;border:none;color:#3D8881;font-weight:600;cursor:pointer;text-decoration:underline;">Email me a code</button>' +
+                '<p id="swal2-2fa-email-status" style="color:#3D8881;min-height:1.2em;margin:8px 0 0;font-size:0.9rem;"></p>' +
+                '</div>',
+            showCancelButton: true,
+            confirmButtonText: 'Verify',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#3D8881',
+            cancelButtonColor: '#6c757d',
+            allowOutsideClick: false,
+            focusConfirm: false,
+            didOpen: function () {
+                var input = document.getElementById('swal2-2fa-code');
+                if (input) {
+                    setTimeout(function () { input.focus(); }, 200);
+                    input.addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            var confirmBtn = document.querySelector('.swal2-confirm');
+                            if (confirmBtn) confirmBtn.click();
+                        }
+                    });
+                }
+                var emailBtn = document.getElementById('swal2-2fa-email');
+                if (emailBtn) {
+                    emailBtn.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        send2FAEmailCode();
+                    });
+                }
+            },
+            preConfirm: function () {
+                var code = (document.getElementById('swal2-2fa-code').value || '').trim();
+                if (!code) {
+                    Swal.showValidationMessage('Please enter your verification code');
+                    return false;
+                }
+                if (code.length !== 6 && code.length !== 8) {
+                    Swal.showValidationMessage('Enter a 6-digit code or an 8-digit backup code');
+                    return false;
+                }
+                return code;
+            }
+        }).then(function (result) {
+            if (result.isConfirmed && result.value) {
+                verify2FA(result.value);
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                $.post('scripts/cancel_2fa', { csrf_token: getCSRFToken() });
+                var passField = document.getElementById('signin-password');
+                if (passField) {
+                    passField.value = '';
+                    passField.focus();
+                }
+            }
+        });
+    }
+
+    function verify2FA(code) {
+        Swal.fire({
+            title: 'Verifying...',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: function () { Swal.showLoading(); }
+        });
+
+        $.ajax({
+            type: 'POST',
+            url: 'scripts/verify_2fa',
+            dataType: 'json',
+            data: {
+                code: code,
+                csrf_token: getCSRFToken()
+            },
+            success: function (data) {
+                if (data.statusCode === 'auth') {
+                    window.location.replace(data.link || 'dashboard');
+                } else if (data.statusCode === 'timeout') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Session expired',
+                        text: data.message || 'Verification timed out. Please sign in again.',
+                        confirmButtonColor: '#3D8881'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid code',
+                        text: data.message || 'Invalid verification code. Please try again.',
+                        confirmButtonColor: '#3D8881'
+                    }).then(function () { show2FAModal(); });
+                }
+            },
+            error: function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Connection Error',
+                    text: 'Unable to connect to the server. Please try again.',
+                    confirmButtonColor: '#FF0000'
+                }).then(function () { show2FAModal(); });
+            }
+        });
     }
 
     window.auth = function () {
@@ -66,20 +186,20 @@
         setBtnLoading(btn, true, 'Sign In');
 
         $.ajax({
-            type:     'POST',
-            url:      'scripts/userlogin',
+            type: 'POST',
+            url: 'scripts/userlogin',
             dataType: 'json',
             data: {
-                username:   username,
-                pass:       password,
+                username: username,
+                pass: password,
                 csrf_token: getCSRFToken()
             },
             success: function (data) {
                 if (data.statusCode === 'auth') {
-                    window.location.replace('dashboard');
+                    window.location.replace(data.link || (data.setup_2fa ? 'profile' : 'dashboard'));
                 } else if (data.statusCode === '2fa_required') {
                     setBtnLoading(btn, false, 'Sign In');
-                    show2FAStep();
+                    show2FAModal();
                 } else {
                     setBtnLoading(btn, false, 'Sign In');
                     if (data.statusCode === 'locked') {
@@ -88,10 +208,8 @@
                         showError('login-error', data.message || 'This account has been disabled. Please contact the administrator.');
                     } else if (data.statusCode === 'rate_limit') {
                         showError('login-error', 'Too many login attempts. Please wait a moment and try again.');
-                    } else if (data.message) {
-                        showError('login-error', data.message);
                     } else {
-                        showError('login-error', 'Incorrect username or password.');
+                        showError('login-error', data.message || 'Incorrect username or password.');
                     }
                 }
             },
@@ -102,53 +220,9 @@
         });
     };
 
-    window.verify2FA = function () {
-        hideError('login-2fa-error');
-
-        var code = document.getElementById('signin-2fa-code').value.trim();
-        var isBackup = document.getElementById('signin-2fa-backup').checked;
-
-        if (!code) {
-            showError('login-2fa-error', 'Please enter your verification code.');
-            return;
-        }
-
-        var btn = document.getElementById('login-2fa-submit-btn');
-        setBtnLoading(btn, true, 'Verify');
-
-        $.ajax({
-            type:     'POST',
-            url:      'scripts/verify_2fa',
-            dataType: 'json',
-            data: {
-                code:       code,
-                is_backup:  isBackup ? 'true' : 'false',
-                csrf_token: getCSRFToken()
-            },
-            success: function (data) {
-                if (data.statusCode === 'auth') {
-                    window.location.replace('dashboard');
-                } else if (data.statusCode === 'timeout') {
-                    setBtnLoading(btn, false, 'Verify');
-                    hide2FAStep();
-                    showError('login-error', data.message || 'Verification timed out. Please sign in again.');
-                } else {
-                    setBtnLoading(btn, false, 'Verify');
-                    showError('login-2fa-error', data.message || 'Invalid verification code. Please try again.');
-                    document.getElementById('signin-2fa-code').focus();
-                }
-            },
-            error: function () {
-                setBtnLoading(btn, false, 'Verify');
-                showError('login-2fa-error', 'A network error occurred. Please try again.');
-            }
-        });
-    };
-
     document.addEventListener('DOMContentLoaded', function () {
-
         if (document.body.getAttribute('data-2fa-pending') === '1') {
-            show2FAStep();
+            show2FAModal();
         }
 
         ['signin-user', 'signin-password'].forEach(function (id) {
@@ -163,56 +237,15 @@
             }
         });
 
-        var codeField = document.getElementById('signin-2fa-code');
-        if (codeField) {
-            codeField.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    window.verify2FA();
-                }
-            });
-            codeField.addEventListener('input', function () {
-                var backup = document.getElementById('signin-2fa-backup').checked;
-                var maxLen = backup ? 8 : 6;
-                var value = this.value.replace(/[^0-9A-Za-z-]/g, '');
-                if (value.length > maxLen) {
-                    value = value.substring(0, maxLen);
-                }
-                this.value = value;
-            });
-        }
-
-        var backupToggle = document.getElementById('signin-2fa-backup');
-        if (backupToggle && codeField) {
-            backupToggle.addEventListener('change', function () {
-                codeField.placeholder = this.checked ? 'Backup code' : '000000';
-                codeField.maxLength = this.checked ? 8 : 6;
-                codeField.value = '';
-                codeField.focus();
-            });
-        }
-
-        var backLink = document.getElementById('login-2fa-back-link');
-        if (backLink) {
-            backLink.addEventListener('click', function (e) {
-                e.preventDefault();
-                $.post('scripts/cancel_2fa', { csrf_token: getCSRFToken() }, function () {
-                    hide2FAStep();
-                    document.getElementById('signin-password').value = '';
-                });
-            });
-        }
-
-        var toggleBtn  = document.getElementById('toggle-password');
+        var toggleBtn = document.getElementById('toggle-password');
         var toggleIcon = document.getElementById('toggle-password-icon');
-        var passField  = document.getElementById('signin-password');
-
+        var passField = document.getElementById('signin-password');
         if (toggleBtn && passField) {
             toggleBtn.addEventListener('click', function () {
                 var isHidden = passField.type === 'password';
                 passField.type = isHidden ? 'text' : 'password';
-                toggleIcon.classList.toggle('fa-eye',       !isHidden);
-                toggleIcon.classList.toggle('fa-eye-slash',  isHidden);
+                toggleIcon.classList.toggle('fa-eye', !isHidden);
+                toggleIcon.classList.toggle('fa-eye-slash', isHidden);
                 passField.focus();
             });
         }

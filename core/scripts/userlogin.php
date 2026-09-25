@@ -147,7 +147,10 @@ if ($user && $password_ok) {
 
     resetLoginAttempts($username);
 
-    if ($has_2fa_helper && userHas2FAEnabled($pdo, (int)$user['id'])) {
+    $requires_2fa = $has_2fa_helper && is2FAEnabled() && userHas2FAEnabled($pdo, (int)$user['id']);
+    $must_setup_2fa = $has_2fa_helper && !$requires_2fa && userMustSetup2FA($pdo, (int)$user['id']);
+
+    if ($requires_2fa) {
         ees_begin_pending_2fa($user, $username);
         logSecurityEvent('login_2fa_required', [
             'username' => $username,
@@ -158,7 +161,7 @@ if ($user && $password_ok) {
         ob_end_clean();
         echo json_encode([
             'statusCode' => '2fa_required',
-            'message'    => 'Enter the code from your authenticator app.',
+            'message'    => 'Enter the code from your authenticator app, an emailed code, or a backup code.',
         ]);
         exit;
     }
@@ -169,8 +172,16 @@ if ($user && $password_ok) {
     require_once __DIR__ . '/../common/user_notifications.php';
     ees_sync_password_expiry_notification((int)$user['id'], $pdo);
 
+    $response = [
+        'statusCode' => 'auth',
+        'link'       => $must_setup_2fa ? 'profile' : 'dashboard',
+    ];
+    if ($must_setup_2fa) {
+        $response['setup_2fa'] = true;
+        $response['message'] = 'Set up two-factor authentication to continue.';
+    }
     ob_end_clean();
-    echo json_encode(['statusCode' => 'auth']);
+    echo json_encode($response);
 } else {
     // Failed login (unknown user or bad password — same response to avoid user enumeration)
     recordFailedLoginAttempt($username, $ip_address);

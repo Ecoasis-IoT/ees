@@ -32,7 +32,8 @@ $csrf_token = generateCSRFToken();
     <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <style>
-
+.tfa-badge-on  { display:inline-block; background:rgba(61,136,129,.15); color:#2d6a64; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+.tfa-badge-off { display:inline-block; background:rgba(100,116,139,.12); color:#475569; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
 </style>
 </head>
 
@@ -79,6 +80,7 @@ $csrf_token = generateCSRFToken();
                                         <tr>
                                             <th>Name</th>
                                             <th>Email</th>
+                                            <th>2FA</th>
                                             <th>Date Joined</th>
                                         </tr>
                                     </thead>
@@ -154,7 +156,11 @@ $(function users() {
             var $tb = $('#tbl_users tbody');
             $tb.empty();
             for (var i = 0; i < rows.length; i++) {
-                var row = '<tr><td>' + _esc(rows[i].fullname) + '</td><td>' + _esc(rows[i].email) + '</td><td>' + _esc(rows[i].date_added) + '</td></tr>';
+                var on = parseInt(rows[i].tfa_enabled, 10) === 1;
+                var badge = on
+                    ? '<span class="tfa-badge-on">On</span>'
+                    : '<span class="tfa-badge-off">Off</span>';
+                var row = '<tr><td>' + _esc(rows[i].fullname) + '</td><td>' + _esc(rows[i].email) + '</td><td>' + badge + '</td><td>' + _esc(rows[i].date_added) + '</td></tr>';
                 $tb.append(row);
             }
         },
