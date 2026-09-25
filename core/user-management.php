@@ -32,7 +32,7 @@ $csrf_token = generateCSRFToken();
     <link rel="stylesheet" href="assets/css/ees-theme.css">
 
 <style>
-.tfa-badge-on  { display:inline-block; background:rgba(61,136,129,.15); color:#2d6a64; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+.tfa-badge-on  { display:inline-block; background:rgba(112,173,71,.15); color:#3d6d1f; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
 .tfa-badge-off { display:inline-block; background:rgba(100,116,139,.12); color:#475569; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
 </style>
 </head>

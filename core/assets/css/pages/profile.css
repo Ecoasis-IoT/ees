@@ -1,18 +1,18 @@
 #2fa-section .btn.bg-custom {
-    --bs-btn-bg: #3D8881;
-    background-color: #3D8881 !important;
+    --bs-btn-bg: #70AD47;
+    background-color: #70AD47 !important;
     color: #fff !important;
-    border-color: #3D8881;
+    border-color: #70AD47;
 }
 
 #2fa-section .btn.bg-custom:hover {
-    background-color: #2d6a64 !important;
-    border-color: #2d6a64;
+    background-color: #5d9638 !important;
+    border-color: #5d9638;
     color: #fff !important;
 }
 
 #2fa-section.tfa-required {
-    outline: 2px solid #3D8881;
+    outline: 2px solid #70AD47;
 }
 
 #2fa-qr-code {

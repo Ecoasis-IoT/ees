@@ -11,7 +11,7 @@
 
     function copyText(text, okTitle) {
         if (!text) {
-            Swal.fire({ icon: 'info', title: 'Nothing to copy', confirmButtonColor: '#3D8881' });
+            Swal.fire({ icon: 'info', title: 'Nothing to copy', confirmButtonColor: '#70AD47' });
             return;
         }
         var done = function () {
@@ -109,7 +109,7 @@
             icon: 'info',
             title: 'Finish two-factor setup',
             text: 'Two-factor authentication is required before you can use the rest of the system. Use the Two-Factor Authentication section on this page.',
-            confirmButtonColor: '#3D8881',
+            confirmButtonColor: '#70AD47',
             confirmButtonText: 'Continue setup'
         }).then(function () {
             twoFaPromptOpen = false;
@@ -181,7 +181,7 @@
             title: 'Regenerate backup codes?',
             text: 'The current codes will stop working. The new codes are saved on this page so you can copy them.',
             showCancelButton: true,
-            confirmButtonColor: '#3D8881',
+            confirmButtonColor: '#70AD47',
             confirmButtonText: 'Regenerate'
         }).then(function (result) {
             if (!result.isConfirmed) return;
@@ -195,7 +195,7 @@
                         renderSavedBackupCodes(data.backup_codes || []);
                         var count = (data.backup_codes || []).length;
                         $('#2fa-status-text').html('<span class="text-success"><i class="fa fa-check-circle"></i> Two-Factor Authentication is <strong>enabled</strong></span><br><small class="text-muted">You have ' + count + ' backup code(s) remaining.</small>');
-                        Swal.fire({ icon: 'success', title: 'Saved', text: data.message || 'New backup codes saved.', confirmButtonColor: '#3D8881' });
+                        Swal.fire({ icon: 'success', title: 'Saved', text: data.message || 'New backup codes saved.', confirmButtonColor: '#70AD47' });
                     } else {
                         Swal.fire({ icon: 'error', title: 'Could not regenerate', text: data.message || 'Try again.', confirmButtonColor: '#FF0000' });
                     }

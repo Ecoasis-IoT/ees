@@ -60,23 +60,23 @@
         }
 
         Swal.fire({
-            title: '<i class="fa fa-shield" style="font-size: 2.2rem; color: #3D8881;"></i><br><strong>Two-Factor Authentication</strong>',
+            title: '<i class="fa fa-shield ees-swal-icon"></i><br><strong>Two-Factor Authentication</strong>',
             width: '24rem',
             html:
                 '<div style="text-align:center;">' +
-                '<p style="color:#6c757d;margin:0 0 14px;font-size:0.92rem;line-height:1.45;">' +
+                '<p style="margin:0 0 14px;font-size:0.92rem;line-height:1.45;">' +
                 'Enter the 6-digit code from your authenticator app, an emailed code, or an 8-digit backup code.' +
                 '</p>' +
-                '<input type="text" id="swal2-2fa-code" class="swal2-input" placeholder="000000" maxlength="8" autocomplete="one-time-code" ' +
-                'style="display:block;width:11rem;max-width:100%;height:48px;margin:0 auto;text-align:center;font-size:1.25rem;letter-spacing:0.2rem;font-weight:600;">' +
-                '<button type="button" id="swal2-2fa-email" style="margin-top:12px;background:none;border:none;color:#3D8881;font-weight:600;cursor:pointer;text-decoration:underline;">Email me a code</button>' +
-                '<p id="swal2-2fa-email-status" style="color:#3D8881;min-height:1.2em;margin:8px 0 0;font-size:0.9rem;"></p>' +
+                '<input type="text" id="swal2-2fa-code" class="swal2-input" placeholder="000000" maxlength="8" autocomplete="one-time-code">' +
+                '<button type="button" id="swal2-2fa-email">Email me a code</button>' +
+                '<p id="swal2-2fa-email-status"></p>' +
                 '</div>',
             showCancelButton: true,
             confirmButtonText: 'Verify',
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#3D8881',
-            cancelButtonColor: '#6c757d',
+            confirmButtonColor: '#70AD47',
+            cancelButtonColor: '#E2E8F0',
+            customClass: { popup: 'ees-swal' },
             allowOutsideClick: false,
             focusConfirm: false,
             didOpen: function () {
@@ -130,6 +130,7 @@
             title: 'Verifying...',
             allowOutsideClick: false,
             allowEscapeKey: false,
+            customClass: { popup: 'ees-swal' },
             didOpen: function () { Swal.showLoading(); }
         });
 
@@ -149,14 +150,16 @@
                         icon: 'warning',
                         title: 'Session expired',
                         text: data.message || 'Verification timed out. Please sign in again.',
-                        confirmButtonColor: '#3D8881'
+                        confirmButtonColor: '#70AD47',
+                        customClass: { popup: 'ees-swal' }
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'Invalid code',
                         text: data.message || 'Invalid verification code. Please try again.',
-                        confirmButtonColor: '#3D8881'
+                        confirmButtonColor: '#70AD47',
+                        customClass: { popup: 'ees-swal' }
                     }).then(function () { show2FAModal(); });
                 }
             },
@@ -165,7 +168,8 @@
                     icon: 'error',
                     title: 'Connection Error',
                     text: 'Unable to connect to the server. Please try again.',
-                    confirmButtonColor: '#FF0000'
+                    confirmButtonColor: '#EF4444',
+                    customClass: { popup: 'ees-swal' }
                 }).then(function () { show2FAModal(); });
             }
         });
