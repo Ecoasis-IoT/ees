@@ -1,0 +1,72 @@
+#2fa-section .btn.bg-custom {
+    --bs-btn-bg: #3D8881;
+    background-color: #3D8881 !important;
+    color: #fff !important;
+    border-color: #3D8881;
+}
+
+#2fa-section .btn.bg-custom:hover {
+    background-color: #2d6a64 !important;
+    border-color: #2d6a64;
+    color: #fff !important;
+}
+
+#2fa-section.tfa-required {
+    outline: 2px solid #3D8881;
+}
+
+#2fa-qr-code {
+    width: 180px;
+    height: 180px;
+    display: block;
+    margin: 16px 0;
+    border: 1px solid #e2e8f0;
+    padding: 8px;
+    background: #fff;
+}
+
+.tfa-secret-row,
+.tfa-verify-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 12px 0;
+    max-width: 28rem;
+}
+
+.tfa-code-input {
+    letter-spacing: 0.2rem;
+    width: 11rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.tfa-code-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    margin: 12px 0;
+    max-width: 22rem;
+}
+
+.tfa-code {
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    color: #334155;
+}
+
+.tfa-note {
+    color: #64748b;
+    font-size: 13px;
+}
+
+#2fa-enabled-section,
+#2fa-saved-codes,
+#2fa-setup-section {
+    margin-top: 12px;
+}
+
+#2fa-disable-password {
+    max-width: 16rem;
+    margin-bottom: 10px;
+}

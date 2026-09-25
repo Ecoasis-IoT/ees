@@ -194,6 +194,7 @@ define('WEBHOOK_RATE_LIMIT_WINDOW', intval($_ENV['WEBHOOK_RATE_LIMIT_WINDOW']   
 define('TWO_FACTOR_ENABLED',              filter_var($_ENV['TWO_FACTOR_ENABLED']              ?? 'false', FILTER_VALIDATE_BOOLEAN));
 define('TWO_FACTOR_ISSUER',               $_ENV['TWO_FACTOR_ISSUER']                          ?? 'EES System');
 define('TWO_FACTOR_REQUIRED_FOR_ADMIN',   filter_var($_ENV['TWO_FACTOR_REQUIRED_FOR_ADMIN']   ?? 'false', FILTER_VALIDATE_BOOLEAN));
+define('TWO_FACTOR_REQUIRED_FOR_ALL',     filter_var($_ENV['TWO_FACTOR_REQUIRED_FOR_ALL']     ?? 'false', FILTER_VALIDATE_BOOLEAN));
 define('TWO_FACTOR_BACKUP_CODES_COUNT',   intval($_ENV['TWO_FACTOR_BACKUP_CODES_COUNT']       ?? 10));
 define('TWO_FACTOR_WINDOW',               intval($_ENV['TWO_FACTOR_WINDOW']                   ?? 1));
 

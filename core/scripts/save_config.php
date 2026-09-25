@@ -77,6 +77,7 @@ try {
     if (isset($_POST['TWO_FACTOR_ENABLED']))             $updates['TWO_FACTOR_ENABLED']             = boolStr($_POST['TWO_FACTOR_ENABLED']);
     if (isset($_POST['TWO_FACTOR_ISSUER']))              $updates['TWO_FACTOR_ISSUER']              = trim($_POST['TWO_FACTOR_ISSUER']);
     if (isset($_POST['TWO_FACTOR_REQUIRED_FOR_ADMIN'])) $updates['TWO_FACTOR_REQUIRED_FOR_ADMIN']  = boolStr($_POST['TWO_FACTOR_REQUIRED_FOR_ADMIN']);
+    if (isset($_POST['TWO_FACTOR_REQUIRED_FOR_ALL']))   $updates['TWO_FACTOR_REQUIRED_FOR_ALL']    = boolStr($_POST['TWO_FACTOR_REQUIRED_FOR_ALL']);
     if (isset($_POST['TWO_FACTOR_BACKUP_CODES_COUNT'])) $updates['TWO_FACTOR_BACKUP_CODES_COUNT']  = max(5, min(20, intval($_POST['TWO_FACTOR_BACKUP_CODES_COUNT'])));
     if (isset($_POST['TWO_FACTOR_WINDOW']))              $updates['TWO_FACTOR_WINDOW']              = max(1, min(3,  intval($_POST['TWO_FACTOR_WINDOW'])));
 
