@@ -67,7 +67,7 @@
         } else if (status.has_secret) {
             $('#2fa-status-text').html('<span class="text-warning"><i class="fa fa-exclamation-triangle"></i> 2FA secret generated but not enabled. Complete setup to enable.</span>');
             $('#2fa-setup-section').show();
-            $('[data-action="setup-2fa"]').hide();
+            $('[data-action="setup-2fa"]').show();
             $('#2fa-qr-section').show();
             $('#2fa-enabled-section').hide();
             $('#2fa-saved-codes').hide();
