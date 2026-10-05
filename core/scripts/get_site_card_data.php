@@ -43,14 +43,20 @@ try {
     $sun->execute([':now' => $timenow]);
     $sun_hours = $sun->fetch();
 
+    $roundOrNull = static function ($value) {
+        return ($value === null || $value === '') ? null : round((float) $value, 2);
+    };
+
     ob_end_clean();
     echo json_encode([
-        'active_power'  => round((float)($site_power['active_power']  ?? 0), 2),
-        'daily_prod'    => round((float)($site_daily['daily']          ?? 0), 2),
-        'monthly_prod'  => round((float)($site_monthly['monthly']      ?? 0), 2),
-        'yearly_prod'   => round((float)($site_yearly['yearly']        ?? 0), 2),
-        'avg_irr'       => round((float)($avg_irradiance['avg']        ?? 0), 2),
-        'sun_hours'     => (int)($sun_hours['minutes']                 ?? 0),
+        'active_power'  => $site_power ? $roundOrNull($site_power['active_power'] ?? null) : null,
+        'daily_prod'    => $roundOrNull($site_daily['daily'] ?? null),
+        'monthly_prod'  => $roundOrNull($site_monthly['monthly'] ?? null),
+        'yearly_prod'   => $roundOrNull($site_yearly['yearly'] ?? null),
+        'avg_irr'       => $roundOrNull($avg_irradiance['avg'] ?? null),
+        'sun_hours'     => isset($sun_hours['minutes']) && $sun_hours['minutes'] !== null
+            ? (int) $sun_hours['minutes']
+            : null,
     ]);
 } catch (PDOException $e) {
     error_log("get_site_card_data error: " . $e->getMessage());

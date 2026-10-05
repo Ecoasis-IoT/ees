@@ -39,11 +39,14 @@ try {
         if ((int)$r['status'] === 1) { $panel_status = 1; break; }
     }
 
+    $has_data = count($rows) > 0;
+
     ob_end_clean();
     echo json_encode([
         'status'       => 'OK',
-        'alarm_active' => $panel_status === 1,
-        'panel_status' => $panel_status,
+        'alarm_active' => $has_data && $panel_status === 1,
+        'panel_status' => $has_data ? $panel_status : null,
+        'has_data'     => $has_data,
     ]);
 } catch (PDOException $e) {
     error_log('get_site_fap_status error: ' . $e->getMessage());
@@ -51,7 +54,8 @@ try {
     echo json_encode([
         'status'       => 'OK',
         'alarm_active' => false,
-        'panel_status' => 0,
+        'panel_status' => null,
+        'has_data'     => false,
         'missing'      => true,
     ]);
 }

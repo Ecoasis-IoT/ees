@@ -12,47 +12,63 @@ var kpi_irradiance = [];
 var kpi_prod = [];
 var kpi_active_power = [];
 
+function eesHasValue(val) {
+    return val !== null && val !== undefined && val !== '' && !(typeof val === 'number' && isNaN(val));
+}
+
+function eesSetEnergy(id, val) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (!eesHasValue(val)) { el.textContent = 'N/A'; return; }
+    val = Number(val);
+    el.textContent = val < 1000 ? val.toFixed(2) + ' kWh' : (val / 1000).toFixed(2) + ' MWh';
+}
+
+function applyCardData(data) {
+    if (!data || data.status === 'Err') {
+        ['daily_prod','monthly_prod','yearly_prod','active_power','avg_irradiance','sun_hours'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = 'N/A';
+        });
+        return;
+    }
+
+    eesSetEnergy('daily_prod', data.daily_prod);
+    eesSetEnergy('monthly_prod', data.monthly_prod);
+    eesSetEnergy('yearly_prod', data.yearly_prod);
+
+    var ap = document.getElementById('active_power');
+    if (ap) {
+        ap.textContent = eesHasValue(data.active_power) ? Number(data.active_power).toFixed(2) + ' kW' : 'N/A';
+    }
+
+    var irr = document.getElementById('avg_irradiance');
+    if (irr) {
+        irr.innerHTML = eesHasValue(data.avg_irr) ? Number(data.avg_irr).toFixed(2) + ' W/m<sup>2</sup>' : 'N/A';
+    }
+
+    var sun = document.getElementById('sun_hours');
+    if (sun) {
+        if (!eesHasValue(data.sun_hours)) {
+            sun.textContent = 'N/A';
+        } else {
+            var mins = parseInt(data.sun_hours, 10);
+            sun.textContent = Math.floor(mins / 60) + ' hours ' + (mins % 60) + ' minutes';
+        }
+    }
+}
+
 //Get Card Data
 $(function get_card_data(){
 
     $.ajax({
         type: "POST",
         url: "scripts/get_site_card_data",
-        async: false,
         data: {
             "site_db": SITE_DB
         },
-        success: function(data) {
-            document.getElementById('active_power').innerHTML = data.active_power.toFixed(2) + " kW";
-
-            if(data.daily_prod < 1000){
-                document.getElementById('daily_prod').innerHTML = data.daily_prod.toFixed(2) + " kWh";
-            }
-            else{
-                document.getElementById('daily_prod').innerHTML = (data.daily_prod/1000).toFixed(2) + " MWh";
-            }
-
-            if(data.monthly_prod < 1000){
-                document.getElementById('monthly_prod').innerHTML = data.monthly_prod.toFixed(2) + " kWh";
-            }
-            else{
-                document.getElementById('monthly_prod').innerHTML = (data.monthly_prod/1000).toFixed(2) + " MWh";
-            }
-
-            if(data.yearly_prod < 1000){
-                document.getElementById('yearly_prod').innerHTML = data.yearly_prod.toFixed(2) + " kWh";
-            }
-            else{
-                document.getElementById('yearly_prod').innerHTML = (data.yearly_prod/1000).toFixed(2) + " MWh";
-            }
-
-            document.getElementById('avg_irradiance').innerHTML = data.avg_irr + " W/m<sup>2<sup>";
-
-            let sun_hours   = Math.floor(parseInt(data.sun_hours) / 60);
-            let sun_minutes = parseInt(data.sun_hours) % 60;
-
-            document.getElementById('sun_hours').innerHTML = sun_hours + " hours " + sun_minutes + " minutes ";
-        }
+        success: applyCardData,
+        error: function () { applyCardData(null); }
     });
 });
 

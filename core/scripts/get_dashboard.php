@@ -28,15 +28,15 @@ foreach ($sites as &$site) {
         $site['dashboard_href'] = 'site-dashboardv3';
     } elseif ($dk === 'bovalon') {
         $site['dashboard_href'] = 'site-dashboardv2';
-    } elseif ($dk === 'moka_city' || $dk === 'case_noyal') {
+    } elseif ($dk === 'moka_city' || $dk === 'case_noyal' || $dk === 'joli_bois') {
         $site['dashboard_href'] = 'site-dashboardv4';
     } else {
         $site['dashboard_href'] = 'site-dashboard';
     }
 
     if ((int)$site['commissioned'] !== 1) {
-        $site['prod']         = 0;
-        $site['active_power'] = 0;
+        $site['prod']         = null;
+        $site['active_power'] = null;
         continue;
     }
 
@@ -44,8 +44,8 @@ foreach ($sites as &$site) {
     $site_pdo = tryGetDB($db_key);
 
     if (!$site_pdo) {
-        $site['prod']         = 0;
-        $site['active_power'] = 0;
+        $site['prod']         = null;
+        $site['active_power'] = null;
         continue;
     }
 
@@ -66,12 +66,16 @@ foreach ($sites as &$site) {
         $q->execute([':dt' => $timenow, ':dt2' => $timenow]);
         $rows = $q->fetchAll(PDO::FETCH_NUM);
 
-        $site['prod']         = round((float)($rows[0][0] ?? 0), 2);
-        $site['active_power'] = round((float)($rows[1][0] ?? 0), 2);
+        $site['prod']         = isset($rows[0][0]) && $rows[0][0] !== null
+            ? round((float) $rows[0][0], 2)
+            : null;
+        $site['active_power'] = isset($rows[1][0]) && $rows[1][0] !== null
+            ? round((float) $rows[1][0], 2)
+            : null;
     } catch (PDOException $e) {
         error_log("get_dashboard site [{$site['db_name']}] error: " . $e->getMessage());
-        $site['prod']         = 0;
-        $site['active_power'] = 0;
+        $site['prod']         = null;
+        $site['active_power'] = null;
     }
 }
 unset($site);

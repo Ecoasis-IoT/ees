@@ -24,6 +24,7 @@ if (!function_exists('ees_db_key')) {
                 'u889201362_helvetia'     => 'helvetia',
                 'u889201362_home_leisure' => 'home_leisure',
                 'u889201362_case_noyal'   => 'case_noyal',
+                'u889201362_joli_bois'    => 'joli_bois',
                 // Config file basenames (as stored in tbl_site.db_name)
                 'factory'          => 'factory',
                 'gob_config'       => 'gob',
@@ -46,6 +47,8 @@ if (!function_exists('ees_db_key')) {
                 'home_and_leisure' => 'home_leisure',
                 'case_noyal'       => 'case_noyal',
                 'case_noyal.php'   => 'case_noyal',
+                'joli_bois'        => 'joli_bois',
+                'joli_bois.php'    => 'joli_bois',
             ];
         }
 

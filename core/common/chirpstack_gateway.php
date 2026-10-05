@@ -18,6 +18,7 @@ function ees_chirpstack_env_token_key(string $db_name): ?string
         'helvetia.php'      => 'CHIRPSTACK_TOKEN_MOKA_CITY',
         'moka_city.php'     => 'CHIRPSTACK_TOKEN_MOKA_CITY',
         'case_noyal.php'    => 'CHIRPSTACK_TOKEN_CASE_NOYAL',
+        'joli_bois.php'     => 'CHIRPSTACK_TOKEN_JOLI_BOIS',
     ];
 
     return $map[$db_name] ?? null;

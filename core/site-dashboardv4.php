@@ -242,12 +242,15 @@ $csrf_token = generateCSRFToken();
                             <div class="body">
                                 <div class="row text-center">
                                     <div class="col-6">
-                                        <button class="mb-1 rounded-circle b p-3 border-0 bg-on" id="main_fap_normal"></button>
+                                        <button class="mb-1 rounded-circle b p-3 border-0 bg-gray-500" id="main_fap_normal"></button>
                                         <p class="text-dark mb-0 text-sm">Normal</p>
                                     </div>
                                     <div class="col-6">
                                         <button class="mb-1 rounded-circle b p-3 bg-gray-500 border-0" id="main_fap_alarm"></button>
                                         <p class="text-dark mb-0 text-sm">General Alarm</p>
+                                    </div>
+                                    <div class="col-12">
+                                        <p class="text-muted mb-0 text-sm mt-2" id="fap_na_label">N/A</p>
                                     </div>
                                 </div>
                             </div>
@@ -344,55 +347,63 @@ var kpi_irradiance = [];
 var kpi_prod = [];
 var kpi_active_power = [];
 
-//Get Card Data
-    $(function get_card_data(){
-    
-        $.ajax({
-            type: "POST",
-            url: "scripts/get_site_card_data",
-            async: false,
-            data: {
-                "site_db": '<?php echo $site_db;?>'
-            },
-            success: function(dataResult) {
-                var data = dataResult;
-                
-                // console.log(dataResult);
-                
-                document.getElementById('active_power').innerHTML = data.active_power.toFixed(2) + " kW";
-                
-                if(data.daily_prod < 1000){
-                    document.getElementById('daily_prod').innerHTML = data.daily_prod.toFixed(2) + " kWh";    
-                }
-                else{
-                    document.getElementById('daily_prod').innerHTML = (data.daily_prod/1000).toFixed(2) + " MWh";
-                }
-                
-                if(data.monthly_prod < 1000){
-                    document.getElementById('monthly_prod').innerHTML = data.monthly_prod.toFixed(2) + " kWh";    
-                }
-                else{
-                    document.getElementById('monthly_prod').innerHTML = (data.monthly_prod/1000).toFixed(2) + " MWh";
-                }
-                
-                if(data.yearly_prod < 1000){
-                    document.getElementById('yearly_prod').innerHTML = data.yearly_prod.toFixed(2) + " kWh";    
-                }
-                else{
-                    document.getElementById('yearly_prod').innerHTML = (data.yearly_prod/1000).toFixed(2) + " MWh";
-                }
-                
-                document.getElementById('avg_irradiance').innerHTML = data.avg_irr + " W/m<sup>2<sup>";
-                
-                
-                let sun_hours = Math.floor(parseInt(data.sun_hours) / 60);          
-                let sun_minutes = parseInt(data.sun_hours) % 60;
-                
-                document.getElementById('sun_hours').innerHTML = sun_hours + " hours " + sun_minutes + " minutes ";
-                
-            }
+function eesHasValue(val) {
+    return val !== null && val !== undefined && val !== '' && !(typeof val === 'number' && isNaN(val));
+}
+
+function eesSetEnergy(id, val) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (!eesHasValue(val)) { el.textContent = 'N/A'; return; }
+    val = Number(val);
+    el.textContent = val < 1000 ? val.toFixed(2) + ' kWh' : (val / 1000).toFixed(2) + ' MWh';
+}
+
+function applyCardData(data) {
+    if (!data || data.status === 'Err') {
+        ['daily_prod','monthly_prod','yearly_prod','active_power','avg_irradiance','sun_hours'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = 'N/A';
         });
+        return;
+    }
+
+    eesSetEnergy('daily_prod', data.daily_prod);
+    eesSetEnergy('monthly_prod', data.monthly_prod);
+    eesSetEnergy('yearly_prod', data.yearly_prod);
+
+    var ap = document.getElementById('active_power');
+    if (ap) {
+        ap.textContent = eesHasValue(data.active_power) ? Number(data.active_power).toFixed(2) + ' kW' : 'N/A';
+    }
+
+    var irr = document.getElementById('avg_irradiance');
+    if (irr) {
+        irr.innerHTML = eesHasValue(data.avg_irr) ? Number(data.avg_irr).toFixed(2) + ' W/m<sup>2</sup>' : 'N/A';
+    }
+
+    var sun = document.getElementById('sun_hours');
+    if (sun) {
+        if (!eesHasValue(data.sun_hours)) {
+            sun.textContent = 'N/A';
+        } else {
+            var mins = parseInt(data.sun_hours, 10);
+            sun.textContent = Math.floor(mins / 60) + ' hours ' + (mins % 60) + ' minutes';
+        }
+    }
+}
+
+function loadCardData() {
+    $.ajax({
+        type: "POST",
+        url: "scripts/get_site_card_data",
+        data: {
+            "site_db": '<?php echo $site_db;?>'
+        },
+        success: applyCardData,
+        error: function () { applyCardData(null); }
     });
+}
 
 function updateFapStatus() {
     $.ajax({
@@ -404,21 +415,20 @@ function updateFapStatus() {
 
             var normalBtn = document.getElementById('main_fap_normal');
             var alarmBtn  = document.getElementById('main_fap_alarm');
+            var naLabel   = document.getElementById('fap_na_label');
             if (!normalBtn || !alarmBtn) return;
 
-            var alarm = !!data.alarm_active;
-            normalBtn.classList.toggle('bg-on', !alarm);
-            normalBtn.classList.toggle('bg-gray-500', alarm);
+            var hasData = !!data.has_data;
+            var alarm   = hasData && !!data.alarm_active;
+
+            normalBtn.classList.toggle('bg-on', hasData && !alarm);
+            normalBtn.classList.toggle('bg-gray-500', !hasData || alarm);
             alarmBtn.classList.toggle('bg-alarm', alarm);
             alarmBtn.classList.toggle('bg-gray-500', !alarm);
+            if (naLabel) naLabel.style.display = hasData ? 'none' : '';
         }
     });
 }
-
-$(document).ready(function () {
-    updateFapStatus();
-    setInterval(updateFapStatus, 60000);
-});
 
 
 
@@ -436,7 +446,7 @@ function get_barchart_data(date){
         },
         success: function(dataResult) {
             var data = dataResult;
-            // console.log(data);
+            if (!Array.isArray(data)) return;
             for(var i = 0; i < data.length; i++){
                 
                 kpi_prod.push({"x": data[i].time, "y": data[i].production});
@@ -465,9 +475,7 @@ function get_linechart_data(date){
         },
         success: function(dataResult) {
             var data = dataResult;
-            
-            // console.log(dataResult);
-            
+            if (!Array.isArray(data)) return;
             for(var i = 0; i < data.length; i++){
                 
                 kpi_irradiance.push({"x": data[i].time, "y": data[i].irradiance});
@@ -496,7 +504,7 @@ function getActivePower(date){
         },
         success: function(dataResult) {
             var data = dataResult;
-            
+            if (!Array.isArray(data)) return;
             for(var i = 0; i < data.length; i++){
                 kpi_active_power.push({"x": data[i].time, "y": data[i].active_power});
                 // active_power.push(data[i].active_power);
@@ -514,6 +522,25 @@ const white_back = {
     ctx.globalCompositeOperation = 'destination-over';
     ctx.fillStyle = options.color || 'white';
     ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  }
+};
+
+const eesNoData = {
+  id: 'eesNoData',
+  afterDraw: (chart) => {
+    var has = chart.data.datasets.some(function (ds) { return ds.data && ds.data.length; });
+    if (has) return;
+    var ctx = chart.ctx;
+    var area = chart.chartArea || {};
+    var x = ((area.left || 0) + (area.right || chart.width)) / 2;
+    var y = ((area.top || 0) + (area.bottom || chart.height)) / 2;
+    ctx.save();
+    ctx.fillStyle = '#888';
+    ctx.font = '600 18px Nunito Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('N/A', x, y);
     ctx.restore();
   }
 };  
@@ -673,7 +700,7 @@ function renderKpiChart(){
         //     mode: 'index'
         // },
       },
-      plugins: [white_back],
+      plugins: [white_back, eesNoData],
     };
     
     let chartStatus = Chart.getChart("kpi"); // <canvas> id
@@ -749,7 +776,7 @@ function renderBarchart(){
         maintainAspectRatio:false,
         responsive: true
       },
-      plugins: [white_back],
+      plugins: [white_back, eesNoData],
     };
     
     let chartStatus = Chart.getChart("barChart"); // <canvas> id
@@ -889,7 +916,7 @@ function renderLineChart(){
             mode: 'index'
         },
       },
-      plugins: [white_back],
+      plugins: [white_back, eesNoData],
     };
     
     let chartStatus = Chart.getChart("lineChart"); // <canvas> id
@@ -993,17 +1020,47 @@ function render(){
 }
 
 
+function refreshLiveData() {
+    loadCardData();
+    updateFapStatus();
+
+    var cal = document.getElementById('calendar');
+    if (!cal || cal.value !== currentDate) return;
+
+    barchart_labels = [];
+    barchart_data = [];
+    line_labels = [];
+    line_irradiance = [];
+    line_ambtemp = [];
+    line_pantemp = [];
+    active_power = [];
+    kpi_irradiance = [];
+    kpi_prod = [];
+    kpi_active_power = [];
+
+    get_barchart_data(cal.value);
+    get_linechart_data(cal.value);
+    getActivePower(cal.value);
+    renderKpiChart();
+    renderBarchart();
+    renderLineChart();
+}
+
 $(document).ready(function() {
     
     var val = new Date(document.getElementById('calendar').value);
     let date = val.toISOString().split('T')[0];
     
+    loadCardData();
+    updateFapStatus();
     get_barchart_data(date);
     get_linechart_data(date);
     getActivePower(date);
     renderKpiChart();
     renderBarchart();
     renderLineChart();
+
+    setInterval(refreshLiveData, 60000);
     
 });
 

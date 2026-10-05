@@ -50,18 +50,22 @@
 
                 for (var i = 0; i < data.length; i++) {
                     var href = (data[i].dashboard_href || 'site-dashboard') + '?site=' + encodeURIComponent(data[i].id);
-                    var row = "<tr><td><a href='" + href + "'>" + data[i].site_name + "</a></td><td>" + data[i].prod + "</td><td>" + data[i].active_power + "</td></tr>";
+                    var prod = (data[i].prod === null || data[i].prod === undefined) ? 'N/A' : data[i].prod;
+                    var ap   = (data[i].active_power === null || data[i].active_power === undefined) ? 'N/A' : data[i].active_power;
+                    var row = "<tr><td><a href='" + href + "'>" + data[i].site_name + "</a></td><td>" + prod + "</td><td>" + ap + "</td></tr>";
 
                     $('#tbl_site_prod tbody').append(row);
 
                     chart_labels.push(data[i].site_name);
                     chart_prod.push(data[i].prod);
 
+                    if (!data[i].location) { continue; }
                     var coordinates = data[i].location.split(',');
+                    if (coordinates.length < 2 || !coordinates[0] || !coordinates[1]) { continue; }
                     var marker = L.marker([coordinates[0], coordinates[1]])
                         .bindTooltip(data[i].site_name, { permanent: false, direction: 'right', offset: L.point(-14, -5) })
                         .addTo(map);
-                    marker.bindPopup('<b>' + data[i].site_name + '</b><br>Production (kWh): ' + data[i].prod, { closeOnClick: false, autoClose: false });
+                    marker.bindPopup('<b>' + data[i].site_name + '</b><br>Production (kWh): ' + prod, { closeOnClick: false, autoClose: false });
                 }
 
                 refreshMapSize();
