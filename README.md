@@ -86,7 +86,8 @@ EES/
 │   ├── Home_and_Leisure/       # Home & Leisure callbacks
 │   ├── phoenix/                # Phoenix Mall callbacks
 │   ├── moka_city/              # Moka City callbacks (+ Fire Alarm Panel)
-│   └── case_noyal/             # Case Noyal callbacks
+│   ├── case_noyal/             # Case Noyal callbacks
+│   └── joli_bois/              # Joli Bois callbacks (same as Case Noyal)
 │
 └── cron/                       # Scheduled CLI scripts
     ├── gateway_status.php      # Polls gateway connectivity
@@ -110,6 +111,8 @@ EES/
 | `p_catering` | Phoenix Catering | `u889201362_p_catering` |
 | `moka_city` | Moka City | `u889201362_moka_city` |
 | `home_leisure` | Home & Leisure | `u889201362_home_leisure` |
+| `case_noyal` | Case Noyal | `u889201362_case_noyal` |
+| `joli_bois` | Joli Bois | `u889201362_joli_bois` |
 
 ---
 
@@ -295,6 +298,7 @@ POST /EES/callback/Home_and_Leisure/
 POST /EES/callback/phoenix/
 POST /EES/callback/moka_city/
 POST /EES/callback/case_noyal/
+POST /EES/callback/joli_bois/
 ```
 
 Each callback:
