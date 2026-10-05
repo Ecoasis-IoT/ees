@@ -15,7 +15,7 @@ WHERE NOT EXISTS (
 UPDATE `tbl_site` SET `site_name` = 'Moka City 1 (Moka)'
   WHERE `db_name` IN ('moka_city.php', 'moka_city');
 
-UPDATE `tbl_site` SET `site_name` = 'Heritage Telfaire (Case Noyal)'
+UPDATE `tbl_site` SET `site_name` = 'Heritage Awali (Case Noyal)'
   WHERE `db_name` IN ('case_noyal.php', 'case_noyal');
 
 UPDATE `tbl_site` SET `site_name` = 'Moka City 2 (Joli Bois)'
