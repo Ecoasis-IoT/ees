@@ -14,14 +14,19 @@ if (!headers_sent()) {
 
     // Content Security Policy — only in production when enabled
     if ($csp_enabled && $environment === 'production') {
+        // Keep in sync with every external host referenced by pages (scan for src=/href= https://)
+        $cdn_hosts = "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.datatables.net " .
+                     "https://unpkg.com https://ajax.googleapis.com https://stackpath.bootstrapcdn.com";
+        $mapbox    = "https://api.mapbox.com";
+
         $csp = "default-src 'self'; " .
-               "script-src 'self' 'unsafe-inline' 'unsafe-eval' " .
-                   "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " .
-               "style-src 'self' 'unsafe-inline' " .
-                   "https://fonts.googleapis.com https://cdn.jsdelivr.net; " .
-               "font-src 'self' https://fonts.gstatic.com; " .
-               "img-src 'self' data: https:; " .
-               "connect-src 'self'; " .
+               "script-src 'self' 'unsafe-inline' 'unsafe-eval' {$cdn_hosts} {$mapbox}; " .
+               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com {$cdn_hosts} {$mapbox}; " .
+               "font-src 'self' data: https://fonts.gstatic.com {$cdn_hosts}; " .
+               "img-src 'self' data: blob: https:; " .
+               "connect-src 'self' {$cdn_hosts} {$mapbox} https://events.mapbox.com; " .
+               "worker-src 'self' blob:; " .
+               "child-src 'self' blob:; " .
                "frame-ancestors 'self';";
         header("Content-Security-Policy: " . $csp);
     }
