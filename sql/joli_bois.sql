@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `tbl_sub_meters` (
 INSERT INTO `tbl_group` (`id`, `group_name`) VALUES (1, 'Ecoasis')
   ON DUPLICATE KEY UPDATE `group_name` = VALUES(`group_name`);
 
-INSERT INTO `tbl_client` (`id`, `client_name`, `group_id`) VALUES (1, 'Joli Bois', 1)
+INSERT INTO `tbl_client` (`id`, `client_name`, `group_id`) VALUES (1, 'Moka City 2 Joli Bois', 1)
   ON DUPLICATE KEY UPDATE `client_name` = VALUES(`client_name`);
 
 INSERT INTO `tbl_meters` (`id`, `meter_name`, `address`, `header`, `controller_eui`, `client_id`, `device_type`) VALUES
