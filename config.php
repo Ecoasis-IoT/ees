@@ -118,6 +118,14 @@ define('HSTS_ENABLED',   filter_var($_ENV['HSTS_ENABLED']   ?? 'false', FILTER_V
 define('HSTS_MAX_AGE',   intval($_ENV['HSTS_MAX_AGE']       ?? 31536000));
 define('DISPLAY_ERRORS', filter_var($_ENV['DISPLAY_ERRORS'] ?? 'false', FILTER_VALIDATE_BOOLEAN));
 
+// Apply the session cookie settings (HttpOnly, Secure, SameSite) before any page or script
+// calls session_start(), so index.php, forgot/reset-password, logout and the 2FA scripts
+// never issue a cookie with the server defaults.
+require_once __DIR__ . '/core/common/session_cookie_config.php';
+if (!headers_sent()) {
+    applySessionCookieConfig();
+}
+
 // SMTP
 define('SMTP_HOST',       $_ENV['SMTP_HOST']       ?? 'smtp.hostinger.com');
 define('SMTP_PORT',       intval($_ENV['SMTP_PORT'] ?? 587));

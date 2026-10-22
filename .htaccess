@@ -21,6 +21,8 @@ Options -Indexes +FollowSymLinks
     RewriteRule ^vendor/                      - [F,L]
     RewriteRule ^composer\.(json|lock)$       - [F,L]
     RewriteRule ^database/                    - [F,L]
+    # Never run scripts from upload folders (none exist yet; protects any future UPLOAD_DIR)
+    RewriteRule ^(core/)?uploads?/.*\.(php\d?|phtml|pht|phar|phps|cgi|pl|py|sh)$ - [F,NC,L]
 </IfModule>
 
 # Security headers (requires mod_headers — enable in httpd.conf)
