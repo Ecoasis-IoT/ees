@@ -21,14 +21,34 @@
 $json = file_get_contents('php://input');
 require_once __DIR__ . '/../shared/bootstrap.php';
 verifyWebhookRequest($json);
-$pdo = getDB('joli_bois');
 
 $timereal = date('Y-m-d H:i:s');
-$data     = json_decode($json, true);
-
 $log = __DIR__ . '/webhook_log.txt';
 if (@filesize($log) > 2 * 1024 * 1024) { @rename($log, $log . '.old'); }
 @file_put_contents($log, sprintf("[%s] %s\n", $timereal, $json), FILE_APPEND | LOCK_EX);
+
+$pdo = tryGetDB('joli_bois');
+if (!$pdo instanceof PDO) {
+    $mapped  = isset($GLOBALS['_ees_db_map']['joli_bois']);
+    $hasName = trim((string)($_ENV['JOLI_BOIS_DB_NAME'] ?? '')) !== '';
+    $hasUser = trim((string)($_ENV['JOLI_BOIS_DB_USERNAME'] ?? '')) !== '';
+    @file_put_contents(
+        $log,
+        sprintf(
+            "[%s] DB FAIL | mapped=%s | db_name_set=%s | db_user_set=%s\n",
+            $timereal,
+            $mapped ? 'yes' : 'no',
+            $hasName ? 'yes' : 'no',
+            $hasUser ? 'yes' : 'no'
+        ),
+        FILE_APPEND | LOCK_EX
+    );
+    http_response_code(500);
+    echo 'Database connection error';
+    exit;
+}
+
+$data = json_decode($json, true);
 
 if (!is_array($data) || !isset($data['params']) || !is_array($data['params'])) { exit; }
 $p = $data['params'];
@@ -203,6 +223,7 @@ function jb_record_fap(PDO $pdo, $raw, string $stamp): void
     }
 }
 
+try {
 // ── Janitza main meter (W / Wh from Bivocom) ────────────────────────────────
 $mmPowerRaw  = $p['main_meter_power']  ?? ($p['mm_active_power'] ?? ($p['mm_power'] ?? null));
 $mmEnergyRaw = $p['main_meter_energy'] ?? ($p['mm_energy'] ?? null);
@@ -257,4 +278,15 @@ if (isset($p['irradiance']) || isset($p['ambient_temp']) || isset($p['panel_temp
     $pdo->prepare(
         'INSERT INTO `plant_irradiance`(`date`,`irradiance`,`insolation`,`ambient_temp`,`panel_temp`) VALUES (?,?,?,?,?)'
     )->execute([$timereal, $irradiance, round($insolation, 5), $ambient_temp, $panel_temp]);
+}
+} catch (Throwable $e) {
+    @file_put_contents(
+        $log,
+        sprintf("[%s] SAVE FAIL | %s\n", $timereal, $e->getMessage()),
+        FILE_APPEND | LOCK_EX
+    );
+    error_log('joli_bois webhook: ' . $e->getMessage());
+    http_response_code(500);
+    echo 'Save failed';
+    exit;
 }
