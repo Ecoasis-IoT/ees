@@ -32,14 +32,18 @@ if (!$pdo instanceof PDO) {
     $mapped  = isset($GLOBALS['_ees_db_map']['joli_bois']);
     $hasName = trim((string)($_ENV['JOLI_BOIS_DB_NAME'] ?? '')) !== '';
     $hasUser = trim((string)($_ENV['JOLI_BOIS_DB_USERNAME'] ?? '')) !== '';
+    $mysqlError = (string)($GLOBALS['_ees_db_last_error']['joli_bois'] ?? '');
     @file_put_contents(
         $log,
         sprintf(
-            "[%s] DB FAIL | mapped=%s | db_name_set=%s | db_user_set=%s\n",
+            "[%s] DB FAIL | mapped=%s | db_name_set=%s | db_user_set=%s | user=%s | db=%s | mysql=%s\n",
             $timereal,
             $mapped ? 'yes' : 'no',
             $hasName ? 'yes' : 'no',
-            $hasUser ? 'yes' : 'no'
+            $hasUser ? 'yes' : 'no',
+            (string)($_ENV['JOLI_BOIS_DB_USERNAME'] ?? ''),
+            (string)($_ENV['JOLI_BOIS_DB_NAME'] ?? ''),
+            $mysqlError !== '' ? $mysqlError : 'no PDO message'
         ),
         FILE_APPEND | LOCK_EX
     );

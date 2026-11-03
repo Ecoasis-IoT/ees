@@ -326,6 +326,7 @@ function tryGetDB(string $key): ?PDO {
         $GLOBALS['_ees_pdo_pool'][$key] = $pdo;
         return $pdo;
     } catch (PDOException $e) {
+        $GLOBALS['_ees_db_last_error'][$key] = $e->getMessage();
         error_log("EES DB connection failed [$key]: " . $e->getMessage());
         return null;
     }
