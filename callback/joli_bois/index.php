@@ -38,24 +38,16 @@ $round_date = date('Y-m-d H:i:s', $ts);
 // The weather sensor is the only one that reports a 3rd modbus channel, so use that to tell them apart.
 $isWeatherSensor = array_key_exists('modbus_chn_3', $object);
 
-// Fire Alarm Panel (gpio_in_1) — switchgear only, record 24/7 independent of the solar window
-if (!$isWeatherSensor && array_key_exists('gpio_in_1', $object)) {
-    include 'fap_decoder.php';
-}
-
+// Joli Bois main meter + fire alarm are owned by the Bivocom webhook
+// (main_meter_power / main_meter_energy / fire_alarm). Do not write them
+// from ChirpStack or they will double-count.
 if ($fPort == 85) {
     $time  = date('H:i:s');
     $start = '04:55:00';
     $end   = '20:15:00';
 
-    if ($time >= $start && $time <= $end) {
-        if ($isWeatherSensor) {
-            // Weather sensor: irradiance / ambient / panel temp -> plant_irradiance
-            include 'weather_sensor.php';
-        } else {
-            // Switchgear Controller UC300: active power + energy in the decoded object
-            include 'uc300_decoder.php';
-        }
+    if ($time >= $start && $time <= $end && $isWeatherSensor) {
+        include 'weather_sensor.php';
     }
 
 } elseif ($fPort == 123) {

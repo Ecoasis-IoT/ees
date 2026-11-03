@@ -1,30 +1,21 @@
 <?php
 /**
- * Joli Bois — weather-station gateway webhook.
+ * Joli Bois — Bivocom GSM gateway webhook.
  *
- * Source split for Joli Bois:
- *   - ChirpStack (switchgear UC300)  -> MAIN METER: active power, energy, production.
- *   - This gateway                   -> WEATHER data + the LV sub-meters.
- * So this script deliberately does NOT touch the main meter (mm_*) — ChirpStack
- * owns it. Writing it here too would double-count and corrupt hourly production.
+ * Everything for this site arrives here (no ChirpStack main-meter path):
+ *   main_meter_power   (W)  -> plant_active_power   meter_id 100   (stored as kW)
+ *   main_meter_energy  (Wh) -> tbl_main_meter + tbl_hourly_prod    (stored as kWh)
+ *   fire_alarm         0/1  -> tbl_main_FAP
  *
- * Payload (params):
- *   irradiance / ambient_temp / panel_temp   -> plant_irradiance
- *   mm_energy / mm_power                      -> tbl_sub_meters  (LV main, meter_id 8)
- *   meter1..7_energy / meter1..7_power        -> tbl_sub_meters  (LV units, meter_id 1..7)
+ * Later extras (same payload, ignored until the gateway sends them):
+ *   irradiance / ambient_temp / panel_temp -> plant_irradiance
+ *   meter1..7_* / mm_*                     -> LV reports only (meter_id 1..8)
  *
- * Meter-id convention (verified against the other plants):
- *   plant production = SUM(production) WHERE meter_id >= main_meter (default 100).
- *   The Janitza dashboard main meter is id 100 (written by the ChirpStack path).
- *   The LV main + sub units come from this gateway and are for REPORTS only, so
- *   they live BELOW 100 (LV main = 8, LV sub units = 1..7) and never inflate the
- *   dashboard production total.
- *
- * Storage rules (mirror the rest of the system):
- *   tbl_sub_meters   : every push, real time, meter_id = LV unit number.
- *   plant_irradiance : every push, real time.
- *   tbl_hourly_prod  : one row per clock hour per sub-meter (closest reading to
- *                      each top-of-hour boundary; negatives clamped to 0).
+ * Dashboard mapping:
+ *   Active Power          <- latest plant_active_power today
+ *   Today/Month/Year prod <- SUM(tbl_hourly_prod) WHERE meter_id >= 100
+ *   KPI / hourly charts   <- plant_active_power + tbl_hourly_prod + plant_irradiance
+ *   Fire Alarm Panel      <- latest tbl_main_FAP.status
  */
 
 $json = file_get_contents('php://input');
@@ -32,10 +23,9 @@ require_once __DIR__ . '/../shared/bootstrap.php';
 verifyWebhookRequest($json);
 $pdo = getDB('joli_bois');
 
-$timereal = date('Y-m-d H:i:s');   // server clock — same basis as every other callback
+$timereal = date('Y-m-d H:i:s');
 $data     = json_decode($json, true);
 
-// Lightweight receipt log (self-rotates at ~2MB).
 $log = __DIR__ . '/webhook_log.txt';
 if (@filesize($log) > 2 * 1024 * 1024) { @rename($log, $log . '.old'); }
 @file_put_contents($log, sprintf("[%s] %s\n", $timereal, $json), FILE_APPEND | LOCK_EX);
@@ -47,8 +37,71 @@ if (function_exists('ees_audit_log_webhook')) {
     ees_audit_log_webhook('joli_bois', $data);
 }
 
-/** Sub-meter reading (date + energy) closest to $boundary. */
-function cn_closest_energy(PDO $pdo, int $meterId, string $boundary): ?array
+/** Main-meter reading closest to $boundary. */
+function jb_main_closest(PDO $pdo, string $boundary): ?array
+{
+    $bStmt = $pdo->prepare('SELECT `date`, `total_active_energy` AS energy FROM `tbl_main_meter` WHERE `date` <= ? ORDER BY `date` DESC, `id` DESC LIMIT 1');
+    $bStmt->execute([$boundary]);
+    $aStmt = $pdo->prepare('SELECT `date`, `total_active_energy` AS energy FROM `tbl_main_meter` WHERE `date` > ?  ORDER BY `date` ASC,  `id` ASC  LIMIT 1');
+    $aStmt->execute([$boundary]);
+
+    $b = $bStmt->fetch();
+    $a = $aStmt->fetch();
+
+    if (!$b && !$a) return null;
+    if (!$b) return $a;
+    if (!$a) return $b;
+
+    $bDiff = abs(strtotime($b['date']) - strtotime($boundary));
+    $aDiff = abs(strtotime($a['date']) - strtotime($boundary));
+    return ($aDiff < $bDiff) ? $a : $b;
+}
+
+/** Close completed hours for MAIN METER (id 100) from tbl_main_meter. */
+function jb_main_hourly_prod(PDO $pdo, string $timereal): void
+{
+    $meterId   = 100;
+    $meterName = 'MAIN METER';
+
+    $lastProd = $pdo->prepare('SELECT `datetime` FROM `tbl_hourly_prod` WHERE `meter_id` = ? ORDER BY `id` DESC LIMIT 1');
+    $lastProd->execute([$meterId]);
+    $lp = $lastProd->fetch();
+
+    if ($lp && !empty($lp['datetime'])) {
+        $startReading = jb_main_closest($pdo, $lp['datetime']);
+        $nextBoundary = strtotime($lp['datetime']) + 3600;
+    } else {
+        $first = $pdo->query('SELECT `date`, `total_active_energy` AS energy FROM `tbl_main_meter` ORDER BY `date` ASC, `id` ASC LIMIT 1')->fetch();
+        $startReading = $first ?: null;
+        $nextBoundary = $first
+            ? strtotime(date('Y-m-d H:00:00', strtotime($first['date']))) + 3600
+            : PHP_INT_MAX;
+    }
+
+    $nowTs = strtotime($timereal);
+    $guard = 0;
+
+    while ($startReading && $nowTs >= $nextBoundary && $guard < 50) {
+        $guard++;
+        $boundaryStr = date('Y-m-d H:i:s', $nextBoundary);
+        $endReading  = jb_main_closest($pdo, $boundaryStr);
+        if (!$endReading) break;
+
+        $production = bcsub((string)$endReading['energy'], (string)$startReading['energy'], 2);
+        if ((float)$production < 0) { $production = '0'; }
+
+        $pdo->prepare(
+            'INSERT INTO `tbl_hourly_prod`(`meter_id`,`datetime`,`meter_name`,`starting_datetime`,`ending_datetime`,`production`)
+             VALUES (?,?,?,?,?,?)'
+        )->execute([$meterId, $boundaryStr, $meterName, $startReading['date'], $endReading['date'], $production]);
+
+        $startReading  = $endReading;
+        $nextBoundary += 3600;
+    }
+}
+
+/** Sub-meter reading closest to $boundary. */
+function jb_closest_energy(PDO $pdo, int $meterId, string $boundary): ?array
 {
     $bStmt = $pdo->prepare('SELECT `date`, `total_active_energy` AS energy FROM `tbl_sub_meters` WHERE `meter_id` = ? AND `date` <= ? ORDER BY `date` DESC, `id` DESC LIMIT 1');
     $bStmt->execute([$meterId, $boundary]);
@@ -67,26 +120,24 @@ function cn_closest_energy(PDO $pdo, int $meterId, string $boundary): ?array
     return ($aDiff < $bDiff) ? $a : $b;
 }
 
-/** Earliest reading for a sub-meter. */
-function cn_first_energy(PDO $pdo, int $meterId): ?array
+function jb_first_energy(PDO $pdo, int $meterId): ?array
 {
     $s = $pdo->prepare('SELECT `date`, `total_active_energy` AS energy FROM `tbl_sub_meters` WHERE `meter_id` = ? ORDER BY `date` ASC, `id` ASC LIMIT 1');
     $s->execute([$meterId]);
     return $s->fetch() ?: null;
 }
 
-/** Close any whole hours that have elapsed for a sub-meter. */
-function cn_hourly_prod(PDO $pdo, int $meterId, string $meterName, string $timereal): void
+function jb_sub_hourly_prod(PDO $pdo, int $meterId, string $meterName, string $timereal): void
 {
     $lastProd = $pdo->prepare('SELECT `datetime` FROM `tbl_hourly_prod` WHERE `meter_id` = ? ORDER BY `id` DESC LIMIT 1');
     $lastProd->execute([$meterId]);
     $lp = $lastProd->fetch();
 
     if ($lp && !empty($lp['datetime'])) {
-        $startReading = cn_closest_energy($pdo, $meterId, $lp['datetime']);
+        $startReading = jb_closest_energy($pdo, $meterId, $lp['datetime']);
         $nextBoundary = strtotime($lp['datetime']) + 3600;
     } else {
-        $first        = cn_first_energy($pdo, $meterId);
+        $first        = jb_first_energy($pdo, $meterId);
         $startReading = $first ?: null;
         $nextBoundary = $first
             ? strtotime(date('Y-m-d H:00:00', strtotime($first['date']))) + 3600
@@ -94,12 +145,12 @@ function cn_hourly_prod(PDO $pdo, int $meterId, string $meterName, string $timer
     }
 
     $nowTs = strtotime($timereal);
-    $guard = 0; // never let a big gap run away inside one request
+    $guard = 0;
 
     while ($startReading && $nowTs >= $nextBoundary && $guard < 50) {
         $guard++;
         $boundaryStr = date('Y-m-d H:i:s', $nextBoundary);
-        $endReading  = cn_closest_energy($pdo, $meterId, $boundaryStr);
+        $endReading  = jb_closest_energy($pdo, $meterId, $boundaryStr);
         if (!$endReading) break;
 
         $production = bcsub((string)$endReading['energy'], (string)$startReading['energy'], 2);
@@ -115,7 +166,68 @@ function cn_hourly_prod(PDO $pdo, int $meterId, string $meterName, string $timer
     }
 }
 
-// ── LV sub-meters 1..7 ────────────────────────────────────────────────────────
+/** Record Bivocom fire_alarm (0 = normal, 1 = alarm). */
+function jb_record_fap(PDO $pdo, $raw, string $stamp): void
+{
+    if (is_string($raw)) {
+        $status = in_array(strtolower(trim($raw)), ['on', '1', 'true', 'alarm'], true) ? 1 : 0;
+    } else {
+        $status = ((int)$raw !== 0) ? 1 : 0;
+    }
+
+    $devEui = 'bivocom';
+    $last = $pdo->prepare(
+        'SELECT `id`, `status`, `date` FROM `tbl_main_FAP` WHERE `dev_eui` = ? ORDER BY `id` DESC LIMIT 1'
+    );
+    $last->execute([$devEui]);
+    $prev = $last->fetch();
+
+    $insertRow = static function () use ($pdo, $stamp, $devEui, $status) {
+        $pdo->prepare(
+            'INSERT INTO `tbl_main_FAP` (`date`, `dev_eui`, `status`) VALUES (?, ?, ?)'
+        )->execute([$stamp, $devEui, $status]);
+    };
+
+    if (!$prev || (int)$prev['status'] !== $status) {
+        $insertRow();
+        return;
+    }
+
+    $prevHour = date('Y-m-d H', strtotime($prev['date']));
+    $nowHour  = date('Y-m-d H', strtotime($stamp));
+    if ($prevHour !== $nowHour) {
+        $insertRow();
+    } else {
+        $pdo->prepare('UPDATE `tbl_main_FAP` SET `date` = ? WHERE `id` = ?')
+            ->execute([$stamp, $prev['id']]);
+    }
+}
+
+// ── Janitza main meter (W / Wh from Bivocom) ────────────────────────────────
+$mmPowerRaw  = $p['main_meter_power']  ?? ($p['mm_active_power'] ?? ($p['mm_power'] ?? null));
+$mmEnergyRaw = $p['main_meter_energy'] ?? ($p['mm_energy'] ?? null);
+
+if ($mmPowerRaw !== null) {
+    $activePower = (float)$mmPowerRaw / 1000; // W -> kW
+    $pdo->prepare(
+        'INSERT INTO `plant_active_power`(`date`,`meter_id`,`meter_name`,`active_power`) VALUES (?,?,?,?)'
+    )->execute([$timereal, 100, 'MAIN METER', $activePower]);
+}
+
+if ($mmEnergyRaw !== null && (float)$mmEnergyRaw > 0) {
+    $energyKwh = (float)$mmEnergyRaw / 1000; // Wh -> kWh
+    $pdo->prepare(
+        'INSERT INTO `tbl_main_meter`(`date`,`total_active_energy`) VALUES (?,?)'
+    )->execute([$timereal, round($energyKwh, 5)]);
+    jb_main_hourly_prod($pdo, $timereal);
+}
+
+// ── Fire alarm ──────────────────────────────────────────────────────────────
+if (array_key_exists('fire_alarm', $p)) {
+    jb_record_fap($pdo, $p['fire_alarm'], $timereal);
+}
+
+// ── LV sub-meters 1..7 (reports only; not on dashboard KPIs) ────────────────
 for ($i = 1; $i <= 7; $i++) {
     $eKey = "meter{$i}_energy";
     $wKey = "meter{$i}_power";
@@ -131,34 +243,16 @@ for ($i = 1; $i <= 7; $i++) {
     )->execute([$timereal, $i, $name, $power, 0, $energy]);
 
     if ($energy > 0) {
-        cn_hourly_prod($pdo, $i, $name, $timereal);
+        jb_sub_hourly_prod($pdo, $i, $name, $timereal);
     }
 }
 
-// ── LV main (parent of the 7 sub-meters) ──────────────────────────────────────
-// Stored as meter_id 8 (below 100) so it shows in reports without being summed
-// into the Janitza dashboard production. NOT the same meter as the ChirpStack
-// main meter (id 100), so there is no double-count.
-if (isset($p['mm_power']) || isset($p['mm_energy'])) {
-    $power  = isset($p['mm_power'])  ? (float)$p['mm_power']  : 0.0;
-    $energy = isset($p['mm_energy']) ? (float)$p['mm_energy'] : 0.0;
-
-    $pdo->prepare(
-        'INSERT INTO `tbl_sub_meters`(`date`,`meter_id`,`meter_name`,`active_power`,`power_factor`,`total_active_energy`)
-         VALUES (?,?,?,?,?,?)'
-    )->execute([$timereal, 8, 'MAIN LV', $power, 0, $energy]);
-
-    if ($energy > 0) {
-        cn_hourly_prod($pdo, 8, 'MAIN LV', $timereal);
-    }
-}
-
-// ── Weather sensor ────────────────────────────────────────────────────────────
+// ── Weather (when the gateway starts sending it) ────────────────────────────
 if (isset($p['irradiance']) || isset($p['ambient_temp']) || isset($p['panel_temp'])) {
     $irradiance   = isset($p['irradiance'])   ? (float)$p['irradiance']   : 0.0;
     $ambient_temp = isset($p['ambient_temp']) ? (float)$p['ambient_temp'] : 0.0;
     $panel_temp   = isset($p['panel_temp'])   ? (float)$p['panel_temp']   : 0.0;
-    $insolation   = ($irradiance / 1000) * (5 / 60); // kWh/m^2 over a ~5-min reading
+    $insolation   = ($irradiance / 1000) * (5 / 60);
 
     $pdo->prepare(
         'INSERT INTO `plant_irradiance`(`date`,`irradiance`,`insolation`,`ambient_temp`,`panel_temp`) VALUES (?,?,?,?,?)'
