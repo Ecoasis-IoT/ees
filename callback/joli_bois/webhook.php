@@ -330,25 +330,23 @@ $jb_lv_insert(
     $timereal
 );
 
-// ── Weather. One row per minute; insolation uses the real gap, capped at 5 min.
+// ── Weather. Every push is stored. Insolation follows the real gap (5s now, 300s later).
 if (isset($p['irradiance']) || isset($p['ambient_temp']) || isset($p['panel_temp'])) {
     $lastWx = $pdo->query('SELECT `date` FROM `plant_irradiance` ORDER BY `id` DESC LIMIT 1')->fetch();
     $gap = $lastWx && !empty($lastWx['date']) ? (strtotime($timereal) - strtotime($lastWx['date'])) : 300;
-    if ($gap >= 60) {
-        if ($gap < 0)   { $gap = 0; }
-        if ($gap > 300) { $gap = 300; }
-        $irradiance = jb_num($p['irradiance'] ?? null) ?? 0.0;
-        $insolation = ($irradiance / 1000) * ($gap / 3600);
-        $pdo->prepare(
-            'INSERT INTO `plant_irradiance`(`date`,`irradiance`,`insolation`,`ambient_temp`,`panel_temp`) VALUES (?,?,?,?,?)'
-        )->execute([
-            $timereal,
-            $irradiance,
-            round($insolation, 5),
-            jb_celsius(jb_num($p['ambient_temp'] ?? null)),
-            jb_celsius(jb_num($p['panel_temp'] ?? null)),
-        ]);
-    }
+    if ($gap < 0)   { $gap = 0; }
+    if ($gap > 300) { $gap = 300; }
+    $irradiance = jb_num($p['irradiance'] ?? null) ?? 0.0;
+    $insolation = ($irradiance / 1000) * ($gap / 3600);
+    $pdo->prepare(
+        'INSERT INTO `plant_irradiance`(`date`,`irradiance`,`insolation`,`ambient_temp`,`panel_temp`) VALUES (?,?,?,?,?)'
+    )->execute([
+        $timereal,
+        $irradiance,
+        round($insolation, 5),
+        jb_celsius(jb_num($p['ambient_temp'] ?? null)),
+        jb_celsius(jb_num($p['panel_temp'] ?? null)),
+    ]);
 }
 } catch (Throwable $e) {
     @file_put_contents(
