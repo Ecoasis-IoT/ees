@@ -3,13 +3,15 @@
  * Joli Bois — Bivocom GSM gateway webhook.
  *
  * Everything for this site arrives here (no ChirpStack main-meter path):
- *   main_meter_power   (W)  -> plant_active_power   meter_id 100   (stored as kW)
- *   main_meter_energy  (Wh) -> tbl_main_meter + tbl_hourly_prod    (stored as kWh)
- *   fire_alarm         0/1  -> tbl_main_FAP
+ *   janitza_power   (W)   -> plant_active_power   meter_id 100   (stored as kW)
+ *   janitza_energy  (Wh)  -> tbl_main_meter + tbl_hourly_prod    (stored as kWh)
+ *   fire_alarm      0/1   -> tbl_main_FAP
+ *   lv_meter_1..6_*       -> tbl_sub_meters meter_id 1..6        (already kW / kWh)
+ *   lv_meter_main_*       -> tbl_sub_meters meter_id 8 MAIN LV   (already kW / kWh)
+ *   irradiance (W/m2), ambient_temp / panel_temp (tenths of °C) -> plant_irradiance
  *
- * Later extras (same payload, ignored until the gateway sends them):
- *   irradiance / ambient_temp / panel_temp -> plant_irradiance
- *   meter1..7_* / mm_*                     -> LV reports only (meter_id 1..8)
+ * "-" or a blank LV field means that meter is not wired. It is skipped.
+ * Older key names (main_meter_*, meter1_*) are still accepted.
  *
  * Dashboard mapping:
  *   Active Power          <- latest plant_active_power today
@@ -190,6 +192,50 @@ function jb_sub_hourly_prod(PDO $pdo, int $meterId, string $meterName, string $t
     }
 }
 
+/** Numeric gateway value. "-" and blanks mean "no reading". */
+function jb_num($raw): ?float
+{
+    if ($raw === null || is_bool($raw)) {
+        return null;
+    }
+    if (is_string($raw)) {
+        $raw = trim($raw);
+        if ($raw === '' || $raw === '-' || !is_numeric($raw)) {
+            return null;
+        }
+    } elseif (!is_numeric($raw)) {
+        return null;
+    }
+    return (float)$raw;
+}
+
+/** First present numeric value among $keys. */
+function jb_first_num(array $p, array $keys): ?float
+{
+    foreach ($keys as $key) {
+        if (!array_key_exists($key, $p)) {
+            continue;
+        }
+        $n = jb_num($p[$key]);
+        if ($n !== null) {
+            return $n;
+        }
+    }
+    return null;
+}
+
+/** Bivocom temperatures arrive as tenths of a degree (446 = 44.6°C). */
+function jb_celsius(?float $raw): float
+{
+    if ($raw === null) {
+        return 0.0;
+    }
+    if (abs($raw) >= 100) {
+        return round($raw / 10, 1);
+    }
+    return $raw;
+}
+
 /** Record Bivocom fire_alarm (0 = normal, 1 = alarm). */
 function jb_record_fap(PDO $pdo, $raw, string $stamp): void
 {
@@ -228,22 +274,20 @@ function jb_record_fap(PDO $pdo, $raw, string $stamp): void
 }
 
 try {
-// ── Janitza main meter (W / Wh from Bivocom) ────────────────────────────────
-$mmPowerRaw  = $p['main_meter_power']  ?? ($p['mm_active_power'] ?? ($p['mm_power'] ?? null));
-$mmEnergyRaw = $p['main_meter_energy'] ?? ($p['mm_energy'] ?? null);
+// ── Janitza main meter (W / Wh). Negative power is export and is kept. ─────
+$mmPower  = jb_first_num($p, ['janitza_power', 'main_meter_power', 'mm_active_power', 'mm_power']);
+$mmEnergy = jb_first_num($p, ['janitza_energy', 'main_meter_energy', 'mm_energy']);
 
-if ($mmPowerRaw !== null) {
-    $activePower = (float)$mmPowerRaw / 1000; // W -> kW
+if ($mmPower !== null) {
     $pdo->prepare(
         'INSERT INTO `plant_active_power`(`date`,`meter_id`,`meter_name`,`active_power`) VALUES (?,?,?,?)'
-    )->execute([$timereal, 100, 'MAIN METER', $activePower]);
+    )->execute([$timereal, 100, 'MAIN METER', $mmPower / 1000]);
 }
 
-if ($mmEnergyRaw !== null && (float)$mmEnergyRaw > 0) {
-    $energyKwh = (float)$mmEnergyRaw / 1000; // Wh -> kWh
+if ($mmEnergy !== null && $mmEnergy > 0) {
     $pdo->prepare(
         'INSERT INTO `tbl_main_meter`(`date`,`total_active_energy`) VALUES (?,?)'
-    )->execute([$timereal, round($energyKwh, 5)]);
+    )->execute([$timereal, round($mmEnergy / 1000, 5)]);
     jb_main_hourly_prod($pdo, $timereal);
 }
 
@@ -252,36 +296,59 @@ if (array_key_exists('fire_alarm', $p)) {
     jb_record_fap($pdo, $p['fire_alarm'], $timereal);
 }
 
-// ── LV sub-meters 1..7 (reports only; not on dashboard KPIs) ────────────────
-for ($i = 1; $i <= 7; $i++) {
-    $eKey = "meter{$i}_energy";
-    $wKey = "meter{$i}_power";
-    if (!isset($p[$eKey]) && !isset($p[$wKey])) { continue; }
-
-    $power  = isset($p[$wKey]) ? (float)$p[$wKey] : 0.0;
-    $energy = isset($p[$eKey]) ? (float)$p[$eKey] : 0.0;
-    $name   = "METER {$i}";
-
+// ── LV meters 1..6, already in kW / kWh. Meter 7 kept for the old key names.
+$jb_lv_insert = static function (PDO $pdo, int $meterId, string $name, ?float $power, ?float $energy, string $timereal): void {
+    if ($power === null && $energy === null) {
+        return;
+    }
     $pdo->prepare(
         'INSERT INTO `tbl_sub_meters`(`date`,`meter_id`,`meter_name`,`active_power`,`power_factor`,`total_active_energy`)
          VALUES (?,?,?,?,?,?)'
-    )->execute([$timereal, $i, $name, $power, 0, $energy]);
+    )->execute([$timereal, $meterId, $name, $power ?? 0.0, 0, $energy ?? 0.0]);
 
-    if ($energy > 0) {
-        jb_sub_hourly_prod($pdo, $i, $name, $timereal);
+    if ($energy !== null && $energy > 0) {
+        jb_sub_hourly_prod($pdo, $meterId, $name, $timereal);
     }
+};
+
+for ($i = 1; $i <= 7; $i++) {
+    $energyKeys = ["meter{$i}_energy"];
+    $powerKeys  = ["meter{$i}_power"];
+    if ($i <= 6) {
+        array_unshift($energyKeys, "lv_meter_{$i}_energy");
+        array_unshift($powerKeys, "lv_meter_{$i}_power");
+    }
+    $jb_lv_insert($pdo, $i, "METER {$i}", jb_first_num($p, $powerKeys), jb_first_num($p, $energyKeys), $timereal);
 }
 
-// ── Weather (when the gateway starts sending it) ────────────────────────────
-if (isset($p['irradiance']) || isset($p['ambient_temp']) || isset($p['panel_temp'])) {
-    $irradiance   = isset($p['irradiance'])   ? (float)$p['irradiance']   : 0.0;
-    $ambient_temp = isset($p['ambient_temp']) ? (float)$p['ambient_temp'] : 0.0;
-    $panel_temp   = isset($p['panel_temp'])   ? (float)$p['panel_temp']   : 0.0;
-    $insolation   = ($irradiance / 1000) * (5 / 60);
+$jb_lv_insert(
+    $pdo,
+    8,
+    'MAIN LV',
+    jb_first_num($p, ['lv_meter_main_power']),
+    jb_first_num($p, ['lv_meter_main_energy']),
+    $timereal
+);
 
-    $pdo->prepare(
-        'INSERT INTO `plant_irradiance`(`date`,`irradiance`,`insolation`,`ambient_temp`,`panel_temp`) VALUES (?,?,?,?,?)'
-    )->execute([$timereal, $irradiance, round($insolation, 5), $ambient_temp, $panel_temp]);
+// ── Weather. One row per minute; insolation uses the real gap, capped at 5 min.
+if (isset($p['irradiance']) || isset($p['ambient_temp']) || isset($p['panel_temp'])) {
+    $lastWx = $pdo->query('SELECT `date` FROM `plant_irradiance` ORDER BY `id` DESC LIMIT 1')->fetch();
+    $gap = $lastWx && !empty($lastWx['date']) ? (strtotime($timereal) - strtotime($lastWx['date'])) : 300;
+    if ($gap >= 60) {
+        if ($gap < 0)   { $gap = 0; }
+        if ($gap > 300) { $gap = 300; }
+        $irradiance = jb_num($p['irradiance'] ?? null) ?? 0.0;
+        $insolation = ($irradiance / 1000) * ($gap / 3600);
+        $pdo->prepare(
+            'INSERT INTO `plant_irradiance`(`date`,`irradiance`,`insolation`,`ambient_temp`,`panel_temp`) VALUES (?,?,?,?,?)'
+        )->execute([
+            $timereal,
+            $irradiance,
+            round($insolation, 5),
+            jb_celsius(jb_num($p['ambient_temp'] ?? null)),
+            jb_celsius(jb_num($p['panel_temp'] ?? null)),
+        ]);
+    }
 }
 } catch (Throwable $e) {
     @file_put_contents(
