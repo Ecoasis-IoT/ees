@@ -167,8 +167,9 @@ function ees_establish_user_session(array $user): void {
     $_SESSION['email']         = $user['email'] ?? '';
     $_SESSION['username']      = $user['username'] ?? '';
     $_SESSION['group_id']      = $user['group_id'] ?? 0;
-    $_SESSION['created']       = time();
-    $_SESSION['last_activity'] = time();
+    $_SESSION['created']          = time();
+    $_SESSION['last_activity']    = time();
+    $_SESSION['last_regenerated'] = time();
 }
 
 /**

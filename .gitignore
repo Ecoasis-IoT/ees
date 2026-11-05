@@ -11,6 +11,10 @@ database/
 # PHP dependencies (run: composer install)
 vendor/
 
+# Login sessions — keep the folder guard, ignore the session files
+core/sessions/*
+!core/sessions/.htaccess
+
 # Runtime logs — keep core/logs/.htaccess but ignore log files
 core/logs/security/
 *.log
