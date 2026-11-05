@@ -15,6 +15,9 @@ vendor/
 core/sessions/*
 !core/sessions/.htaccess
 
+# One-time audit clock correction marker (created on the server)
+core/logs/audit/.mur_shift_done
+
 # Runtime logs — keep core/logs/.htaccess but ignore log files
 core/logs/security/
 *.log

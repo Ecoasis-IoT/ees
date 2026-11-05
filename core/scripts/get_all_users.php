@@ -18,12 +18,18 @@ ees_ensure_tbl_user_2fa($pdo);
 try {
     $stmt = $pdo->query(
         "SELECT u.id,
+                u.firstname,
+                u.lastname,
                 CONCAT(u.firstname,' ',u.lastname) AS fullname,
+                u.username,
                 u.email,
+                u.group_id,
+                g.name AS group_name,
                 u.date_added,
                 CASE WHEN t.enabled = 1 THEN 1 ELSE 0 END AS tfa_enabled
          FROM tbl_user u
          LEFT JOIN tbl_user_2fa t ON t.user_id = u.id
+         LEFT JOIN tbl_user_group g ON g.id = u.group_id
          ORDER BY u.date_added DESC"
     );
     $users = $stmt->fetchAll();

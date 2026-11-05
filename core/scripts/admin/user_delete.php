@@ -47,8 +47,24 @@ if ($id === intval($_SESSION['id'])) {
 $pdo = getDB('admin');
 
 try {
+    try {
+        $pdo->prepare('DELETE FROM tbl_user_2fa WHERE user_id = :id')->execute([':id' => $id]);
+    } catch (PDOException $e) {
+        error_log('user_delete 2fa: ' . $e->getMessage());
+    }
+    try {
+        $pdo->prepare('DELETE FROM tbl_notifications WHERE user_id = :id')->execute([':id' => $id]);
+    } catch (PDOException $e) {
+        error_log('user_delete notifications: ' . $e->getMessage());
+    }
+
     $stmt = $pdo->prepare("DELETE FROM tbl_user WHERE id = :id");
     $stmt->execute([':id' => $id]);
+    if ($stmt->rowCount() === 0) {
+        ob_end_clean();
+        echo json_encode(['status' => 'Err', 'message' => 'User not found']);
+        exit;
+    }
 
     logSecurityEvent('user_deleted', ['deleted_id' => $id, 'by' => $_SESSION['id']], 'WARNING');
 
