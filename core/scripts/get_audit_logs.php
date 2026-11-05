@@ -12,6 +12,7 @@ require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../common/auth.php';
 require_once __DIR__ . '/../common/csrf.php';
 require_once __DIR__ . '/../common/audit_logs_query.php';
+require_once __DIR__ . '/../common/audit_logging.php';
 
 if ((int)($_SESSION['group_id'] ?? 0) !== ADMIN_USERGROUP_ID) {
     ob_clean();
@@ -28,6 +29,7 @@ if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
 
 try {
     $pdo = getDB('admin');
+    ees_audit_use_mauritius($pdo);
 
     $t = $pdo->query("SHOW TABLES LIKE 'tbl_audit_logs'");
     if ($t->rowCount() === 0) {

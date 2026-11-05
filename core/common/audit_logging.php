@@ -81,13 +81,14 @@ function logAuditEvent(
             return;
         }
 
+        ees_audit_use_mauritius($pdo);
         $stmt = $pdo->prepare(
             "INSERT INTO tbl_audit_logs
                 (category, action, severity, user_id, username, email, ip_address,
                  request_method, request_uri, resource, message, details, created_at)
              VALUES
                 (:category, :action, :severity, :user_id, :username, :email, :ip_address,
-                 :request_method, :request_uri, :resource, :message, :details, NOW())"
+                 :request_method, :request_uri, :resource, :message, :details, :created_at)"
         );
         $stmt->execute([
             ':category'       => $category,
@@ -102,11 +103,53 @@ function logAuditEvent(
             ':resource'       => $entry['resource'],
             ':message'        => $entry['message'],
             ':details'        => json_encode($details, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            ':created_at'     => date('Y-m-d H:i:s'),
         ]);
     } catch (PDOException $e) {
         error_log('logAuditEvent DB error: ' . $e->getMessage());
     } finally {
         $writing = false;
+    }
+}
+
+/**
+ * Show and store audit times in Mauritius (UTC+4).
+ * On a UTC MySQL server, rows already saved with NOW() are moved forward 4 hours once.
+ */
+function ees_audit_use_mauritius(PDO $pdo): void
+{
+    static $ready = false;
+    if ($ready) {
+        return;
+    }
+    $ready = true;
+
+    try {
+        $offset = (int)$pdo->query('SELECT TIME_TO_SEC(TIMEDIFF(NOW(), UTC_TIMESTAMP()))')->fetchColumn();
+        if ($offset === 0) {
+            $flag = __DIR__ . '/../logs/audit/.mur_shift_done';
+            $dir  = dirname($flag);
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            $locked = (int)$pdo->query("SELECT GET_LOCK('ees_audit_mur', 10)")->fetchColumn();
+            if ($locked === 1) {
+                try {
+                    if (!is_file($flag)) {
+                        $chk = $pdo->query("SHOW TABLES LIKE 'tbl_audit_logs'");
+                        if ($chk && $chk->rowCount() > 0) {
+                            $pdo->exec('UPDATE tbl_audit_logs SET created_at = DATE_ADD(created_at, INTERVAL 4 HOUR)');
+                        }
+                        @file_put_contents($flag, date('c'));
+                    }
+                } finally {
+                    $pdo->query("SELECT RELEASE_LOCK('ees_audit_mur')");
+                }
+            }
+        }
+        $pdo->exec("SET time_zone = '+04:00'");
+    } catch (Throwable $e) {
+        error_log('ees_audit_use_mauritius: ' . $e->getMessage());
     }
 }
 

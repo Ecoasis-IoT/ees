@@ -14,6 +14,8 @@ $csrf_token = generateCSRFToken();
 $stats = ['total' => 0, 'user' => 0, 'system' => 0, 'error' => 0, 'today' => 0];
 try {
     $pdo = getDB('admin');
+    require_once __DIR__ . '/common/audit_logging.php';
+    ees_audit_use_mauritius($pdo);
     $chk = $pdo->query("SHOW TABLES LIKE 'tbl_audit_logs'");
     if ($chk && $chk->rowCount() > 0) {
         $stats['total']  = (int)$pdo->query("SELECT COUNT(*) FROM tbl_audit_logs")->fetchColumn();
@@ -88,7 +90,7 @@ try {
             <div class="block-header">
                 <div class="row g-3">
                     <div class="col-lg-8 col-md-8 col-sm-12">
-                        <h2>Audit Logs <small>User actions, system events &amp; errors</small></h2>
+                        <h2>Audit Logs <small>User actions, system events and errors, Mauritius time</small></h2>
                         <ul class="breadcrumb">
                             <li class="breadcrumb-item"><a href="dashboard"><i class="fa fa-home"></i></a></li>
                             <li class="breadcrumb-item active">Audit Logs</li>

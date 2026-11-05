@@ -32,6 +32,7 @@ const EES_AUDIT_EXPORT_MAX_ROWS = 50000;
 
 try {
     $pdo = getDB('admin');
+    ees_audit_use_mauritius($pdo);
 
     $t = $pdo->query("SHOW TABLES LIKE 'tbl_audit_logs'");
     if (!$t || $t->rowCount() === 0) {

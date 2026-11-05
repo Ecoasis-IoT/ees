@@ -35,18 +35,65 @@ $fname    = sanitizeString($_POST['firstname'] ?? '');
 $lname    = sanitizeString($_POST['lastname']  ?? '');
 $email    = sanitizeEmail($_POST['email']      ?? '');
 $group_id = intval($_POST['group_id'] ?? 0);
-$password = $_POST['password'] ?? '';
+$password = (string)($_POST['password'] ?? '');
 
-if (!$id || !$fname || !$lname || !$email) {
+if (!$id || !$fname || !$lname || !$email || !$group_id) {
     ob_end_clean();
     echo json_encode(['status' => 'Err', 'message' => 'Required fields missing']);
+    exit;
+}
+
+$name_check = validateName($fname);
+if ($name_check !== true) {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'message' => $name_check]);
+    exit;
+}
+$name_check = validateName($lname);
+if ($name_check !== true) {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'message' => $name_check]);
+    exit;
+}
+$email_check = validateEmail($email);
+if ($email_check !== true) {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'message' => $email_check]);
+    exit;
+}
+if ($password !== '' && (strlen($password) < MIN_PASSWORD_LENGTH || strlen($password) > MAX_PASSWORD_LENGTH)) {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'message' => 'Password must be ' . MIN_PASSWORD_LENGTH . ' to ' . MAX_PASSWORD_LENGTH . ' characters']);
+    exit;
+}
+
+$admin_gid = defined('ADMIN_USERGROUP_ID') ? (int)ADMIN_USERGROUP_ID : 1;
+if ($id === (int)($_SESSION['id'] ?? 0) && $group_id !== $admin_gid) {
+    ob_end_clean();
+    echo json_encode(['status' => 'Err', 'message' => 'You cannot remove your own admin access']);
     exit;
 }
 
 $pdo = getDB('admin');
 
 try {
-    if (!empty($password)) {
+    $group = $pdo->prepare('SELECT id FROM tbl_user_group WHERE id = :id LIMIT 1');
+    $group->execute([':id' => $group_id]);
+    if (!$group->fetch()) {
+        ob_end_clean();
+        echo json_encode(['status' => 'Err', 'message' => 'Unknown role']);
+        exit;
+    }
+
+    $dup = $pdo->prepare('SELECT id FROM tbl_user WHERE email = :email AND id <> :id LIMIT 1');
+    $dup->execute([':email' => $email, ':id' => $id]);
+    if ($dup->fetch()) {
+        ob_end_clean();
+        echo json_encode(['status' => 'Err', 'message' => 'That email is already used']);
+        exit;
+    }
+
+    if ($password !== '') {
         $hashed = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare(
             "UPDATE tbl_user SET firstname=:fname, lastname=:lname, email=:email, group_id=:gid, password=:pwd WHERE id=:id"
@@ -63,6 +110,14 @@ try {
     }
 
     logSecurityEvent('user_updated', ['user_id' => $id, 'by' => $_SESSION['id']], 'INFO');
+
+    if ($id === (int)($_SESSION['id'] ?? 0)) {
+        $_SESSION['firstname'] = $fname;
+        $_SESSION['lastname']  = $lname;
+        $_SESSION['name']      = $fname;
+        $_SESSION['last_name'] = $lname;
+        $_SESSION['email']     = $email;
+    }
 
     ob_end_clean();
     echo json_encode(['status' => 'ok', 'message' => 'User updated successfully']);
