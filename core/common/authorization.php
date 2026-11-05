@@ -30,6 +30,8 @@ function isAuthorized(int $user_id, int $resource_user_id, bool $allow_admin = f
  */
 function getCurrentUserId() {
     if (session_status() === PHP_SESSION_NONE) {
+        require_once __DIR__ . '/session_cookie_config.php';
+        applySessionCookieConfig();
         session_start();
     }
 
@@ -38,7 +40,8 @@ function getCurrentUserId() {
     }
 
     $session_lifetime = defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 14400;
-    if ((time() - ($_SESSION['last_activity'] ?? 0)) >= $session_lifetime) {
+    $last = (int)($_SESSION['last_activity'] ?? $_SESSION['created'] ?? 0);
+    if ($last > 0 && (time() - $last) >= $session_lifetime) {
         $_SESSION = [];
         session_destroy();
         return false;
